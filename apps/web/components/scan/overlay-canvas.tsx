@@ -25,6 +25,8 @@ export function OverlayCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layoutRef = useRef<OverlayLayout | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  // Mouse hover only: touch has no hover, a tap selects instead.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,6 +65,7 @@ export function OverlayCanvas({
         source,
         detections,
         selectedId,
+        hoveredId,
         now,
         reducedMotion,
         font,
@@ -72,7 +75,7 @@ export function OverlayCanvas({
     render(performance.now());
 
     return () => cancelAnimationFrame(frame);
-  }, [detections, selectedId, size, source, reducedMotion]);
+  }, [detections, selectedId, hoveredId, size, source, reducedMotion]);
 
   function pointFrom(event: PointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -86,11 +89,14 @@ export function OverlayCanvas({
       aria-label="Máscaras de los componentes detectados"
       className="absolute inset-0 size-full touch-manipulation"
       onPointerMove={(event) => {
+        if (event.pointerType === "touch") return;
         const { x, y } = pointFrom(event);
-        event.currentTarget.style.cursor = hitTest(layoutRef.current, x, y)
-          ? "pointer"
-          : "default";
+        const id = hitTest(layoutRef.current, x, y);
+        event.currentTarget.style.cursor = id ? "pointer" : "default";
+        setHoveredId((current) => (current === id ? current : id));
       }}
+      onPointerLeave={() => setHoveredId(null)}
+      onPointerCancel={() => setHoveredId(null)}
       onClick={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         const id = hitTest(

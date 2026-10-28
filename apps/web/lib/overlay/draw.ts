@@ -1,4 +1,3 @@
-import type { ComponentStatus } from "../component-status";
 import {
   LABEL_BG,
   LABELS_ES,
@@ -31,6 +30,8 @@ export type OverlayScene = {
   source: { width: number; height: number };
   detections: readonly Detection[];
   selectedId: string | null;
+  /** Detection under the pointer (mouse only), or null. */
+  hoveredId: string | null;
   now: number;
   reducedMotion: boolean;
   /** Canvas font, e.g. "500 12px Inter". */
@@ -48,15 +49,6 @@ type Shape = {
 export type OverlayLayout = {
   shapes: Shape[];
   labels: Array<{ id: string; rect: BoundingBox }>;
-  dots: Array<{ id: string; x: number; y: number }>;
-};
-
-const DOT_RADIUS = 5;
-const DOT_HIT_RADIUS = 12;
-const STATUS_PRIORITY: Record<ComponentStatus, number> = {
-  anomaly: 1,
-  warning: 2,
-  ok: 3,
 };
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -72,12 +64,17 @@ function tracePath(ctx: CanvasRenderingContext2D, points: readonly Point[]) {
   ctx.closePath();
 }
 
-/** Paints masks, labels and dots. Returns the layout used for hit-testing. */
+/**
+ * Paints the masks. Names are shown only for the hovered and the selected
+ * component, so a crowded board stays readable. Returns the layout used for
+ * hit-testing.
+ */
 export function drawOverlay(
   ctx: CanvasRenderingContext2D,
   scene: OverlayScene,
 ): OverlayLayout {
-  const { width, height, source, selectedId, now, reducedMotion } = scene;
+  const { width, height, source, selectedId, hoveredId, now, reducedMotion } =
+    scene;
   ctx.clearRect(0, 0, width, height);
 
   const transform = coverTransform(source.width, source.height, width, height);
@@ -104,16 +101,19 @@ export function drawOverlay(
     const shape = byId.get(d.id)!;
     const style = OVERLAY[d.cls];
     const isSelected = d.id === selectedId;
+    const isHovered = d.id === hoveredId && !isSelected;
     const dimmed = selectedId !== null && !isSelected;
     const pulsing = Boolean(style.pulse);
 
-    const fillAlpha = dimmed
+    let fillAlpha = dimmed
       ? SELECTED_DIM_FILL
       : pulsing
         ? pulseAlpha(now, reducedMotion)
         : style.fill;
+    if (isHovered) fillAlpha = Math.min(1, fillAlpha + 0.2);
     const lineWidth =
-      pulsing && reducedMotion ? STROKE_REDUCED_MOTION : style.stroke;
+      (pulsing && reducedMotion ? STROKE_REDUCED_MOTION : style.stroke) +
+      (isHovered ? 1.5 : 0);
 
     tracePath(ctx, shape.points);
     ctx.fillStyle = hexToRgba(style.color, fillAlpha);
@@ -141,53 +141,37 @@ export function drawOverlay(
 
   ctx.font = scene.font;
   const measure = (text: string) => ctx.measureText(text).width;
-  const specs: LabelSpec[] = scene.detections.map((d) => ({
-    id: d.id,
-    text: LABELS_ES[d.cls],
-    anchor: byId.get(d.id)!.bounds,
-    priority: d.id === selectedId ? 0 : STATUS_PRIORITY[d.status],
+  const detectionById = new Map(scene.detections.map((d) => [d.id, d]));
+
+  // Selected first, then hovered; each only if it still exists.
+  const labeled = [selectedId, hoveredId].filter(
+    (id, index, all): id is string =>
+      id !== null && detectionById.has(id) && all.indexOf(id) === index,
+  );
+  const specs: LabelSpec[] = labeled.map((id, index) => ({
+    id,
+    text: LABELS_ES[detectionById.get(id)!.cls],
+    anchor: byId.get(id)!.bounds,
+    priority: index,
   }));
   const placements = placeLabels(specs, measure, { w: width, h: height });
 
   const labels: OverlayLayout["labels"] = [];
-  const dots: OverlayLayout["dots"] = [];
-  const detectionById = new Map(scene.detections.map((d) => [d.id, d]));
-
   ctx.textBaseline = "middle";
   for (const placement of placements) {
-    const d = detectionById.get(placement.id)!;
-    const shape = byId.get(placement.id)!;
-    const color = OVERLAY[d.cls].color;
-
-    if (placement.rect) {
-      const r = placement.rect;
-      ctx.fillStyle = LABEL_BG;
-      ctx.beginPath();
-      ctx.roundRect(r.x, r.y, r.w, r.h, LABEL_HEIGHT / 2);
-      ctx.fill();
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillText(
-        LABELS_ES[d.cls],
-        r.x + LABEL_PADDING_X,
-        r.y + r.h / 2 + 0.5,
-      );
-      labels.push({ id: d.id, rect: r });
-    } else {
-      // No room for the name: a dot in the class color marks the part.
-      const x = shape.bounds.x + shape.bounds.w / 2;
-      const y = shape.bounds.y + shape.bounds.h / 2;
-      ctx.beginPath();
-      ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.stroke();
-      dots.push({ id: d.id, x, y });
-    }
+    if (!placement.rect) continue;
+    const r = placement.rect;
+    const text = LABELS_ES[detectionById.get(placement.id)!.cls];
+    ctx.fillStyle = LABEL_BG;
+    ctx.beginPath();
+    ctx.roundRect(r.x, r.y, r.w, r.h, LABEL_HEIGHT / 2);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(text, r.x + LABEL_PADDING_X, r.y + r.h / 2 + 0.5);
+    labels.push({ id: placement.id, rect: r });
   }
 
-  return { shapes, labels, dots };
+  return { shapes, labels };
 }
 
 /** The detection under a point (canvas pixels), or null. Small shapes win. */
@@ -200,9 +184,6 @@ export function hitTest(
 
   for (const label of layout.labels) {
     if (pointInRect(x, y, label.rect)) return label.id;
-  }
-  for (const dot of layout.dots) {
-    if (Math.hypot(x - dot.x, y - dot.y) <= DOT_HIT_RADIUS) return dot.id;
   }
 
   const hits = layout.shapes

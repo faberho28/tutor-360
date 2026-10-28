@@ -2,7 +2,7 @@
 
 import { Maximize, Minimize } from "lucide-react";
 import { cn } from "cn";
-import { useState, useSyncExternalStore, type RefObject } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useSession } from "@/lib/session/session-provider";
 
 // Simulated devices; HU-14 lists the real ones with enumerateDevices().
@@ -19,25 +20,6 @@ const DEVICES = [
   { id: "iphone", label: "iPhone (Continuity Camera)" },
   { id: "usb", label: "Webcam USB" },
 ] as const;
-
-const subscribeFullscreen = (onChange: () => void) => {
-  document.addEventListener("fullscreenchange", onChange);
-  return () => document.removeEventListener("fullscreenchange", onChange);
-};
-
-function useFullscreen() {
-  const supported = useSyncExternalStore(
-    subscribeFullscreen,
-    () => document.fullscreenEnabled,
-    () => false,
-  );
-  const active = useSyncExternalStore(
-    subscribeFullscreen,
-    () => document.fullscreenElement !== null,
-    () => false,
-  );
-  return { supported, active };
-}
 
 /** Green under 1.5 s, amber under 3 s, red from there (PRD target: < 1.5 s). */
 function latencyTone(ms: number): { dot: string; word: string } {
@@ -49,9 +31,9 @@ function latencyTone(ms: number): { dot: string; word: string } {
 const GLASS = "bg-black/50 text-white backdrop-blur";
 
 export function StageCornerControls({
-  targetRef,
+  fullscreenTarget,
 }: {
-  targetRef: RefObject<HTMLElement | null>;
+  fullscreenTarget: HTMLElement | null;
 }) {
   const latencyMs = useSession((s) => s.analysis.latencyMs);
   const ready = useSession((s) => s.stage === "ready");
@@ -60,7 +42,7 @@ export function StageCornerControls({
 
   function toggleFullscreen() {
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void targetRef.current?.requestFullscreen();
+    else void fullscreenTarget?.requestFullscreen();
   }
 
   // The latency only means something while the camera is running.
