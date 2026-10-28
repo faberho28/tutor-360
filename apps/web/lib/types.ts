@@ -23,6 +23,14 @@ export type Detection = {
 export type StageState =
   "ready" | "no-permission" | "no-camera" | "loading-model";
 
+/** A saved moment of the scan. HU-09 adds the composed image. */
+export type Capture = {
+  id: string;
+  /** Epoch milliseconds. */
+  at: number;
+  detections: Detection[];
+};
+
 export type AnalysisState = {
   mode: "auto" | "manual";
   phase: "idle" | "analyzing" | "paused" | "offline" | "quota" | "error";

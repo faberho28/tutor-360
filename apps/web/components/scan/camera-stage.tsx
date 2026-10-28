@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ControlBar } from "@/components/scan/control-bar";
 import { DemoControls } from "@/components/scan/demo-controls";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
 import { StageCornerControls } from "@/components/scan/stage-corner-controls";
@@ -36,6 +37,9 @@ export function CameraStage() {
           <StageEmptyState state={stage} />
         )}
         <StageCornerControls fullscreenTarget={element} />
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-3">
+          <ControlBar />
+        </div>
         {process.env.NODE_ENV !== "production" ? <DemoControls /> : null}
       </div>
     </PortalContainerProvider>

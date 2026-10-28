@@ -1,0 +1,29 @@
+import type { AnalysisState } from "./types";
+
+/** User-facing texts (es-CO) shared by several components. */
+export const copy = {
+  status: {
+    idle: "Listo",
+    analyzing: "Analizando",
+    paused: "En pausa",
+    offline: "Sin conexión con la IA",
+    quota: "Cuota de la IA agotada",
+    error: "Algo salió mal al analizar",
+  } satisfies Record<AnalysisState["phase"], string>,
+  controls: {
+    capture: "Capturar",
+    autoOn: "Activar análisis automático",
+    autoOff: "Pausar análisis automático",
+    view3d: "Ver en 3D",
+    view3dNeedsSelection: "Selecciona un componente",
+    report: "Generar reporte",
+    reportNeedsCapture: "Haz al menos una captura",
+  },
+} as const;
+
+/** 754 -> "00:12:34" */
+export function formatElapsed(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+}

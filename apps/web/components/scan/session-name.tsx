@@ -53,9 +53,9 @@ export function SessionName() {
       ref={buttonRef}
       type="button"
       onClick={() => setDraft(name)}
-      className="group flex min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-lg font-semibold outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex max-w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-lg font-semibold outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="truncate">{name}</span>
+      <span className="min-w-0 truncate">{name}</span>
       <Pencil
         aria-hidden="true"
         className="size-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"

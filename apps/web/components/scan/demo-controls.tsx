@@ -53,7 +53,7 @@ export function DemoControls() {
     ) ?? "findings";
 
   return (
-    <div className="absolute bottom-3 left-3 z-10">
+    <div className="absolute top-14 left-3 z-10">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

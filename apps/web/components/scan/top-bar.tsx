@@ -2,6 +2,7 @@ import { Cpu, Settings } from "lucide-react";
 import { cn } from "cn";
 import { SessionName } from "@/components/scan/session-name";
 import { SettingsDialog } from "@/components/scan/settings-dialog";
+import { StatusPill } from "@/components/scan/status-pill";
 import { Button } from "@/components/ui/button";
 
 export function TopBar({ className }: { className?: string }) {
@@ -20,7 +21,7 @@ export function TopBar({ className }: { className?: string }) {
         <SessionName />
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {/* Analysis status pill: HU-06 */}
+        <StatusPill />
         <div className="lg:hidden">
           <SettingsDialog>
             <Button

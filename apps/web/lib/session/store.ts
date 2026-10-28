@@ -1,5 +1,5 @@
 import { createStore } from "zustand/vanilla";
-import type { AnalysisState, Detection, StageState } from "../types";
+import type { AnalysisState, Capture, Detection, StageState } from "../types";
 
 export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
@@ -10,6 +10,7 @@ export type SessionState = {
   analysis: AnalysisState;
   detections: Detection[];
   selectedId: string | null;
+  captures: Capture[];
 };
 
 export type SessionActions = {
@@ -19,6 +20,8 @@ export type SessionActions = {
   replaceDetections: (detections: Detection[]) => void;
   select: (id: string) => void;
   clearSelection: () => void;
+  /** Saves the given detections as a capture and returns it. */
+  addCapture: (detections: Detection[]) => Capture;
   reset: () => void;
 };
 
@@ -45,6 +48,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     analysis: initialAnalysis(),
     detections: [],
     selectedId: null,
+    captures: [],
     ...overrides,
   };
 }
@@ -54,7 +58,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
  * between server requests and between tests.
  */
 export function createSessionStore(initial: Partial<SessionState> = {}) {
-  return createStore<SessionSlice>()((set) => ({
+  return createStore<SessionSlice>()((set, get) => ({
     ...freshState(initial),
 
     setName: (name) => set({ name }),
@@ -75,6 +79,16 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
         state.detections.some((d) => d.id === id) ? { selectedId: id } : state,
       ),
     clearSelection: () => set({ selectedId: null }),
+
+    addCapture: (detections) => {
+      const capture: Capture = {
+        id: `capture-${get().captures.length + 1}`,
+        at: Date.now(),
+        detections: structuredClone(detections),
+      };
+      set((state) => ({ captures: [...state.captures, capture] }));
+      return capture;
+    },
 
     reset: () => set(freshState()),
   }));
