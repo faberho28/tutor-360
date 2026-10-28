@@ -1,0 +1,40 @@
+# Agent tooling
+.atl/
+
+# Docs: only README.md is versioned
+docs/
+*.md
+!README.md
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Build and test output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment (the example file is versioned)
+.env
+.env.*
+!.env.example
+
+# Python (services/vision)
+__pycache__/
+.venv/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

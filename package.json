@@ -1,0 +1,24 @@
+{
+  "name": "tutor-360",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PC-Tutor 360 monorepo",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm --filter web test",
+    "test:watch": "pnpm --filter web test:watch",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

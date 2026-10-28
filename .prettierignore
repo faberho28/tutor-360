@@ -1,0 +1,16 @@
+# Local-only documents (not versioned; absent in a clean clone)
+docs/
+.atl/
+PRD.md
+AGENTS.md
+design-system.md
+
+# Generated output
+node_modules/
+.next/
+out/
+dist/
+coverage/
+next-env.d.ts
+pnpm-lock.yaml
+*.tsbuildinfo
