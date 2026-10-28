@@ -74,7 +74,13 @@ function newSessionId(): string {
 }
 
 function initialAnalysis(): AnalysisState {
-  return { mode: "manual", phase: "idle", latencyMs: null, startedAt: null };
+  return {
+    mode: "manual",
+    phase: "idle",
+    latencyMs: null,
+    startedAt: null,
+    stale: false,
+  };
 }
 
 function freshState(overrides: Partial<SessionState> = {}): SessionState {

@@ -44,25 +44,27 @@ export const demoServices: ScanServices = {
       stop: () => mock.stop(),
       captureOnce: () => mock.captureOnce(),
       dispose: () => mock.dispose(),
+      // The simulated analysis does not look at the camera.
+      report() {},
+      retry() {
+        if (!onDemoPhoto) return;
+        store.getState().setAnalysis({
+          phase: "analyzing",
+          latencyMs: null,
+          startedAt: Date.now(),
+        });
+        window.setTimeout(() => {
+          const state = store.getState();
+          state.replaceDetections(getScenario("findings"));
+          state.setAnalysis({ phase: "idle", latencyMs: 900, startedAt: null });
+        }, 650);
+      },
       async snapshot() {
         if (!onDemoPhoto) return readyVideo(getVideo());
         await mock.captureOnce();
         return loadImage(DEMO_IMAGE.src);
       },
     };
-  },
-  retryAnalysis(store) {
-    if (store.getState().source !== "demo") return;
-    store.getState().setAnalysis({
-      phase: "analyzing",
-      latencyMs: null,
-      startedAt: Date.now(),
-    });
-    window.setTimeout(() => {
-      const state = store.getState();
-      state.replaceDetections(getScenario("findings"));
-      state.setAnalysis({ phase: "idle", latencyMs: 900, startedAt: null });
-    }, 650);
   },
   DemoStage,
   DevTools: DemoControls,

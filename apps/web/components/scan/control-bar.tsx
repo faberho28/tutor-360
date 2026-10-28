@@ -2,8 +2,9 @@
 
 import { Aperture, Box, Ellipsis, FileDown, Pause, Play } from "lucide-react";
 import { cn } from "cn";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useAnalysis } from "@/components/scan/analysis-provider";
 import { Button } from "@/components/ui/button";
 import { ModelViewerDialog } from "@/components/scan/model-viewer-dialog";
 import { ReportDialog } from "@/components/scan/report-dialog";
@@ -13,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useScanShortcuts } from "@/hooks/use-scan-shortcuts";
+import { AnalyzeClientError } from "@/lib/analysis/analyze-client";
 import { copy } from "@/lib/copy";
 import { composeCapture } from "@/lib/overlay/compose-capture";
 import { useServices } from "@/lib/services/context";
@@ -46,21 +48,15 @@ function Hint({
  * Floating bar: capture, automatic analysis, 3D view and report. It drives the
  * analysis the page provides: simulated on /demo, real on the main page.
  */
-export function ControlBar({
-  getVideo,
-}: {
-  getVideo: () => HTMLVideoElement | null;
-}) {
+export function ControlBar() {
   const store = useSessionStore();
   const services = useServices();
+  const { analysis } = useAnalysis();
   const auto = useSession((s) => s.analysis.mode === "auto");
   const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
-  const [analysis] = useState(() => services.createAnalysis(store, getVideo));
   const [reportOpen, setReportOpen] = useState(false);
   const autoAvailable = analysis.autoAvailable;
-
-  useEffect(() => () => analysis.dispose(), [analysis]);
 
   async function capture() {
     try {
@@ -78,8 +74,13 @@ export function ControlBar({
       toast.success(`Captura ${store.getState().captures.length} guardada`, {
         id: saved.id,
       });
-    } catch {
-      toast.error("No pudimos guardar la captura");
+    } catch (error) {
+      // An analysis failure carries its own message (offline, quota, ...).
+      toast.error(
+        error instanceof AnalyzeClientError
+          ? error.message
+          : "No pudimos guardar la captura",
+      );
     }
   }
 

@@ -19,7 +19,8 @@ const DETAILS: Record<
     icon: WifiOff,
   },
   quota: {
-    description: "El análisis se reanudará cuando haya créditos disponibles.",
+    description:
+      "Pausamos el análisis automático. Actívalo de nuevo cuando haya créditos disponibles.",
     icon: CircleAlert,
   },
   error: {

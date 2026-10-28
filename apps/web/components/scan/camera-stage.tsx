@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useAnalysis } from "@/components/scan/analysis-provider";
 import { ChangeIndicator } from "@/components/scan/change-indicator";
 import { ControlBar } from "@/components/scan/control-bar";
 import { LiveCameraSource } from "@/components/scan/live-camera-source";
@@ -26,11 +27,16 @@ export function CameraStage() {
   const demo = DemoStage !== null && source === "demo";
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [dims, setDims] = useState({ width: 1280, height: 720 });
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { analysis, videoRef } = useAnalysis();
   const fullscreen = useFullscreen();
   const stream = useCamera(!demo, deviceId);
   const live = !demo && stage === "ready" && stream !== null;
   const change = useChangeDetection(() => videoRef.current, live);
+
+  // The analysis reacts to the engine: when to analyze, and when masks are stale.
+  useEffect(() => {
+    analysis.report(change.reading.status);
+  }, [analysis, change.reading.status]);
 
   return (
     // While the stage is fullscreen, menus must be drawn inside it or the
@@ -62,7 +68,7 @@ export function CameraStage() {
           ) : null}
         </StageCornerControls>
         <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-3">
-          <ControlBar getVideo={() => videoRef.current} />
+          <ControlBar />
         </div>
         {DevTools ? <DevTools /> : null}
       </div>

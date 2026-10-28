@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  AnalysisProvider,
+  useAnalysis,
+} from "@/components/scan/analysis-provider";
 import { CameraStage } from "@/components/scan/camera-stage";
 import { ConnectionBanner } from "@/components/scan/connection-banner";
 import { NavRail } from "@/components/scan/nav-rail";
@@ -9,16 +13,22 @@ import { StatusPill } from "@/components/scan/status-pill";
 import { ShortcutsHelp } from "@/components/scan/shortcuts-help";
 import { TopBar } from "@/components/scan/top-bar";
 import { useNewAnomalyToast } from "@/hooks/use-new-anomaly-toast";
-import { useServices } from "@/lib/services/context";
-import { useSession, useSessionStore } from "@/lib/session/session-provider";
+import { useSession } from "@/lib/session/session-provider";
+
+export function ScanScreen() {
+  return (
+    <AnalysisProvider>
+      <ScanLayout />
+    </AnalysisProvider>
+  );
+}
 
 /**
  * Desktop (>= 1024px): rail | stage | 360px panel.
  * Below that: top bar + stage, with the panel as a bottom drawer.
  */
-export function ScanScreen() {
-  const store = useSessionStore();
-  const services = useServices();
+function ScanLayout() {
+  const { analysis } = useAnalysis();
   const phase = useSession((s) => s.analysis.phase);
   useNewAnomalyToast();
 
@@ -35,10 +45,7 @@ export function ScanScreen() {
       <ShortcutsHelp />
       <main className="flex min-h-0 flex-col gap-3 p-4 pb-28 lg:pb-4">
         {failed ? (
-          <ConnectionBanner
-            phase={phase}
-            onRetry={() => services.retryAnalysis(store)}
-          />
+          <ConnectionBanner phase={phase} onRetry={() => analysis.retry()} />
         ) : null}
         <div className="min-h-0 flex-1">
           <CameraStage />

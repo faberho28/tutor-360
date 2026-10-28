@@ -60,7 +60,13 @@ export type Model3DState =
 
 export type AnalysisState = {
   mode: "auto" | "manual";
-  phase: "idle" | "analyzing" | "paused" | "offline" | "quota" | "error";
+  phase:
+    "idle" | "waiting" | "analyzing" | "paused" | "offline" | "quota" | "error";
   latencyMs: number | null;
   startedAt: number | null;
+  /**
+   * The detections no longer match the image (the camera moved) until the next
+   * analysis arrives; the overlay dims them.
+   */
+  stale: boolean;
 };

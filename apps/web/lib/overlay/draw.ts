@@ -36,7 +36,15 @@ export type OverlayScene = {
   reducedMotion: boolean;
   /** Canvas font, e.g. "500 12px Inter". */
   font: string;
+  /**
+   * The masks no longer match the image (the camera moved): they are drawn
+   * faint, without names and without pulsing, until a new analysis arrives.
+   */
+  stale?: boolean;
 };
+
+/** Opacity of the masks while they are out of date. */
+export const STALE_ALPHA = 0.33;
 
 type Shape = {
   id: string;
@@ -75,7 +83,9 @@ export function drawOverlay(
 ): OverlayLayout {
   const { width, height, source, selectedId, hoveredId, now, reducedMotion } =
     scene;
+  const stale = scene.stale === true;
   ctx.clearRect(0, 0, width, height);
+  ctx.globalAlpha = stale ? STALE_ALPHA : 1;
 
   const transform = coverTransform(source.width, source.height, width, height);
 
@@ -103,7 +113,7 @@ export function drawOverlay(
     const isSelected = d.id === selectedId;
     const isHovered = d.id === hoveredId && !isSelected;
     const dimmed = selectedId !== null && !isSelected;
-    const pulsing = Boolean(style.pulse);
+    const pulsing = Boolean(style.pulse) && !stale;
 
     let fillAlpha = dimmed
       ? SELECTED_DIM_FILL
@@ -139,14 +149,19 @@ export function drawOverlay(
     }
   }
 
+  ctx.globalAlpha = 1;
   ctx.font = scene.font;
   const measure = (text: string) => ctx.measureText(text).width;
   const detectionById = new Map(scene.detections.map((d) => [d.id, d]));
 
-  // Selected first, then hovered; each only if it still exists.
+  // Selected first, then hovered; each only if it still exists. A stale mask
+  // has no name: it would label something that may no longer be there.
   const labeled = [selectedId, hoveredId].filter(
     (id, index, all): id is string =>
-      id !== null && detectionById.has(id) && all.indexOf(id) === index,
+      !stale &&
+      id !== null &&
+      detectionById.has(id) &&
+      all.indexOf(id) === index,
   );
   const specs: LabelSpec[] = labeled.map((id, index) => ({
     id,

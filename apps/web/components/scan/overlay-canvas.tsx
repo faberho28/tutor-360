@@ -20,6 +20,7 @@ export function OverlayCanvas({
   const selectedId = useSession((s) => s.selectedId);
   const select = useSession((s) => s.select);
   const clearSelection = useSession((s) => s.clearSelection);
+  const stale = useSession((s) => s.analysis.stale);
   const reducedMotion = useReducedMotion();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,7 +55,7 @@ export function OverlayCanvas({
 
     const font = `500 12px ${getComputedStyle(document.body).fontFamily}`;
     const animate =
-      !reducedMotion && detections.some((d) => OVERLAY[d.cls].pulse);
+      !reducedMotion && !stale && detections.some((d) => OVERLAY[d.cls].pulse);
     let frame = 0;
 
     const render = (now: number) => {
@@ -69,13 +70,14 @@ export function OverlayCanvas({
         now,
         reducedMotion,
         font,
+        stale,
       });
       if (animate) frame = requestAnimationFrame(render);
     };
     render(performance.now());
 
     return () => cancelAnimationFrame(frame);
-  }, [detections, selectedId, hoveredId, size, source, reducedMotion]);
+  }, [detections, selectedId, hoveredId, size, source, reducedMotion, stale]);
 
   function pointFrom(event: PointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();

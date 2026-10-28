@@ -35,6 +35,7 @@ export function DemoScan({
                   phase: getScenarioPhase(scenario),
                   latencyMs: 900,
                   startedAt: null,
+                  stale: false,
                 },
               }
             : {}),
