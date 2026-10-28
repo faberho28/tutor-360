@@ -47,6 +47,7 @@ const STAGE_LABELS: Record<StageState, string> = {
   "no-permission": "Sin permiso",
   "no-camera": "Sin cámaras",
   "loading-model": "Cargando modelo",
+  insecure: "Sin HTTPS",
 };
 
 /** The scenario the page started with: the URL parameter, else findings. */

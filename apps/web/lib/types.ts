@@ -21,7 +21,12 @@ export type Detection = {
 };
 
 export type StageState =
-  "ready" | "no-permission" | "no-camera" | "loading-model";
+  "ready" | "no-permission" | "no-camera" | "loading-model" | "insecure";
+
+/** Where the stage image comes from: the real camera or the demo photo. */
+export type FrameSource = "camera" | "demo";
+
+export type CameraDevice = { id: string; label: string };
 
 export type Diagnosis = {
   summary: string;

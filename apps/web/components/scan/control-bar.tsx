@@ -48,8 +48,14 @@ function Hint({
  * Floating bar: capture, automatic analysis, 3D view and report. It drives the
  * analysis source, which is simulated until the camera and the API (HU-18).
  */
-export function ControlBar() {
+export function ControlBar({
+  getVideo,
+}: {
+  getVideo: () => HTMLVideoElement | null;
+}) {
   const store = useSessionStore();
+  const frameSource = useSession((s) => s.source);
+  const demo = frameSource === "demo";
   const auto = useSession((s) => s.analysis.mode === "auto");
   const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
@@ -60,9 +66,19 @@ export function ControlBar() {
 
   async function capture() {
     try {
-      await source.captureOnce();
+      let image: HTMLImageElement | HTMLVideoElement;
+      if (demo) {
+        await source.captureOnce();
+        image = await loadImage(DEMO_IMAGE.src);
+      } else {
+        const video = getVideo();
+        if (!video || video.readyState < 2 || video.videoWidth === 0) {
+          toast.error("La cámara aún no está lista");
+          return;
+        }
+        image = video;
+      }
       const state = store.getState();
-      const image = await loadImage(DEMO_IMAGE.src);
       const saved = state.addCapture(
         state.detections,
         composeCapture(image, state.detections),
@@ -77,6 +93,8 @@ export function ControlBar() {
   }
 
   function toggleAuto() {
+    // Real analysis arrives with HU-17/18.
+    if (!demo) return;
     if (auto) source.stop();
     else source.start();
   }
@@ -107,18 +125,29 @@ export function ControlBar() {
       >
         <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
           <Hint
-            label={auto ? copy.controls.autoOff : copy.controls.autoOn}
-            shortcut="A"
+            label={
+              demo
+                ? auto
+                  ? copy.controls.autoOff
+                  : copy.controls.autoOn
+                : "Análisis automático (próximamente)"
+            }
+            shortcut={demo ? "A" : undefined}
           >
             <Button
               type="button"
               size="control"
               variant="secondary"
               aria-pressed={auto}
+              aria-disabled={!demo || undefined}
               aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
               aria-keyshortcuts="A"
               onClick={toggleAuto}
-              className={cn("border", auto && "border-primary text-primary")}
+              className={cn(
+                "border",
+                auto && "border-primary text-primary",
+                !demo && "opacity-50",
+              )}
             >
               {auto ? (
                 <Pause

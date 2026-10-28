@@ -13,6 +13,9 @@ export function StageEmptyState({
   state: Exclude<StageState, "ready">;
 }) {
   const setStage = useSession((s) => s.setStage);
+  const retryCamera = useSession((s) => s.retryCamera);
+  const source = useSession((s) => s.source);
+  const retry = () => (source === "camera" ? retryCamera() : setStage("ready"));
 
   if (state === "loading-model") {
     return (
@@ -32,6 +35,7 @@ export function StageEmptyState({
   }
 
   const noPermission = state === "no-permission";
+  const insecure = state === "insecure";
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-muted p-6 text-center">
       <CameraOff
@@ -41,19 +45,25 @@ export function StageEmptyState({
       />
       <div className="flex max-w-sm flex-col gap-1">
         <p className="text-base font-semibold">
-          {noPermission
-            ? "Necesitamos tu cámara para ver la PC"
-            : "No encontramos ninguna cámara"}
+          {insecure
+            ? "La cámara requiere una conexión segura"
+            : noPermission
+              ? "Necesitamos tu cámara para ver la PC"
+              : "No encontramos ninguna cámara"}
         </p>
         <p className="text-sm text-muted-foreground">
-          {noPermission
-            ? "Permite el acceso a la cámara en tu navegador y vuelve a intentarlo."
-            : "Conecta tu iPhone por USB-C (Mac: Continuity Camera · Windows: Camo o Iriun) o una webcam."}
+          {insecure
+            ? "El navegador solo permite usar la cámara en páginas HTTPS (o localhost). Abre la app con una dirección segura."
+            : noPermission
+              ? "Permite el acceso a la cámara en tu navegador y vuelve a intentarlo."
+              : "Conecta tu iPhone por USB-C (Mac: Continuity Camera · Windows: Camo o Iriun) o una webcam."}
         </p>
       </div>
-      <Button type="button" onClick={() => setStage("ready")}>
-        Reintentar
-      </Button>
+      {insecure ? null : (
+        <Button type="button" onClick={retry}>
+          Reintentar
+        </Button>
+      )}
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { Maximize, Minimize } from "lucide-react";
 import { cn } from "cn";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,14 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFullscreen } from "@/hooks/use-fullscreen";
+import { savePreferredDevice } from "@/lib/camera/devices";
 import { useSession } from "@/lib/session/session-provider";
-
-// Simulated devices; HU-14 lists the real ones with enumerateDevices().
-const DEVICES = [
-  { id: "integrated", label: "Cámara integrada" },
-  { id: "iphone", label: "iPhone (Continuity Camera)" },
-  { id: "usb", label: "Webcam USB" },
-] as const;
 
 /** Green under 1.5 s, amber under 3 s, red from there (PRD target: < 1.5 s). */
 function latencyTone(ms: number): { dot: string; word: string } {
@@ -37,7 +30,12 @@ export function StageCornerControls({
 }) {
   const latencyMs = useSession((s) => s.analysis.latencyMs);
   const ready = useSession((s) => s.stage === "ready");
-  const [device, setDevice] = useState<string>(DEVICES[0].id);
+  const source = useSession((s) => s.source);
+  const devices = useSession((s) => s.cameraDevices);
+  const activeId = useSession((s) => s.cameraActiveId);
+  const setCameraDeviceId = useSession((s) => s.setCameraDeviceId);
+  const demo = source === "demo";
+  const value = demo ? "demo" : (activeId ?? "");
   const fullscreen = useFullscreen();
 
   function toggleFullscreen() {
@@ -69,7 +67,14 @@ export function StageCornerControls({
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
-        <Select value={device} onValueChange={setDevice}>
+        <Select
+          value={value}
+          onValueChange={(id) => {
+            setCameraDeviceId(id);
+            savePreferredDevice(id);
+          }}
+          disabled={demo || devices.length === 0}
+        >
           <SelectTrigger
             aria-label="Cámara"
             className={cn(
@@ -77,10 +82,13 @@ export function StageCornerControls({
               GLASS,
             )}
           >
-            <SelectValue />
+            <SelectValue placeholder="Sin cámaras" />
           </SelectTrigger>
           <SelectContent align="end">
-            {DEVICES.map((item) => (
+            {demo ? (
+              <SelectItem value="demo">Foto de ejemplo</SelectItem>
+            ) : null}
+            {devices.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 {item.label}
               </SelectItem>

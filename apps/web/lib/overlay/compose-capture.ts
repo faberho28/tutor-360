@@ -28,12 +28,15 @@ function createCanvas(width: number, height: number) {
  * `object-cover` and the masks go through the same `drawOverlay` as the stage.
  */
 export function composeCapture(
-  image: HTMLImageElement,
+  image: HTMLImageElement | HTMLVideoElement,
   detections: readonly Detection[],
   size: { width: number; height: number } = CAPTURE_SIZE,
 ): string {
   const { width, height } = size;
-  const source = { width: image.naturalWidth, height: image.naturalHeight };
+  const source =
+    image instanceof HTMLVideoElement
+      ? { width: image.videoWidth, height: image.videoHeight }
+      : { width: image.naturalWidth, height: image.naturalHeight };
   const base = createCanvas(width, height);
   const masks = createCanvas(width, height);
 

@@ -20,6 +20,8 @@ export function ScanScreen() {
   useNewAnomalyToast();
 
   function retryAnalysis() {
+    // Real analysis arrives with HU-18; simulating recovery is demo-only.
+    if (store.getState().source !== "demo") return;
     const startedAt = Date.now();
     store.getState().setAnalysis({
       phase: "analyzing",

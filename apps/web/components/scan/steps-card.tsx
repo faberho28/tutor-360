@@ -26,6 +26,8 @@ const NO_STEPS: number[] = [];
  */
 export function StepsCard() {
   const store = useSessionStore();
+  const demo = useSession((s) => s.source === "demo");
+  const hasDetections = useSession((s) => s.detections.length > 0);
   const selected = useSession((s) =>
     s.detections.find((d) => d.id === s.selectedId),
   );
@@ -55,6 +57,9 @@ export function StepsCard() {
   const total = steps?.length ?? 0;
   const current = steps ? currentStepIndex(total, done, skipped) : null;
   const progress = stepProgress(total, done, skipped);
+
+  // Real environment: no steps until a real analysis produces detections.
+  if (!hasDetections && !demo) return null;
 
   const counter = !steps
     ? ""

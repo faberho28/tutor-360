@@ -1,4 +1,4 @@
-import type { StageState } from "../types";
+import type { FrameSource, StageState } from "../types";
 import { SCENARIO_NAMES, type ScenarioName } from "./scenarios";
 
 export const DEFAULT_SCENARIO: ScenarioName = "findings";
@@ -8,7 +8,18 @@ export const STAGE_NAMES = [
   "no-permission",
   "no-camera",
   "loading-model",
+  "insecure",
 ] as const satisfies readonly StageState[];
+
+/** Demo only when requested via params (and never in production). */
+export function resolveSource(
+  search: string | URLSearchParams | undefined,
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+): FrameSource {
+  const source = readParam(search, "source", nodeEnv);
+  if (source === "demo" || source === "camera") return source;
+  return readParam(search, "scenario", nodeEnv) !== null ? "demo" : "camera";
+}
 
 function readParam(
   search: string | URLSearchParams | undefined,
