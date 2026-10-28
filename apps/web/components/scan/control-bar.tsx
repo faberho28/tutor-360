@@ -119,8 +119,8 @@ export function ControlBar({
         role="toolbar"
         aria-label="Controles de captura"
         className={cn(
-          "group pointer-events-auto grid w-fit grid-cols-[96px_44px_96px] items-center gap-2 overflow-hidden rounded-full border bg-card/90 p-2 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
-          "[@media(hover:hover)]:grid-cols-[0px_44px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[96px_44px_96px] [@media(hover:hover)]:hover:gap-2 [@media(hover:hover)]:focus-within:grid-cols-[96px_44px_96px] [@media(hover:hover)]:focus-within:gap-2",
+          "group pointer-events-auto grid w-fit grid-cols-[68px_32px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
+          "[@media(hover:hover)]:grid-cols-[0px_32px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_32px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_32px_68px] [@media(hover:hover)]:focus-within:gap-1",
         )}
       >
         <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
@@ -152,13 +152,13 @@ export function ControlBar({
               {auto ? (
                 <Pause
                   aria-hidden="true"
-                  className="size-5"
+                  className="size-4"
                   strokeWidth={1.75}
                 />
               ) : (
                 <Play
                   aria-hidden="true"
-                  className="size-5"
+                  className="size-4"
                   strokeWidth={1.75}
                 />
               )}
@@ -182,7 +182,7 @@ export function ControlBar({
               onClick={view3d}
               className={cn("border", !hasSelection && "opacity-50")}
             >
-              <Box aria-hidden="true" className="size-5" strokeWidth={1.75} />
+              <Box aria-hidden="true" className="size-4" strokeWidth={1.75} />
             </Button>
           </Hint>
         </div>
@@ -191,14 +191,14 @@ export function ControlBar({
           <Button
             type="button"
             size="control"
-            variant="inverse"
+            variant="ghost"
             aria-label={copy.controls.capture}
             aria-keyshortcuts="Space"
             onClick={capture}
           >
             <Aperture
               aria-hidden="true"
-              className="size-5"
+              className="size-6"
               strokeWidth={1.75}
             />
           </Button>
@@ -225,7 +225,7 @@ export function ControlBar({
             >
               <FileDown
                 aria-hidden="true"
-                className="size-5"
+                className="size-4"
                 strokeWidth={1.75}
               />
             </Button>
@@ -241,7 +241,7 @@ export function ControlBar({
             >
               <Ellipsis
                 aria-hidden="true"
-                className="size-5"
+                className="size-4"
                 strokeWidth={1.75}
               />
             </Button>

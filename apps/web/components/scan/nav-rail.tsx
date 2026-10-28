@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const RAIL_BUTTON = "size-11 rounded-xl";
+const RAIL_BUTTON = "size-9 rounded-lg";
 
 function Item({
   label,
@@ -49,7 +49,7 @@ function Item({
               "cursor-not-allowed text-muted-foreground opacity-50 hover:bg-transparent hover:text-muted-foreground",
           )}
         >
-          <Icon aria-hidden="true" className="size-5" strokeWidth={1.75} />
+          <Icon aria-hidden="true" className="size-4" strokeWidth={1.75} />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">
@@ -64,7 +64,7 @@ export function NavRail({ className }: { className?: string }) {
     <nav
       aria-label="Principal"
       className={cn(
-        "flex flex-col items-center gap-2 border-r bg-card py-4",
+        "flex flex-col items-center gap-1.5 border-r bg-card py-3",
         className,
       )}
     >
@@ -84,7 +84,7 @@ export function NavRail({ className }: { className?: string }) {
               >
                 <Settings
                   aria-hidden="true"
-                  className="size-5"
+                  className="size-4"
                   strokeWidth={1.75}
                 />
               </Button>

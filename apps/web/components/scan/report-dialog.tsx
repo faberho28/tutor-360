@@ -23,7 +23,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl bg-muted/60 p-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+      <dd className="text-lg font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -113,7 +113,7 @@ export function ReportDialog({
           </div>
         ) : null}
         {phase === "error" ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-xs text-destructive">
             No pudimos generar el reporte. Inténtalo de nuevo.
           </p>
         ) : null}
@@ -122,8 +122,8 @@ export function ReportDialog({
           <Button
             type="button"
             variant="outline"
-            size="lg"
-            className="rounded-full px-5"
+            size="sm"
+            className="rounded-full px-4 text-xs"
             onClick={() => handleOpenChange(false)}
           >
             Cerrar
@@ -131,14 +131,15 @@ export function ReportDialog({
           <Button
             type="button"
             variant="inverse"
-            size="lg"
+            size="sm"
+            className="rounded-full px-4 text-xs"
             disabled={captures.length === 0 || generating}
             onClick={generate}
           >
             {phase === "done" ? (
-              <Check aria-hidden="true" className="size-5" />
+              <Check aria-hidden="true" className="size-3.5" />
             ) : (
-              <FileDown aria-hidden="true" className="size-5" />
+              <FileDown aria-hidden="true" className="size-3.5" />
             )}
             {generating
               ? "Generando…"

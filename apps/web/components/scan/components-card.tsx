@@ -77,7 +77,7 @@ export function ComponentsCard() {
       className={cn(PANEL_CARD, "min-h-0 px-4", !collapsed && "flex-1")}
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 id="components-title" className="text-base font-semibold">
+        <h2 id="components-title" className="text-xs font-semibold">
           {listCopy.title}
         </h2>
         <Button
@@ -101,10 +101,10 @@ export function ComponentsCard() {
         <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6 text-center">
           <ScanLine
             aria-hidden="true"
-            className="size-8 text-muted-foreground"
+            className="size-7 text-muted-foreground"
             strokeWidth={1.5}
           />
-          <p className="max-w-[24ch] text-sm text-muted-foreground">
+          <p className="max-w-[26ch] text-xs text-muted-foreground">
             {listCopy.empty}
           </p>
         </div>

@@ -40,7 +40,7 @@ export function LiveCameraSource({
             aria-hidden="true"
             className="size-6 motion-safe:animate-spin"
           />
-          <p role="status" className="text-sm font-medium">
+          <p role="status" className="text-xs font-medium">
             Conectando con la cámara…
           </p>
         </div>

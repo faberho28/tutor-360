@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 export function TopBar({ className }: { className?: string }) {
   return (
     <header
-      className={cn("flex items-center gap-3 border-b bg-card px-4", className)}
+      className={cn("flex items-center gap-2 border-b bg-card px-3", className)}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-        <Cpu aria-hidden="true" className="size-5" strokeWidth={1.75} />
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <Cpu aria-hidden="true" className="size-4" strokeWidth={1.75} />
       </div>
-      <h1 className="sr-only text-sm font-semibold text-muted-foreground sm:not-sr-only">
+      <h1 className="sr-only text-xs font-semibold text-muted-foreground sm:not-sr-only">
         PC-Tutor 360
       </h1>
       <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
@@ -32,7 +32,7 @@ export function TopBar({ className }: { className?: string }) {
             >
               <Settings
                 aria-hidden="true"
-                className="size-5"
+                className="size-4"
                 strokeWidth={1.75}
               />
             </Button>

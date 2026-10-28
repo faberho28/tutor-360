@@ -40,7 +40,7 @@ export function SummaryPill() {
           ))}
         </span>
       ) : null}
-      <p className="min-w-0 text-sm leading-snug font-medium">{text}</p>
+      <p className="min-w-0 text-xs leading-snug font-medium">{text}</p>
     </Card>
   );
 }

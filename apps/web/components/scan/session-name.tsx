@@ -43,7 +43,7 @@ export function SessionName() {
           if (event.key === "Enter") finish(true, true);
           if (event.key === "Escape") finish(false, true);
         }}
-        className="h-9 w-full min-w-0 max-w-[28ch] rounded-lg border border-input bg-background px-2 text-lg font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 w-full min-w-0 max-w-[28ch] rounded-lg border border-input bg-background px-2 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
     );
   }
@@ -53,7 +53,7 @@ export function SessionName() {
       ref={buttonRef}
       type="button"
       onClick={() => setDraft(name)}
-      className="group flex max-w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-lg font-semibold outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex max-w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-sm font-semibold outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span className="min-w-0 truncate">{name}</span>
       <Pencil

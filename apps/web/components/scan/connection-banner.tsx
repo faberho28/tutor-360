@@ -45,7 +45,7 @@ export function ConnectionBanner({
     >
       <Icon aria-hidden="true" className="size-5 shrink-0" />
       <div className="min-w-0 flex-1">
-        <h2 id="connection-banner-title" className="text-sm font-semibold">
+        <h2 id="connection-banner-title" className="text-xs font-semibold">
           {copy.status[phase]}
         </h2>
         <p className="text-xs">{description}</p>

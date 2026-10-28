@@ -37,6 +37,7 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
+          size="sm"
           variant="outline"
           onClick={() => requestMockModel(store, detection.id)}
         >
@@ -45,6 +46,7 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
         </Button>
         <Button
           type="button"
+          size="sm"
           variant="ghost"
           aria-pressed={inReport}
           onClick={() => toggleReportItem(detection.id)}

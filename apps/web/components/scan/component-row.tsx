@@ -49,7 +49,7 @@ export function ComponentRow({
     >
       <CropThumbnail detection={detection} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
+        <p className="truncate text-xs font-medium">
           {LABELS_ES[detection.cls]}
         </p>
         <p className="truncate text-xs text-muted-foreground">{meta}</p>

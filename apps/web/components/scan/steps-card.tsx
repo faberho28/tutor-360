@@ -73,7 +73,7 @@ export function StepsCard() {
       className={cn(PANEL_CARD, "max-h-[40%] min-h-0 shrink-0 px-4")}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold">Paso a paso</h2>
+        <h2 className="text-xs font-semibold">Paso a paso</h2>
         <p
           className="text-xs text-muted-foreground tabular-nums"
           aria-live="polite"
@@ -104,7 +104,7 @@ export function StepsCard() {
           </ul>
         </>
       ) : entry?.status === "error" ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Los pasos aparecen cuando el diagnóstico se carga.
         </p>
       ) : (

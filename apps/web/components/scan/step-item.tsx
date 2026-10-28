@@ -51,7 +51,7 @@ export function StepItem({
       <label
         htmlFor={id}
         className={cn(
-          "flex-1 cursor-pointer text-sm leading-snug",
+          "flex-1 cursor-pointer text-xs leading-snug",
           current && "font-semibold",
           status === "done" && "text-muted-foreground line-through",
           status === "skipped" && "text-muted-foreground italic",

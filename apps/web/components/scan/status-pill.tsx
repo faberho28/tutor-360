@@ -20,7 +20,7 @@ export function StatusPill() {
       variant="inverse"
       role="status"
       aria-live="polite"
-      className="h-8 gap-2 px-3 text-sm"
+      className="h-7 gap-1.5 border border-foreground/70 bg-transparent px-2.5 text-xs text-foreground"
     >
       <span
         aria-hidden="true"

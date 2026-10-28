@@ -44,7 +44,7 @@ export function ScanScreen() {
   return (
     // minmax(0, 1fr) on the single mobile column: without it the track grows
     // to the widest content (the top bar) and the page scrolls sideways.
-    <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[64px_minmax(0,1fr)] bg-background lg:grid-cols-[72px_minmax(0,1fr)_360px]">
+    <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[52px_minmax(0,1fr)] bg-background lg:grid-cols-[56px_minmax(0,1fr)_360px]">
       <TopBar className="lg:col-span-3" />
       <NavRail className="hidden lg:flex" />
       <ShortcutsHelp />

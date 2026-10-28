@@ -51,7 +51,7 @@ export function ShortcutsHelp() {
         <dl className="grid gap-3">
           {SHORTCUTS.map(([key, action]) => (
             <div key={key} className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-muted-foreground">{action}</dt>
+              <dt className="text-xs text-muted-foreground">{action}</dt>
               <dd>
                 <kbd className="inline-flex min-w-8 items-center justify-center rounded border bg-muted px-2 py-1 text-xs font-medium">
                   {key}
@@ -64,8 +64,8 @@ export function ShortcutsHelp() {
           <Button
             type="button"
             variant="outline"
-            size="lg"
-            className="rounded-full px-5"
+            size="sm"
+            className="rounded-full px-4 text-xs"
             onClick={() => setOpen(false)}
           >
             <Keyboard aria-hidden="true" data-icon="inline-start" />

@@ -26,7 +26,7 @@ export function StageEmptyState({
             aria-hidden="true"
             className="size-8 text-muted-foreground motion-safe:animate-spin"
           />
-          <p role="status" className="text-sm font-medium">
+          <p role="status" className="text-xs font-medium">
             Preparando análisis…
           </p>
         </div>
@@ -44,14 +44,14 @@ export function StageEmptyState({
         strokeWidth={1.5}
       />
       <div className="flex max-w-sm flex-col gap-1">
-        <p className="text-base font-semibold">
+        <p className="text-sm font-semibold">
           {insecure
             ? "La cámara requiere una conexión segura"
             : noPermission
               ? "Necesitamos tu cámara para ver la PC"
               : "No encontramos ninguna cámara"}
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {insecure
             ? "El navegador solo permite usar la cámara en páginas HTTPS (o localhost). Abre la app con una dirección segura."
             : noPermission

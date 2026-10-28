@@ -28,6 +28,8 @@ export function ThemeToggle() {
         <Button
           key={value}
           type="button"
+          size="sm"
+          className="text-xs [&_svg:not([class*='size-'])]:size-3.5"
           variant={mounted && theme === value ? "default" : "secondary"}
           aria-pressed={mounted && theme === value}
           onClick={() => setTheme(value)}

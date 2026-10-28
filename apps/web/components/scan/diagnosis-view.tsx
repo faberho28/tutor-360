@@ -29,7 +29,7 @@ export function DiagnosisView({
   if (entry.status === "error") {
     return (
       <div className="flex flex-col items-start gap-2" role="alert">
-        <p className="text-sm">No pudimos generar el diagnóstico.</p>
+        <p className="text-xs">No pudimos generar el diagnóstico.</p>
         <Button type="button" variant="outline" size="sm" onClick={onRetry}>
           Reintentar
         </Button>
@@ -41,7 +41,7 @@ export function DiagnosisView({
   return (
     <div className="flex flex-col gap-2">
       <Badge variant={severity.variant}>{severity.text}</Badge>
-      <p className="text-sm leading-relaxed">{entry.data.summary}</p>
+      <p className="text-xs leading-relaxed">{entry.data.summary}</p>
     </div>
   );
 }

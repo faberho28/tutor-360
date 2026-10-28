@@ -82,7 +82,7 @@ export function ModelViewerDialog() {
               <Skeleton className="size-full rounded-none" />
               <p
                 role="status"
-                className="absolute inset-0 flex items-center justify-center text-sm font-medium"
+                className="absolute inset-0 flex items-center justify-center text-xs font-medium"
               >
                 Generando modelo 3D…
               </p>
@@ -95,8 +95,8 @@ export function ModelViewerDialog() {
             <Button
               type="button"
               variant="outline"
-              size="lg"
-              className="rounded-full px-5"
+              size="sm"
+              className="rounded-full px-4 text-xs"
               onClick={() => closeMockModel(store)}
             >
               Cancelar
@@ -106,8 +106,8 @@ export function ModelViewerDialog() {
               <Button
                 type="button"
                 variant="outline"
-                size="lg"
-                className="rounded-full px-5"
+                size="sm"
+                className="rounded-full px-4 text-xs"
                 onClick={() => closeMockModel(store)}
               >
                 Cerrar
@@ -116,7 +116,8 @@ export function ModelViewerDialog() {
                 <Button
                   type="button"
                   variant="inverse"
-                  size="lg"
+                  size="sm"
+                  className="rounded-full px-4 text-xs"
                   onClick={() => {
                     // requestMockModel ignores calls while generating, so the
                     // retry goes through from the error state.
