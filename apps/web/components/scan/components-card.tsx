@@ -125,7 +125,9 @@ export function ComponentsCard() {
                 selected={detection.id === selectedId}
                 now={now}
                 animateIn={!initialIds.has(detection.id)}
-                onSelect={select}
+                onSelect={(id) =>
+                  id === selectedId ? clearSelection() : select(id)
+                }
               />
               {detection.id === selectedId && detection.status !== "ok" ? (
                 <ComponentDetail detection={detection} />
