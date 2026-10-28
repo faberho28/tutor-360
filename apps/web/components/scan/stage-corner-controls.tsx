@@ -1,6 +1,7 @@
 "use client";
 
 import { Maximize, Minimize } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,8 +26,10 @@ const GLASS = "bg-black/50 text-white backdrop-blur";
 
 export function StageCornerControls({
   fullscreenTarget,
+  children,
 }: {
   fullscreenTarget: HTMLElement | null;
+  children?: ReactNode;
 }) {
   const latencyMs = useSession((s) => s.analysis.latencyMs);
   const ready = useSession((s) => s.stage === "ready");
@@ -48,7 +51,7 @@ export function StageCornerControls({
 
   return (
     <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
-      <div className="pointer-events-auto">
+      <div className="pointer-events-auto flex items-center gap-2">
         {tone && latencyMs !== null ? (
           <p
             className={cn(
@@ -64,6 +67,7 @@ export function StageCornerControls({
             IA {(latencyMs / 1000).toFixed(1)} s
           </p>
         ) : null}
+        {children}
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">

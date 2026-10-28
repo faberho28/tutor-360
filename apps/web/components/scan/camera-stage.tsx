@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ChangeIndicator } from "@/components/scan/change-indicator";
 import { ControlBar } from "@/components/scan/control-bar";
 import { LiveCameraSource } from "@/components/scan/live-camera-source";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
@@ -8,6 +9,7 @@ import { StageCornerControls } from "@/components/scan/stage-corner-controls";
 import { StageEmptyState } from "@/components/scan/stage-empty-state";
 import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { useFullscreen } from "@/hooks/use-fullscreen";
+import { useChangeDetection } from "@/hooks/use-change-detection";
 import { useCamera } from "@/lib/camera/use-camera";
 import { useServices } from "@/lib/services/context";
 import { useSession } from "@/lib/session/session-provider";
@@ -27,6 +29,8 @@ export function CameraStage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fullscreen = useFullscreen();
   const stream = useCamera(!demo, deviceId);
+  const live = !demo && stage === "ready" && stream !== null;
+  const change = useChangeDetection(() => videoRef.current, live);
 
   return (
     // While the stage is fullscreen, menus must be drawn inside it or the
@@ -52,7 +56,11 @@ export function CameraStage() {
         ) : (
           <StageEmptyState state={stage} />
         )}
-        <StageCornerControls fullscreenTarget={element} />
+        <StageCornerControls fullscreenTarget={element}>
+          {live ? (
+            <ChangeIndicator reading={change.reading} onReset={change.reset} />
+          ) : null}
+        </StageCornerControls>
         <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-3">
           <ControlBar getVideo={() => videoRef.current} />
         </div>
