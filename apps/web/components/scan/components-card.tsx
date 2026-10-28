@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ScanLine } from "lucide-react";
 import { cn } from "cn";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { ComponentDetail } from "@/components/scan/component-detail";
 import { ComponentRow, rowId } from "@/components/scan/component-row";
 import { PANEL_CARD } from "@/components/scan/panel-card";
 import { Button } from "@/components/ui/button";
@@ -118,14 +119,18 @@ export function ComponentsCard() {
           className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto rounded-xl p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {sorted.map((detection) => (
-            <ComponentRow
-              key={detection.id}
-              detection={detection}
-              selected={detection.id === selectedId}
-              now={now}
-              animateIn={!initialIds.has(detection.id)}
-              onSelect={select}
-            />
+            <div key={detection.id} role="presentation">
+              <ComponentRow
+                detection={detection}
+                selected={detection.id === selectedId}
+                now={now}
+                animateIn={!initialIds.has(detection.id)}
+                onSelect={select}
+              />
+              {detection.id === selectedId && detection.status !== "ok" ? (
+                <ComponentDetail detection={detection} />
+              ) : null}
+            </div>
           ))}
         </div>
       )}

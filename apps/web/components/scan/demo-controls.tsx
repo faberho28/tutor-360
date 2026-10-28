@@ -3,8 +3,10 @@
 import { FlaskConical } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { diagnosisDemo } from "@/lib/fixtures/mock-diagnosis";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -57,6 +59,7 @@ export function DemoControls() {
   const stage = useSession((s) => s.stage);
   const setStage = useSession((s) => s.setStage);
   const [scenario, setScenario] = useState<ScenarioName>(initialScenario);
+  const [failDiagnosis, setFailDiagnosis] = useState(diagnosisDemo.fail);
 
   function changeScenario(value: string) {
     const next = value as ScenarioName;
@@ -96,6 +99,16 @@ export function DemoControls() {
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuCheckboxItem
+            checked={failDiagnosis}
+            onCheckedChange={(checked) => {
+              diagnosisDemo.fail = checked === true;
+              setFailDiagnosis(checked === true);
+            }}
+          >
+            Diagnóstico con error
+          </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Estado de la cámara</DropdownMenuLabel>
           <DropdownMenuRadioGroup

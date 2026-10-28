@@ -1,5 +1,11 @@
 import { createStore } from "zustand/vanilla";
-import type { AnalysisState, Capture, Detection, StageState } from "../types";
+import type {
+  AnalysisState,
+  Capture,
+  Detection,
+  DiagnosisEntry,
+  StageState,
+} from "../types";
 
 export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
@@ -11,6 +17,13 @@ export type SessionState = {
   detections: Detection[];
   selectedId: string | null;
   captures: Capture[];
+  /** Diagnosis per detection id. */
+  diagnoses: Record<string, DiagnosisEntry>;
+  /** Step indexes marked done / skipped, per detection id ("general" for the generic list). */
+  completedSteps: Record<string, number[]>;
+  skippedSteps: Record<string, number[]>;
+  /** Detections the user added to the report. */
+  reportIds: string[];
 };
 
 export type SessionActions = {
@@ -22,6 +35,11 @@ export type SessionActions = {
   clearSelection: () => void;
   /** Saves the given detections as a capture and returns it. */
   addCapture: (detections: Detection[]) => Capture;
+  setDiagnosis: (id: string, entry: DiagnosisEntry) => void;
+  /** Marks a step done, or undoes it (also clears "skipped"). */
+  toggleStep: (key: string, index: number) => void;
+  skipStep: (key: string, index: number) => void;
+  toggleReportItem: (id: string) => void;
   reset: () => void;
 };
 
@@ -49,6 +67,10 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     detections: [],
     selectedId: null,
     captures: [],
+    diagnoses: {},
+    completedSteps: {},
+    skippedSteps: {},
+    reportIds: [],
     ...overrides,
   };
 }
@@ -89,6 +111,45 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
       set((state) => ({ captures: [...state.captures, capture] }));
       return capture;
     },
+
+    setDiagnosis: (id, entry) =>
+      set((state) => ({ diagnoses: { ...state.diagnoses, [id]: entry } })),
+
+    toggleStep: (key, index) =>
+      set((state) => {
+        const done = state.completedSteps[key] ?? [];
+        return {
+          completedSteps: {
+            ...state.completedSteps,
+            [key]: done.includes(index)
+              ? done.filter((i) => i !== index)
+              : [...done, index],
+          },
+          skippedSteps: {
+            ...state.skippedSteps,
+            [key]: (state.skippedSteps[key] ?? []).filter((i) => i !== index),
+          },
+        };
+      }),
+
+    skipStep: (key, index) =>
+      set((state) => ({
+        skippedSteps: {
+          ...state.skippedSteps,
+          [key]: [...new Set([...(state.skippedSteps[key] ?? []), index])],
+        },
+        completedSteps: {
+          ...state.completedSteps,
+          [key]: (state.completedSteps[key] ?? []).filter((i) => i !== index),
+        },
+      })),
+
+    toggleReportItem: (id) =>
+      set((state) => ({
+        reportIds: state.reportIds.includes(id)
+          ? state.reportIds.filter((x) => x !== id)
+          : [...state.reportIds, id],
+      })),
 
     reset: () => set(freshState()),
   }));

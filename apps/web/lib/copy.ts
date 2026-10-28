@@ -28,6 +28,12 @@ export const statusLabel: Record<ComponentStatus, string> = {
   ok: "OK",
 };
 
+export const severityLabel = {
+  high: { text: "Gravedad alta", variant: "anomaly" },
+  medium: { text: "Gravedad media", variant: "warning" },
+  low: { text: "Gravedad baja", variant: "ok" },
+} as const;
+
 export const listCopy = {
   title: "Componentes detectados",
   empty: "Apunta la cámara al interior de la PC para empezar",

@@ -4,10 +4,8 @@ import { cn } from "cn";
 import { useState } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { ComponentsCard } from "@/components/scan/components-card";
-import { PANEL_CARD } from "@/components/scan/panel-card";
+import { StepsCard } from "@/components/scan/steps-card";
 import { SummaryPill } from "@/components/scan/summary-pill";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 
 const PEEK = "96px";
@@ -17,19 +15,6 @@ const PEEK = "96px";
 const FULL = 0.92;
 const SNAP_POINTS = [PEEK, 0.5, FULL];
 
-// Placeholder: StepsCard (HU-08) replaces it.
-function StepsPlaceholder() {
-  return (
-    <Card size="sm" className={cn(PANEL_CARD, "px-4")}>
-      <h2 className="text-base font-semibold">Paso a paso</h2>
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-5 rounded-md" />
-        <Skeleton className="h-5 w-3/4 rounded-md" />
-      </div>
-    </Card>
-  );
-}
-
 function DesktopPanel() {
   return (
     <aside
@@ -38,7 +23,7 @@ function DesktopPanel() {
     >
       <SummaryPill />
       <ComponentsCard />
-      <StepsPlaceholder />
+      <StepsCard />
     </aside>
   );
 }
@@ -78,7 +63,7 @@ function MobilePanel() {
           >
             <SummaryPill />
             <ComponentsCard />
-            <StepsPlaceholder />
+            <StepsCard />
           </div>
         </DrawerPrimitive.Content>
       </DrawerPrimitive.Portal>

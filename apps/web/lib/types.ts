@@ -23,6 +23,18 @@ export type Detection = {
 export type StageState =
   "ready" | "no-permission" | "no-camera" | "loading-model";
 
+export type Diagnosis = {
+  summary: string;
+  severity: "low" | "medium" | "high";
+  /** What to do, in order. */
+  steps: string[];
+};
+
+export type DiagnosisEntry =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; data: Diagnosis };
+
 /** A saved moment of the scan. HU-09 adds the composed image. */
 export type Capture = {
   id: string;
