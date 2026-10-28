@@ -14,10 +14,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useScanShortcuts } from "@/hooks/use-scan-shortcuts";
 import { copy } from "@/lib/copy";
-import { requestMockModel } from "@/lib/fixtures/mock-reconstruction";
-import { DEMO_IMAGE } from "@/lib/fixtures/scenarios";
-import { composeCapture, loadImage } from "@/lib/overlay/compose-capture";
-import { MockAnalysisSource } from "@/lib/fixtures/mock-source";
+import { composeCapture } from "@/lib/overlay/compose-capture";
+import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 function Hint({
@@ -46,7 +44,7 @@ function Hint({
 
 /**
  * Floating bar: capture, automatic analysis, 3D view and report. It drives the
- * analysis source, which is simulated until the camera and the API (HU-18).
+ * analysis the page provides: simulated on /demo, real on the main page.
  */
 export function ControlBar({
   getVideo,
@@ -54,29 +52,22 @@ export function ControlBar({
   getVideo: () => HTMLVideoElement | null;
 }) {
   const store = useSessionStore();
-  const frameSource = useSession((s) => s.source);
-  const demo = frameSource === "demo";
+  const services = useServices();
   const auto = useSession((s) => s.analysis.mode === "auto");
   const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
-  const [source] = useState(() => new MockAnalysisSource(store));
+  const [analysis] = useState(() => services.createAnalysis(store, getVideo));
   const [reportOpen, setReportOpen] = useState(false);
+  const autoAvailable = analysis.autoAvailable;
 
-  useEffect(() => () => source.dispose(), [source]);
+  useEffect(() => () => analysis.dispose(), [analysis]);
 
   async function capture() {
     try {
-      let image: HTMLImageElement | HTMLVideoElement;
-      if (demo) {
-        await source.captureOnce();
-        image = await loadImage(DEMO_IMAGE.src);
-      } else {
-        const video = getVideo();
-        if (!video || video.readyState < 2 || video.videoWidth === 0) {
-          toast.error("La cámara aún no está lista");
-          return;
-        }
-        image = video;
+      const image = await analysis.snapshot();
+      if (!image) {
+        toast.error("La cámara aún no está lista");
+        return;
       }
       const state = store.getState();
       const saved = state.addCapture(
@@ -93,15 +84,14 @@ export function ControlBar({
   }
 
   function toggleAuto() {
-    // Real analysis arrives with HU-17/18.
-    if (!demo) return;
-    if (auto) source.stop();
-    else source.start();
+    if (!autoAvailable) return;
+    if (auto) analysis.stop();
+    else analysis.start();
   }
 
   function view3d() {
     const { selectedId } = store.getState();
-    if (selectedId) requestMockModel(store, selectedId);
+    if (selectedId) services.requestModel(store, selectedId);
   }
 
   function report() {
@@ -126,27 +116,27 @@ export function ControlBar({
         <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
           <Hint
             label={
-              demo
+              autoAvailable
                 ? auto
                   ? copy.controls.autoOff
                   : copy.controls.autoOn
                 : "Análisis automático (próximamente)"
             }
-            shortcut={demo ? "A" : undefined}
+            shortcut={autoAvailable ? "A" : undefined}
           >
             <Button
               type="button"
               size="control"
               variant="secondary"
               aria-pressed={auto}
-              aria-disabled={!demo || undefined}
+              aria-disabled={!autoAvailable || undefined}
               aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
               aria-keyshortcuts="A"
               onClick={toggleAuto}
               className={cn(
                 "border",
                 auto && "border-primary text-primary",
-                !demo && "opacity-50",
+                !autoAvailable && "opacity-50",
               )}
             >
               {auto ? (

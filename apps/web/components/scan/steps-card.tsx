@@ -7,7 +7,7 @@ import { StepItem } from "@/components/scan/step-item";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requestMockDiagnosis } from "@/lib/fixtures/mock-diagnosis";
+import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 import {
   GENERAL_STEPS,
@@ -26,6 +26,7 @@ const NO_STEPS: number[] = [];
  */
 export function StepsCard() {
   const store = useSessionStore();
+  const { requestDiagnosis } = useServices();
   const demo = useSession((s) => s.source === "demo");
   const hasDetections = useSession((s) => s.detections.length > 0);
   const selected = useSession((s) =>
@@ -38,9 +39,9 @@ export function StepsCard() {
 
   useEffect(() => {
     if (selected && needsDiagnosis && !entry) {
-      requestMockDiagnosis(store, selected);
+      requestDiagnosis(store, selected);
     }
-  }, [store, selected, needsDiagnosis, entry]);
+  }, [store, requestDiagnosis, selected, needsDiagnosis, entry]);
 
   const key = needsDiagnosis ? selected.id : GENERAL_STEPS_KEY;
   const done = useSession((s) => s.completedSteps[key] ?? NO_STEPS);
@@ -103,7 +104,7 @@ export function StepsCard() {
             ))}
           </ul>
         </>
-      ) : entry?.status === "error" ? (
+      ) : entry?.status === "error" || entry?.status === "unavailable" ? (
         <p className="text-xs text-muted-foreground">
           Los pasos aparecen cuando el diagnóstico se carga.
         </p>

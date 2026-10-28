@@ -38,6 +38,8 @@ export type Diagnosis = {
 export type DiagnosisEntry =
   | { status: "loading" }
   | { status: "error" }
+  /** No real diagnosis exists yet (the API is not wired): never fake one. */
+  | { status: "unavailable" }
   | { status: "ready"; data: Diagnosis };
 
 /** A saved moment of the scan. */

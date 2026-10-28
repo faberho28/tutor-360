@@ -7,7 +7,7 @@ import { SidePanel } from "@/components/scan/side-panel";
 import { ShortcutsHelp } from "@/components/scan/shortcuts-help";
 import { TopBar } from "@/components/scan/top-bar";
 import { useNewAnomalyToast } from "@/hooks/use-new-anomaly-toast";
-import { getScenario } from "@/lib/fixtures/scenarios";
+import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 /**
@@ -16,28 +16,9 @@ import { useSession, useSessionStore } from "@/lib/session/session-provider";
  */
 export function ScanScreen() {
   const store = useSessionStore();
+  const services = useServices();
   const phase = useSession((s) => s.analysis.phase);
   useNewAnomalyToast();
-
-  function retryAnalysis() {
-    // Real analysis arrives with HU-18; simulating recovery is demo-only.
-    if (store.getState().source !== "demo") return;
-    const startedAt = Date.now();
-    store.getState().setAnalysis({
-      phase: "analyzing",
-      latencyMs: null,
-      startedAt,
-    });
-    window.setTimeout(() => {
-      const state = store.getState();
-      state.replaceDetections(getScenario("findings"));
-      state.setAnalysis({
-        phase: "idle",
-        latencyMs: 900,
-        startedAt: null,
-      });
-    }, 650);
-  }
 
   const failed = phase === "offline" || phase === "quota" || phase === "error";
 
@@ -50,7 +31,10 @@ export function ScanScreen() {
       <ShortcutsHelp />
       <main className="flex min-h-0 flex-col gap-3 p-4 pb-28 lg:pb-4">
         {failed ? (
-          <ConnectionBanner phase={phase} onRetry={retryAnalysis} />
+          <ConnectionBanner
+            phase={phase}
+            onRetry={() => services.retryAnalysis(store)}
+          />
         ) : null}
         <div className="min-h-0 flex-1">
           <CameraStage />

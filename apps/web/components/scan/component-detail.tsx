@@ -4,8 +4,7 @@ import { Box, Check, Plus } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { DiagnosisView } from "@/components/scan/diagnosis-view";
 import { Button } from "@/components/ui/button";
-import { requestMockDiagnosis } from "@/lib/fixtures/mock-diagnosis";
-import { requestMockModel } from "@/lib/fixtures/mock-reconstruction";
+import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 import type { Detection } from "@/lib/types";
 
@@ -15,6 +14,7 @@ import type { Detection } from "@/lib/types";
  */
 export function ComponentDetail({ detection }: { detection: Detection }) {
   const store = useSessionStore();
+  const { requestDiagnosis, requestModel } = useServices();
   const entry = useSession((s) => s.diagnoses[detection.id]);
   const inReport = useSession((s) => s.reportIds.includes(detection.id));
   const toggleReportItem = useSession((s) => s.toggleReportItem);
@@ -32,14 +32,14 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
     >
       <DiagnosisView
         entry={entry}
-        onRetry={() => requestMockDiagnosis(store, detection)}
+        onRetry={() => requestDiagnosis(store, detection)}
       />
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => requestMockModel(store, detection.id)}
+          onClick={() => requestModel(store, detection.id)}
         >
           <Box aria-hidden="true" data-icon="inline-start" />
           Ver en 3D

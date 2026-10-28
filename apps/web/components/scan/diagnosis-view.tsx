@@ -26,6 +26,14 @@ export function DiagnosisView({
     );
   }
 
+  if (entry.status === "unavailable") {
+    return (
+      <p className="text-xs text-muted-foreground" role="status">
+        El diagnóstico con IA estará disponible pronto.
+      </p>
+    );
+  }
+
   if (entry.status === "error") {
     return (
       <div className="flex flex-col items-start gap-2" role="alert">

@@ -1,8 +1,8 @@
 import { cn } from "cn";
-import { CropThumbnail } from "@/components/scan/crop-thumbnail";
 import { Badge } from "@/components/ui/badge";
 import { formatAgo, statusLabel } from "@/lib/copy";
 import { LABELS_ES } from "@/lib/overlay-theme";
+import { useServices } from "@/lib/services/context";
 import type { Detection } from "@/lib/types";
 
 export const rowId = (id: string) => `component-${id}`;
@@ -26,6 +26,7 @@ export function ComponentRow({
   animateIn: boolean;
   onSelect: (id: string) => void;
 }) {
+  const { Thumbnail } = useServices();
   const meta = [
     detection.score === null ? null : `conf. ${detection.score.toFixed(2)}`,
     formatAgo(now, detection.seenAt),
@@ -47,7 +48,7 @@ export function ComponentRow({
           "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2",
       )}
     >
-      <CropThumbnail detection={detection} />
+      <Thumbnail detection={detection} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium">
           {LABELS_ES[detection.cls]}

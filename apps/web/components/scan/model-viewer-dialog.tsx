@@ -12,11 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReturnFocus } from "@/hooks/use-return-focus";
-import {
-  closeMockModel,
-  requestMockModel,
-} from "@/lib/fixtures/mock-reconstruction";
 import { LABELS_ES } from "@/lib/overlay-theme";
+import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 // Keeps three.js out of the initial bundle.
@@ -31,6 +28,7 @@ const ModelViewer = dynamic(() => import("@/components/scan/model-viewer"), {
  */
 export function ModelViewerDialog() {
   const store = useSessionStore();
+  const { requestModel, closeModel } = useServices();
   const model = useSession((s) => s.model3d);
   const detections = useSession((s) => s.detections);
   const open = model.status !== "idle";
@@ -45,7 +43,7 @@ export function ModelViewerDialog() {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) closeMockModel(store);
+        if (!next) closeModel(store);
       }}
     >
       <DialogContent
@@ -97,7 +95,7 @@ export function ModelViewerDialog() {
               variant="outline"
               size="sm"
               className="rounded-full px-4 text-xs"
-              onClick={() => closeMockModel(store)}
+              onClick={() => closeModel(store)}
             >
               Cancelar
             </Button>
@@ -108,7 +106,7 @@ export function ModelViewerDialog() {
                 variant="outline"
                 size="sm"
                 className="rounded-full px-4 text-xs"
-                onClick={() => closeMockModel(store)}
+                onClick={() => closeModel(store)}
               >
                 Cerrar
               </Button>
@@ -119,9 +117,9 @@ export function ModelViewerDialog() {
                   size="sm"
                   className="rounded-full px-4 text-xs"
                   onClick={() => {
-                    // requestMockModel ignores calls while generating, so the
-                    // retry goes through from the error state.
-                    requestMockModel(store, model.detectionId);
+                    // Requests are ignored while generating, so the retry goes
+                    // through from the error state.
+                    requestModel(store, model.detectionId);
                   }}
                 >
                   Reintentar

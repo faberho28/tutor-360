@@ -11,48 +11,28 @@ export const STAGE_NAMES = [
   "insecure",
 ] as const satisfies readonly StageState[];
 
-/** Demo only when requested via params (and never in production). */
-export function resolveSource(
-  search: string | URLSearchParams | undefined,
-  nodeEnv: string | undefined = process.env.NODE_ENV,
-): FrameSource {
-  const source = readParam(search, "source", nodeEnv);
-  if (source === "demo" || source === "camera") return source;
-  return readParam(search, "scenario", nodeEnv) !== null ? "demo" : "camera";
-}
-
-function readParam(
-  search: string | URLSearchParams | undefined,
-  key: string,
-  nodeEnv: string | undefined,
-): string | null {
-  if (nodeEnv === "production" || search === undefined) return null;
-  const params =
-    typeof search === "string" ? new URLSearchParams(search) : search;
-  return params.get(key);
-}
-
 /**
- * Picks the demo scenario from `?scenario=`. The parameter is honored only
- * outside production; in production the default scenario is always used.
+ * Reads the parameters of /demo. That route does not exist in production, so
+ * none of this needs its own production guard.
  */
-export function resolveScenario(
-  search: string | URLSearchParams | undefined,
-  nodeEnv: string | undefined = process.env.NODE_ENV,
-): ScenarioName {
-  const value = readParam(search, "scenario", nodeEnv);
-  return (SCENARIO_NAMES as readonly string[]).includes(value ?? "")
+
+/** The demo photo, unless `?source=camera` keeps the real camera. */
+export function resolveSource(params: URLSearchParams): FrameSource {
+  return params.get("source") === "camera" ? "camera" : "demo";
+}
+
+/** Picks the scenario from `?scenario=`. */
+export function resolveScenario(params: URLSearchParams): ScenarioName {
+  const value = params.get("scenario") ?? "";
+  return (SCENARIO_NAMES as readonly string[]).includes(value)
     ? (value as ScenarioName)
     : DEFAULT_SCENARIO;
 }
 
-/** Picks the camera state from `?stage=`, with the same production rule. */
-export function resolveStage(
-  search: string | URLSearchParams | undefined,
-  nodeEnv: string | undefined = process.env.NODE_ENV,
-): StageState {
-  const value = readParam(search, "stage", nodeEnv);
-  return (STAGE_NAMES as readonly string[]).includes(value ?? "")
+/** Picks the camera state from `?stage=`. */
+export function resolveStage(params: URLSearchParams): StageState {
+  const value = params.get("stage") ?? "";
+  return (STAGE_NAMES as readonly string[]).includes(value)
     ? (value as StageState)
     : "ready";
 }

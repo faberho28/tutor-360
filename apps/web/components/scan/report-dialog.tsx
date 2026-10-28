@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useReturnFocus } from "@/hooks/use-return-focus";
-import { REPORT_LATENCY_MS, reportDemo } from "@/lib/fixtures/mock-report";
+import { useServices } from "@/lib/services/context";
 import { useSession } from "@/lib/session/session-provider";
 
 type ReportPhase = "idle" | "generating" | "done" | "error";
@@ -29,8 +29,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 /**
- * Session summary and captures, with the (simulated) report generation.
- * HU-26 and HU-27 make the generation and the PDF download real.
+ * Session summary and captures, with the report generation the page provides
+ * (simulated on /demo, unavailable on the main page until HU-26 and HU-27).
  */
 export function ReportDialog({
   open,
@@ -39,10 +39,12 @@ export function ReportDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { reportAvailable, generateReport } = useServices();
   const captures = useSession((s) => s.captures);
   const included = useSession((s) => s.reportIds.length);
   const [phase, setPhase] = useState<ReportPhase>("idle");
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Bumped to ignore the result of a generation that was cancelled.
+  const run = useRef(0);
   const returnFocus = useReturnFocus(open);
 
   const anomalies = captures.reduce(
@@ -57,25 +59,34 @@ export function ReportDialog({
   // Closing the dialog cancels a generation in progress.
   function handleOpenChange(next: boolean) {
     if (!next) {
-      clearTimeout(timer.current);
+      run.current += 1;
       setPhase("idle");
     }
     onOpenChange(next);
   }
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      run.current += 1;
+    },
+    [],
+  );
 
   function generate() {
-    if (captures.length === 0) return;
+    if (captures.length === 0 || !reportAvailable) return;
+    const id = ++run.current;
     setPhase("generating");
-    timer.current = setTimeout(() => {
-      if (reportDemo.fail) {
+    generateReport().then(
+      () => {
+        if (run.current !== id) return;
+        setPhase("done");
+        toast.success("Reporte generado");
+      },
+      () => {
+        if (run.current !== id) return;
         setPhase("error");
-        return;
-      }
-      setPhase("done");
-      toast.success("Reporte generado");
-    }, REPORT_LATENCY_MS);
+      },
+    );
   }
 
   const generating = phase === "generating";
@@ -90,7 +101,9 @@ export function ReportDialog({
         <DialogHeader>
           <DialogTitle>Reporte de la sesión</DialogTitle>
           <DialogDescription>
-            Revisa las capturas antes de generar el reporte.
+            {reportAvailable
+              ? "Revisa las capturas antes de generar el reporte."
+              : "Revisa tus capturas. La generación del reporte estará disponible pronto."}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +146,7 @@ export function ReportDialog({
             variant="inverse"
             size="sm"
             className="rounded-full px-4 text-xs"
-            disabled={captures.length === 0 || generating}
+            disabled={captures.length === 0 || generating || !reportAvailable}
             onClick={generate}
           >
             {phase === "done" ? (
