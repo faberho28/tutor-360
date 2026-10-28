@@ -19,6 +19,7 @@ export const copy = {
     view3dNeedsSelection: "Selecciona un componente",
     report: "Generar reporte",
     reportNeedsCapture: "Haz al menos una captura",
+    more: "Más",
   },
 } as const;
 
