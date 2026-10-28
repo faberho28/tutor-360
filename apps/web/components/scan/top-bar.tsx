@@ -1,11 +1,23 @@
 import { Cpu, Settings } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "cn";
-import { SessionName } from "@/components/scan/session-name";
 import { SettingsDialog } from "@/components/scan/settings-dialog";
-import { StatusPill } from "@/components/scan/status-pill";
 import { Button } from "@/components/ui/button";
 
-export function TopBar({ className }: { className?: string }) {
+/**
+ * Brand bar shared by every screen. It does not read the session store, so it
+ * also works outside a SessionProvider (the home screen).
+ */
+export function TopBar({
+  className,
+  children,
+  trailing,
+}: {
+  className?: string;
+  /** Fills the space between the brand and the right-hand controls. */
+  children?: ReactNode;
+  trailing?: ReactNode;
+}) {
   return (
     <header
       className={cn("flex items-center gap-2 border-b bg-card px-3", className)}
@@ -17,11 +29,9 @@ export function TopBar({ className }: { className?: string }) {
         PC-Tutor 360
       </h1>
       <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
-      <div className="min-w-0 flex-1">
-        <SessionName />
-      </div>
+      <div className="min-w-0 flex-1">{children}</div>
       <div className="flex shrink-0 items-center gap-2">
-        <StatusPill />
+        {trailing}
         <div className="lg:hidden">
           <SettingsDialog>
             <Button

@@ -3,7 +3,9 @@
 import { CameraStage } from "@/components/scan/camera-stage";
 import { ConnectionBanner } from "@/components/scan/connection-banner";
 import { NavRail } from "@/components/scan/nav-rail";
+import { SessionName } from "@/components/scan/session-name";
 import { SidePanel } from "@/components/scan/side-panel";
+import { StatusPill } from "@/components/scan/status-pill";
 import { ShortcutsHelp } from "@/components/scan/shortcuts-help";
 import { TopBar } from "@/components/scan/top-bar";
 import { useNewAnomalyToast } from "@/hooks/use-new-anomaly-toast";
@@ -26,8 +28,10 @@ export function ScanScreen() {
     // minmax(0, 1fr) on the single mobile column: without it the track grows
     // to the widest content (the top bar) and the page scrolls sideways.
     <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[52px_minmax(0,1fr)] bg-background lg:grid-cols-[56px_minmax(0,1fr)_360px]">
-      <TopBar className="lg:col-span-3" />
-      <NavRail className="hidden lg:flex" />
+      <TopBar className="lg:col-span-3" trailing={<StatusPill />}>
+        <SessionName />
+      </TopBar>
+      <NavRail active="scan" className="hidden lg:flex" />
       <ShortcutsHelp />
       <main className="flex min-h-0 flex-col gap-3 p-4 pb-28 lg:pb-4">
         {failed ? (

@@ -1,6 +1,5 @@
-import { RealScan } from "@/components/scan/real-scan";
+import { HomeScreen } from "@/components/scan/home-screen";
 
-// The simulated experience lives in /demo, which does not exist in production.
 export default function Home() {
-  return <RealScan />;
+  return <HomeScreen />;
 }
