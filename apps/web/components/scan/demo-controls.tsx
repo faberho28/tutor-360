@@ -22,6 +22,7 @@ import {
   stopLiveScenario,
 } from "@/lib/fixtures/live-scenario";
 import {
+  getScenarioPhase,
   SCENARIO_NAMES,
   getScenario,
   type ScenarioName,
@@ -33,6 +34,11 @@ const SCENARIO_LABELS: Record<ScenarioName, string> = {
   empty: "Vacío",
   healthy: "Sin hallazgos",
   findings: "Con hallazgos",
+  "findings-no-score": "Hallazgos sin confianza",
+  analyzing: "Primer análisis",
+  offline: "Sin conexión con la IA",
+  quota: "Cuota agotada",
+  error: "Error de análisis",
   live: "En vivo (guion de 11 s)",
 };
 
@@ -74,7 +80,10 @@ export function DemoControls() {
     } else {
       const state = store.getState();
       state.replaceDetections(getScenario(next));
-      state.setAnalysis({ phase: "idle" });
+      state.setAnalysis({
+        phase: getScenarioPhase(next),
+        startedAt: next === "analyzing" ? Date.now() : null,
+      });
     }
   }
 

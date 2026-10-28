@@ -105,7 +105,7 @@ export function ControlBar() {
           "[@media(hover:hover)]:grid-cols-[0px_44px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[96px_44px_96px] [@media(hover:hover)]:hover:gap-2 [@media(hover:hover)]:focus-within:grid-cols-[96px_44px_96px] [@media(hover:hover)]:focus-within:gap-2",
         )}
       >
-        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
           <Hint
             label={auto ? copy.controls.autoOff : copy.controls.autoOn}
             shortcut="A"
@@ -175,7 +175,7 @@ export function ControlBar() {
           </Button>
         </Hint>
 
-        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
           <Hint
             label={
               hasCaptures

@@ -5,7 +5,7 @@ import {
   resolveScenario,
   resolveStage,
 } from "@/lib/fixtures/dev-scenario";
-import { getScenario } from "@/lib/fixtures/scenarios";
+import { getScenario, getScenarioPhase } from "@/lib/fixtures/scenarios";
 import { SessionProvider } from "@/lib/session/session-provider";
 import type { StageState } from "@/lib/types";
 
@@ -37,7 +37,7 @@ export default async function Home({
         // Simulated until the real analysis reports its own latency.
         analysis: {
           mode: "manual",
-          phase: "idle",
+          phase: getScenarioPhase(scenario),
           latencyMs: 900,
           startedAt: null,
         },

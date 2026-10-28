@@ -95,6 +95,8 @@ export function ModelViewerDialog() {
             <Button
               type="button"
               variant="outline"
+              size="lg"
+              className="rounded-full px-5"
               onClick={() => closeMockModel(store)}
             >
               Cancelar
@@ -104,6 +106,8 @@ export function ModelViewerDialog() {
               <Button
                 type="button"
                 variant="outline"
+                size="lg"
+                className="rounded-full px-5"
                 onClick={() => closeMockModel(store)}
               >
                 Cerrar

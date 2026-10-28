@@ -1,6 +1,6 @@
 import type { ComponentClass } from "../component-status";
 import { STATUS_BY_CLASS } from "../component-status";
-import type { Detection, Point } from "../types";
+import type { AnalysisState, Detection, Point } from "../types";
 import { BOARD, CAPACITORS, DUST_REGION, type PixelPoint } from "./board-parts";
 
 export const DEMO_IMAGE = {
@@ -9,7 +9,17 @@ export const DEMO_IMAGE = {
   height: BOARD.height,
 } as const;
 
-export const SCENARIO_NAMES = ["empty", "healthy", "findings", "live"] as const;
+export const SCENARIO_NAMES = [
+  "empty",
+  "healthy",
+  "findings",
+  "findings-no-score",
+  "analyzing",
+  "offline",
+  "quota",
+  "error",
+  "live",
+] as const;
 export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
 const round = (n: number) => Math.round(n * 10_000) / 10_000;
@@ -18,7 +28,7 @@ function detection(
   id: string,
   cls: ComponentClass,
   pixels: readonly PixelPoint[],
-  score: number,
+  score: number | null,
   seenAt: number,
 ): Detection {
   const polygon: Point[] = pixels.map(([x, y]) => [
@@ -55,11 +65,12 @@ export function getScenario(name: ScenarioName, now = Date.now()): Detection[] {
     id: string,
     cls: ComponentClass,
     pixels: readonly PixelPoint[],
-    score: number,
+    score: number | null,
   ) => detection(id, cls, pixels, score, now);
 
   switch (name) {
     case "empty":
+    case "analyzing":
     case "live":
       // "live" starts empty; lib/fixtures/live-scenario.ts reveals them.
       return [];
@@ -73,6 +84,9 @@ export function getScenario(name: ScenarioName, now = Date.now()): Detection[] {
         d("cap-f", "CAPACITOR_NORMAL", CAPACITORS.f, 0.93),
       ];
     case "findings":
+    case "offline":
+    case "quota":
+    case "error":
       return [
         d("cap-a", "CAPACITOR_NORMAL", CAPACITORS.a, 0.96),
         d("cap-b", "CAPACITOR_NORMAL", CAPACITORS.b, 0.94),
@@ -83,5 +97,23 @@ export function getScenario(name: ScenarioName, now = Date.now()): Detection[] {
         d("cap-h", "CAPACITOR_INFLATED", CAPACITORS.h, 0.88),
         d("dust-1", "DUST_REGION", DUST_REGION, 0.89),
       ];
+    case "findings-no-score":
+      return getScenario("findings", now).map((detection) => ({
+        ...detection,
+        score: null,
+      }));
+  }
+}
+
+export function getScenarioPhase(name: ScenarioName): AnalysisState["phase"] {
+  switch (name) {
+    case "analyzing":
+      return "analyzing";
+    case "offline":
+    case "quota":
+    case "error":
+      return name;
+    default:
+      return "idle";
   }
 }

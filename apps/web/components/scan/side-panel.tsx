@@ -6,7 +6,9 @@ import { Drawer as DrawerPrimitive } from "vaul";
 import { ComponentsCard } from "@/components/scan/components-card";
 import { StepsCard } from "@/components/scan/steps-card";
 import { SummaryPill } from "@/components/scan/summary-pill";
+import { FirstAnalysisSkeleton } from "@/components/scan/first-analysis-skeleton";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { useSession } from "@/lib/session/session-provider";
 
 const PEEK = "96px";
 // vaul offsets the panel assuming it is as tall as the screen, so the panel
@@ -16,14 +18,24 @@ const FULL = 0.92;
 const SNAP_POINTS = [PEEK, 0.5, FULL];
 
 function DesktopPanel() {
+  const initialAnalysis = useSession(
+    (s) => s.analysis.phase === "analyzing" && s.detections.length === 0,
+  );
+
   return (
     <aside
       aria-label="Componentes y pasos"
       className="flex min-h-0 flex-col gap-4 overflow-hidden p-4 pl-0"
     >
-      <SummaryPill />
-      <ComponentsCard />
-      <StepsCard />
+      {initialAnalysis ? (
+        <FirstAnalysisSkeleton />
+      ) : (
+        <>
+          <SummaryPill />
+          <ComponentsCard />
+          <StepsCard />
+        </>
+      )}
     </aside>
   );
 }
@@ -31,6 +43,9 @@ function DesktopPanel() {
 function MobilePanel() {
   const [snap, setSnap] = useState<number | string | null>(PEEK);
   const expanded = snap === FULL;
+  const initialAnalysis = useSession(
+    (s) => s.analysis.phase === "analyzing" && s.detections.length === 0,
+  );
 
   return (
     <DrawerPrimitive.Root
@@ -61,9 +76,15 @@ function MobilePanel() {
               expanded ? "overflow-y-auto" : "overflow-hidden",
             )}
           >
-            <SummaryPill />
-            <ComponentsCard />
-            <StepsCard />
+            {initialAnalysis ? (
+              <FirstAnalysisSkeleton />
+            ) : (
+              <>
+                <SummaryPill />
+                <ComponentsCard />
+                <StepsCard />
+              </>
+            )}
           </div>
         </DrawerPrimitive.Content>
       </DrawerPrimitive.Portal>

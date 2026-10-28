@@ -122,6 +122,8 @@ export function ReportDialog({
           <Button
             type="button"
             variant="outline"
+            size="lg"
+            className="rounded-full px-5"
             onClick={() => handleOpenChange(false)}
           >
             Cerrar
