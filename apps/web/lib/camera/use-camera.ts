@@ -38,15 +38,34 @@ export function useCamera(enabled: boolean, deviceId: string | null) {
     };
 
     const requested = deviceId ?? loadPreferredDevice();
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: false,
-        video: {
-          ...(requested ? { deviceId: { ideal: requested } } : {}),
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      })
+    const open = async (): Promise<MediaStream> => {
+      const size = { width: { ideal: 1280 }, height: { ideal: 720 } };
+      if (!requested) {
+        return navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: size,
+        });
+      }
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { ...size, deviceId: { exact: requested } },
+        });
+      } catch (error) {
+        // The saved camera may be gone: fall back to the default one.
+        if (
+          error instanceof DOMException &&
+          error.name === "OverconstrainedError"
+        ) {
+          return navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: size,
+          });
+        }
+        throw error;
+      }
+    };
+    open()
       .then((s) => {
         if (cancelled) {
           s.getTracks().forEach((t) => t.stop());
@@ -67,7 +86,6 @@ export function useCamera(enabled: boolean, deviceId: string | null) {
 
     const onChange = () => void refresh();
     navigator.mediaDevices.addEventListener("devicechange", onChange);
-    void refresh();
 
     return () => {
       cancelled = true;

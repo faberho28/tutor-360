@@ -5,7 +5,7 @@ const STORAGE_KEY = "tutor360.cameraDeviceId";
 export async function listVideoDevices(): Promise<CameraDevice[]> {
   const all = await navigator.mediaDevices.enumerateDevices();
   return all
-    .filter((d) => d.kind === "videoinput")
+    .filter((d) => d.kind === "videoinput" && d.deviceId !== "")
     .map((d, i) => ({
       id: d.deviceId,
       label: d.label || `Cámara ${i + 1}`,
