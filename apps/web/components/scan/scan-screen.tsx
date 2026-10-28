@@ -1,6 +1,6 @@
+import { CameraStage } from "@/components/scan/camera-stage";
 import { NavRail } from "@/components/scan/nav-rail";
 import { SidePanel } from "@/components/scan/side-panel";
-import { StagePlaceholder } from "@/components/scan/stage-placeholder";
 import { TopBar } from "@/components/scan/top-bar";
 
 /**
@@ -13,7 +13,7 @@ export function ScanScreen() {
       <TopBar className="lg:col-span-3" />
       <NavRail className="hidden lg:flex" />
       <main className="min-h-0 p-4 pb-28 lg:pb-4">
-        <StagePlaceholder />
+        <CameraStage />
       </main>
       <SidePanel />
     </div>
