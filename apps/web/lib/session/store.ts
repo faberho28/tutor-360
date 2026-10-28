@@ -4,6 +4,7 @@ import type {
   Capture,
   Detection,
   DiagnosisEntry,
+  Model3DState,
   StageState,
 } from "../types";
 
@@ -17,6 +18,8 @@ export type SessionState = {
   detections: Detection[];
   selectedId: string | null;
   captures: Capture[];
+  /** The 3D reconstruction in progress or on screen; one at a time. */
+  model3d: Model3DState;
   /** Diagnosis per detection id. */
   diagnoses: Record<string, DiagnosisEntry>;
   /** Step indexes marked done / skipped, per detection id ("general" for the generic list). */
@@ -33,8 +36,10 @@ export type SessionActions = {
   replaceDetections: (detections: Detection[]) => void;
   select: (id: string) => void;
   clearSelection: () => void;
-  /** Saves the given detections as a capture and returns it. */
-  addCapture: (detections: Detection[]) => Capture;
+  /** Saves the given detections and their composed image; returns the capture. */
+  addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
+  removeCapture: (id: string) => void;
+  setModel3d: (model3d: Model3DState) => void;
   setDiagnosis: (id: string, entry: DiagnosisEntry) => void;
   /** Marks a step done, or undoes it (also clears "skipped"). */
   toggleStep: (key: string, index: number) => void;
@@ -67,6 +72,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     detections: [],
     selectedId: null,
     captures: [],
+    model3d: { status: "idle" },
     diagnoses: {},
     completedSteps: {},
     skippedSteps: {},
@@ -80,7 +86,8 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
  * between server requests and between tests.
  */
 export function createSessionStore(initial: Partial<SessionState> = {}) {
-  return createStore<SessionSlice>()((set, get) => ({
+  let captureCounter = 0;
+  return createStore<SessionSlice>()((set) => ({
     ...freshState(initial),
 
     setName: (name) => set({ name }),
@@ -102,15 +109,23 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
       ),
     clearSelection: () => set({ selectedId: null }),
 
-    addCapture: (detections) => {
+    addCapture: (detections, imageDataUrl) => {
+      // Counter instead of length + 1: ids must stay unique after deletions.
+      captureCounter += 1;
       const capture: Capture = {
-        id: `capture-${get().captures.length + 1}`,
+        id: `capture-${captureCounter}`,
         at: Date.now(),
         detections: structuredClone(detections),
+        imageDataUrl,
       };
       set((state) => ({ captures: [...state.captures, capture] }));
       return capture;
     },
+
+    removeCapture: (id) =>
+      set((state) => ({ captures: state.captures.filter((c) => c.id !== id) })),
+
+    setModel3d: (model3d) => set({ model3d }),
 
     setDiagnosis: (id, entry) =>
       set((state) => ({ diagnoses: { ...state.diagnoses, [id]: entry } })),

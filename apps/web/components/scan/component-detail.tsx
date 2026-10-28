@@ -2,10 +2,10 @@
 
 import { Box, Check, Plus } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
 import { DiagnosisView } from "@/components/scan/diagnosis-view";
 import { Button } from "@/components/ui/button";
 import { requestMockDiagnosis } from "@/lib/fixtures/mock-diagnosis";
+import { requestMockModel } from "@/lib/fixtures/mock-reconstruction";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 import type { Detection } from "@/lib/types";
 
@@ -38,7 +38,7 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => toast.info("El visor 3D todavía no está disponible")}
+          onClick={() => requestMockModel(store, detection.id)}
         >
           <Box aria-hidden="true" data-icon="inline-start" />
           Ver en 3D

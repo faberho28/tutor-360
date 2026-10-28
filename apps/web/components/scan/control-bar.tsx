@@ -5,6 +5,8 @@ import { cn } from "cn";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ModelViewerDialog } from "@/components/scan/model-viewer-dialog";
+import { ReportDialog } from "@/components/scan/report-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +14,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useScanShortcuts } from "@/hooks/use-scan-shortcuts";
 import { copy } from "@/lib/copy";
+import { requestMockModel } from "@/lib/fixtures/mock-reconstruction";
+import { DEMO_IMAGE } from "@/lib/fixtures/scenarios";
+import { composeCapture, loadImage } from "@/lib/overlay/compose-capture";
 import { MockAnalysisSource } from "@/lib/fixtures/mock-source";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
@@ -49,17 +54,26 @@ export function ControlBar() {
   const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
   const [source] = useState(() => new MockAnalysisSource(store));
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => () => source.dispose(), [source]);
 
   async function capture() {
-    await source.captureOnce();
-    const state = store.getState();
-    const saved = state.addCapture(state.detections);
-    // Read again: `state` is the snapshot from before the capture was added.
-    toast.success(`Captura ${store.getState().captures.length} guardada`, {
-      id: saved.id,
-    });
+    try {
+      await source.captureOnce();
+      const state = store.getState();
+      const image = await loadImage(DEMO_IMAGE.src);
+      const saved = state.addCapture(
+        state.detections,
+        composeCapture(image, state.detections),
+      );
+      // Read again: `state` is the snapshot from before the capture was added.
+      toast.success(`Captura ${store.getState().captures.length} guardada`, {
+        id: saved.id,
+      });
+    } catch {
+      toast.error("No pudimos guardar la captura");
+    }
   }
 
   function toggleAuto() {
@@ -68,104 +82,92 @@ export function ControlBar() {
   }
 
   function view3d() {
-    if (!store.getState().selectedId) return;
-    toast.info("El visor 3D todavía no está disponible");
+    const { selectedId } = store.getState();
+    if (selectedId) requestMockModel(store, selectedId);
   }
 
   function report() {
     if (store.getState().captures.length === 0) return;
-    toast.info("La generación de reportes todavía no está disponible");
+    setReportOpen(true);
   }
 
   useScanShortcuts({ capture, toggleAuto, report });
 
   return (
-    <div
-      role="toolbar"
-      aria-label="Controles de captura"
-      className={cn(
-        "group pointer-events-auto grid w-fit grid-cols-[96px_44px_96px] items-center gap-2 overflow-hidden rounded-full border bg-card/90 p-2 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
-        "[@media(hover:hover)]:grid-cols-[0px_44px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[96px_44px_96px] [@media(hover:hover)]:hover:gap-2 [@media(hover:hover)]:focus-within:grid-cols-[96px_44px_96px] [@media(hover:hover)]:focus-within:gap-2",
-      )}
-    >
-      <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
-        <Hint
-          label={auto ? copy.controls.autoOff : copy.controls.autoOn}
-          shortcut="A"
-        >
+    <>
+      <ReportDialog open={reportOpen} onOpenChange={setReportOpen} />
+      <ModelViewerDialog />
+      <div
+        role="toolbar"
+        aria-label="Controles de captura"
+        className={cn(
+          "group pointer-events-auto grid w-fit grid-cols-[96px_44px_96px] items-center gap-2 overflow-hidden rounded-full border bg-card/90 p-2 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
+          "[@media(hover:hover)]:grid-cols-[0px_44px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[96px_44px_96px] [@media(hover:hover)]:hover:gap-2 [@media(hover:hover)]:focus-within:grid-cols-[96px_44px_96px] [@media(hover:hover)]:focus-within:gap-2",
+        )}
+      >
+        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+          <Hint
+            label={auto ? copy.controls.autoOff : copy.controls.autoOn}
+            shortcut="A"
+          >
+            <Button
+              type="button"
+              size="control"
+              variant="secondary"
+              aria-pressed={auto}
+              aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
+              aria-keyshortcuts="A"
+              onClick={toggleAuto}
+              className={cn("border", auto && "border-primary text-primary")}
+            >
+              {auto ? (
+                <Pause
+                  aria-hidden="true"
+                  className="size-5"
+                  strokeWidth={1.75}
+                />
+              ) : (
+                <Play
+                  aria-hidden="true"
+                  className="size-5"
+                  strokeWidth={1.75}
+                />
+              )}
+            </Button>
+          </Hint>
+
+          <Hint
+            label={
+              hasSelection
+                ? copy.controls.view3d
+                : copy.controls.view3dNeedsSelection
+            }
+          >
+            <Button
+              type="button"
+              size="control"
+              variant="secondary"
+              // aria-disabled keeps it focusable so the hint also shows with the keyboard.
+              aria-disabled={!hasSelection || undefined}
+              aria-label={copy.controls.view3d}
+              onClick={view3d}
+              className={cn("border", !hasSelection && "opacity-50")}
+            >
+              <Box aria-hidden="true" className="size-5" strokeWidth={1.75} />
+            </Button>
+          </Hint>
+        </div>
+
+        <Hint label={copy.controls.capture} shortcut="Espacio">
           <Button
             type="button"
             size="control"
-            variant="secondary"
-            aria-pressed={auto}
-            aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
-            aria-keyshortcuts="A"
-            onClick={toggleAuto}
-            className={cn("border", auto && "border-primary text-primary")}
+            variant="inverse"
+            aria-label={copy.controls.capture}
+            aria-keyshortcuts="Space"
+            onClick={capture}
           >
-            {auto ? (
-              <Pause aria-hidden="true" className="size-5" strokeWidth={1.75} />
-            ) : (
-              <Play aria-hidden="true" className="size-5" strokeWidth={1.75} />
-            )}
-          </Button>
-        </Hint>
-
-        <Hint
-          label={
-            hasSelection
-              ? copy.controls.view3d
-              : copy.controls.view3dNeedsSelection
-          }
-        >
-          <Button
-            type="button"
-            size="control"
-            variant="secondary"
-            // aria-disabled keeps it focusable so the hint also shows with the keyboard.
-            aria-disabled={!hasSelection || undefined}
-            aria-label={copy.controls.view3d}
-            onClick={view3d}
-            className={cn("border", !hasSelection && "opacity-50")}
-          >
-            <Box aria-hidden="true" className="size-5" strokeWidth={1.75} />
-          </Button>
-        </Hint>
-      </div>
-
-      <Hint label={copy.controls.capture} shortcut="Espacio">
-        <Button
-          type="button"
-          size="control"
-          variant="inverse"
-          aria-label={copy.controls.capture}
-          aria-keyshortcuts="Space"
-          onClick={capture}
-        >
-          <Aperture aria-hidden="true" className="size-5" strokeWidth={1.75} />
-        </Button>
-      </Hint>
-
-      <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
-        <Hint
-          label={
-            hasCaptures
-              ? copy.controls.report
-              : copy.controls.reportNeedsCapture
-          }
-          shortcut={hasCaptures ? "R" : undefined}
-        >
-          <Button
-            type="button"
-            size="control"
-            variant="secondary"
-            aria-label={copy.controls.report}
-            aria-disabled={!hasCaptures || undefined}
-            aria-keyshortcuts="R"
-            onClick={report}
-            className={cn("border", !hasCaptures && "opacity-50")}
-          >
-            <FileDown
+            <Aperture
               aria-hidden="true"
               className="size-5"
               strokeWidth={1.75}
@@ -173,22 +175,50 @@ export function ControlBar() {
           </Button>
         </Hint>
 
-        <Hint label={copy.controls.more}>
-          <Button
-            type="button"
-            size="control"
-            variant="secondary"
-            aria-label={copy.controls.more}
-            className="border"
+        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+          <Hint
+            label={
+              hasCaptures
+                ? copy.controls.report
+                : copy.controls.reportNeedsCapture
+            }
+            shortcut={hasCaptures ? "R" : undefined}
           >
-            <Ellipsis
-              aria-hidden="true"
-              className="size-5"
-              strokeWidth={1.75}
-            />
-          </Button>
-        </Hint>
+            <Button
+              type="button"
+              size="control"
+              variant="secondary"
+              aria-label={copy.controls.report}
+              aria-disabled={!hasCaptures || undefined}
+              aria-keyshortcuts="R"
+              onClick={report}
+              className={cn("border", !hasCaptures && "opacity-50")}
+            >
+              <FileDown
+                aria-hidden="true"
+                className="size-5"
+                strokeWidth={1.75}
+              />
+            </Button>
+          </Hint>
+
+          <Hint label={copy.controls.more}>
+            <Button
+              type="button"
+              size="control"
+              variant="secondary"
+              aria-label={copy.controls.more}
+              className="border"
+            >
+              <Ellipsis
+                aria-hidden="true"
+                className="size-5"
+                strokeWidth={1.75}
+              />
+            </Button>
+          </Hint>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

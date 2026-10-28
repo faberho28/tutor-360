@@ -58,6 +58,11 @@ samples/           Fotos de muestra
 - Guía visual: con `pnpm dev`, abre `http://localhost:3000/design`. La ruta solo existe en desarrollo y responde 404 en producción.
 - Los pares de color de texto de `globals.css` se eligieron para cumplir contraste AA (4.5:1) en claro y oscuro; al cambiar un token, medirlo de nuevo.
 
+## Visor 3D
+
+- El visor usa `@google/model-viewer` (con `three` como dependencia), cargado de forma diferida solo al abrir el diálogo.
+- `apps/web/public/demo/sample.glb` es el modelo de ejemplo de la interfaz simulada: un capacitor electrolítico generado por código para este proyecto, sin recursos de terceros (sin licencia externa).
+
 ## Convenciones
 
 - Commits con Conventional Commits.

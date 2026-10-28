@@ -35,13 +35,21 @@ export type DiagnosisEntry =
   | { status: "error" }
   | { status: "ready"; data: Diagnosis };
 
-/** A saved moment of the scan. HU-09 adds the composed image. */
+/** A saved moment of the scan. */
 export type Capture = {
   id: string;
   /** Epoch milliseconds. */
   at: number;
   detections: Detection[];
+  /** The image with the masks drawn on it. */
+  imageDataUrl: string;
 };
+
+export type Model3DState =
+  | { status: "idle" }
+  | { status: "generating"; detectionId: string }
+  | { status: "ready"; detectionId: string; glbUrl: string }
+  | { status: "error"; detectionId: string };
 
 export type AnalysisState = {
   mode: "auto" | "manual";

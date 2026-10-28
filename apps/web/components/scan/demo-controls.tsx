@@ -4,6 +4,8 @@ import { FlaskConical } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { diagnosisDemo } from "@/lib/fixtures/mock-diagnosis";
+import { modelDemo } from "@/lib/fixtures/mock-reconstruction";
+import { reportDemo } from "@/lib/fixtures/mock-report";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -60,6 +62,8 @@ export function DemoControls() {
   const setStage = useSession((s) => s.setStage);
   const [scenario, setScenario] = useState<ScenarioName>(initialScenario);
   const [failDiagnosis, setFailDiagnosis] = useState(diagnosisDemo.fail);
+  const [failModel, setFailModel] = useState(modelDemo.fail);
+  const [failReport, setFailReport] = useState(reportDemo.fail);
 
   function changeScenario(value: string) {
     const next = value as ScenarioName;
@@ -108,6 +112,24 @@ export function DemoControls() {
             }}
           >
             Diagnóstico con error
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={failModel}
+            onCheckedChange={(checked) => {
+              modelDemo.fail = checked === true;
+              setFailModel(checked === true);
+            }}
+          >
+            Modelo 3D con error
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={failReport}
+            onCheckedChange={(checked) => {
+              reportDemo.fail = checked === true;
+              setFailReport(checked === true);
+            }}
+          >
+            Reporte con error
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Estado de la cámara</DropdownMenuLabel>
