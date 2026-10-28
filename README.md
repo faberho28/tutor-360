@@ -50,6 +50,15 @@ samples/           Fotos de muestra
 
 `services/*` no forma parte del workspace de pnpm porque será Python.
 
+## Sistema de diseño
+
+- Stack de UI: Tailwind CSS v4, shadcn/ui (base Radix, preset `vega`), `lucide-react` e Inter (`next/font`).
+- Los tokens de color, los radios y el tema claro/oscuro viven en `apps/web/app/globals.css`. Los colores del overlay y la clase → estado de cada componente viven en `apps/web/lib/overlay-theme.ts` y `apps/web/lib/component-status.ts`.
+- Los componentes de shadcn están en `apps/web/components/ui/`. Se agregan con `pnpm dlx shadcn@latest add <componente>` desde `apps/web`.
+- El tema sigue al sistema por defecto y se puede forzar con `ThemeToggle`; la elección se guarda en `localStorage`.
+- Guía visual: con `pnpm dev`, abre `http://localhost:3000/design`. La ruta solo existe en desarrollo y responde 404 en producción.
+- Todo texto debe cumplir contraste AA (4.5:1). `app/globals.contrast.test.ts` lo verifica sobre `globals.css`, en claro y oscuro.
+
 ## Convenciones
 
 - Commits con Conventional Commits.
