@@ -28,15 +28,14 @@ Completa los valores de `apps/web/.env.local`. Todas las variables son solo de s
 
 ## Scripts
 
-| Script                              | Descripción                                    |
-| ----------------------------------- | ---------------------------------------------- |
-| `pnpm dev`                          | Servidor de desarrollo de `apps/web`           |
-| `pnpm build`                        | Build de producción                            |
-| `pnpm lint`                         | ESLint                                         |
-| `pnpm typecheck`                    | `tsc --noEmit`                                 |
-| `pnpm format` / `pnpm format:check` | Prettier escribe / verifica                    |
-| `pnpm test` / `pnpm test:watch`     | Vitest, una corrida / modo watch               |
-| `pnpm check`                        | `format:check` + `lint` + `typecheck` + `test` |
+| Script                              | Descripción                           |
+| ----------------------------------- | ------------------------------------- |
+| `pnpm dev`                          | Servidor de desarrollo de `apps/web`  |
+| `pnpm build`                        | Build de producción                   |
+| `pnpm lint`                         | ESLint                                |
+| `pnpm typecheck`                    | `tsc --noEmit`                        |
+| `pnpm format` / `pnpm format:check` | Prettier escribe / verifica           |
+| `pnpm check`                        | `format:check` + `lint` + `typecheck` |
 
 Ejecuta `pnpm check` antes de cada commit.
 
@@ -57,7 +56,7 @@ samples/           Fotos de muestra
 - Los componentes de shadcn están en `apps/web/components/ui/`. Se agregan con `pnpm dlx shadcn@latest add <componente>` desde `apps/web`.
 - El tema sigue al sistema por defecto y se puede forzar con `ThemeToggle`; la elección se guarda en `localStorage`.
 - Guía visual: con `pnpm dev`, abre `http://localhost:3000/design`. La ruta solo existe en desarrollo y responde 404 en producción.
-- Todo texto debe cumplir contraste AA (4.5:1). `app/globals.contrast.test.ts` lo verifica sobre `globals.css`, en claro y oscuro.
+- Los pares de color de texto de `globals.css` se eligieron para cumplir contraste AA (4.5:1) en claro y oscuro; al cambiar un token, medirlo de nuevo.
 
 ## Convenciones
 

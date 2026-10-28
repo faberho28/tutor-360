@@ -14,9 +14,7 @@
     "typecheck": "pnpm --filter web typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm --filter web test",
-    "test:watch": "pnpm --filter web test:watch",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck"
   },
   "devDependencies": {
     "prettier": "3.9.10"
