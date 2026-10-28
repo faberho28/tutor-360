@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "cn";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
+import { ComponentsCard } from "@/components/scan/components-card";
+import { PANEL_CARD } from "@/components/scan/panel-card";
+import { SummaryPill } from "@/components/scan/summary-pill";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
-import { sortDetections, summarize } from "@/lib/session/selectors";
-import { useSession } from "@/lib/session/session-provider";
 
 const PEEK = "96px";
 // vaul offsets the panel assuming it is as tall as the screen, so the panel
@@ -16,39 +17,10 @@ const PEEK = "96px";
 const FULL = 0.92;
 const SNAP_POINTS = [PEEK, 0.5, FULL];
 
-const CARD = "rounded-2xl border shadow-none ring-0";
-
-function SummaryPlaceholder() {
-  const detections = useSession((s) => s.detections);
-  const text = useMemo(
-    () => summarize(sortDetections(detections)),
-    [detections],
-  );
-
-  return (
-    <Card size="sm" className={cn(CARD, "flex-row items-center px-5")}>
-      <p className="text-sm font-medium">{text}</p>
-    </Card>
-  );
-}
-
-// Placeholders: ComponentsCard (HU-07) and StepsCard (HU-08) replace these.
-function ComponentsPlaceholder() {
-  return (
-    <Card size="sm" className={cn(CARD, "min-h-0 flex-1 px-4")}>
-      <h2 className="text-base font-semibold">Componentes detectados</h2>
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-14 rounded-xl" />
-        <Skeleton className="h-14 rounded-xl" />
-        <Skeleton className="h-14 rounded-xl" />
-      </div>
-    </Card>
-  );
-}
-
+// Placeholder: StepsCard (HU-08) replaces it.
 function StepsPlaceholder() {
   return (
-    <Card size="sm" className={cn(CARD, "px-4")}>
+    <Card size="sm" className={cn(PANEL_CARD, "px-4")}>
       <h2 className="text-base font-semibold">Paso a paso</h2>
       <div className="flex flex-col gap-2">
         <Skeleton className="h-5 rounded-md" />
@@ -64,8 +36,8 @@ function DesktopPanel() {
       aria-label="Componentes y pasos"
       className="flex min-h-0 flex-col gap-4 overflow-hidden p-4 pl-0"
     >
-      <SummaryPlaceholder />
-      <ComponentsPlaceholder />
+      <SummaryPill />
+      <ComponentsCard />
       <StepsPlaceholder />
     </aside>
   );
@@ -104,8 +76,8 @@ function MobilePanel() {
               expanded ? "overflow-y-auto" : "overflow-hidden",
             )}
           >
-            <SummaryPlaceholder />
-            <ComponentsPlaceholder />
+            <SummaryPill />
+            <ComponentsCard />
             <StepsPlaceholder />
           </div>
         </DrawerPrimitive.Content>

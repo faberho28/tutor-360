@@ -9,7 +9,7 @@ export const DEMO_IMAGE = {
   height: BOARD.height,
 } as const;
 
-export const SCENARIO_NAMES = ["empty", "healthy", "findings"] as const;
+export const SCENARIO_NAMES = ["empty", "healthy", "findings", "live"] as const;
 export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
 const round = (n: number) => Math.round(n * 10_000) / 10_000;
@@ -60,6 +60,8 @@ export function getScenario(name: ScenarioName, now = Date.now()): Detection[] {
 
   switch (name) {
     case "empty":
+    case "live":
+      // "live" starts empty; lib/fixtures/live-scenario.ts reveals them.
       return [];
     case "healthy":
       return [

@@ -1,3 +1,4 @@
+import type { ComponentStatus } from "./component-status";
 import type { AnalysisState } from "./types";
 
 /** User-facing texts (es-CO) shared by several components. */
@@ -20,6 +21,25 @@ export const copy = {
     reportNeedsCapture: "Haz al menos una captura",
   },
 } as const;
+
+export const statusLabel: Record<ComponentStatus, string> = {
+  anomaly: "Anomalía",
+  warning: "Revisar",
+  ok: "OK",
+};
+
+export const listCopy = {
+  title: "Componentes detectados",
+  empty: "Apunta la cámara al interior de la PC para empezar",
+} as const;
+
+/** "hace 3 s", "hace 2 min"; "ahora" under five seconds or before the clock is known. */
+export function formatAgo(now: number, seenAt: number): string {
+  const seconds = Math.floor((now - seenAt) / 1000);
+  if (now === 0 || seconds < 5) return "ahora";
+  if (seconds < 60) return `hace ${seconds} s`;
+  return `hace ${Math.floor(seconds / 60)} min`;
+}
 
 /** 754 -> "00:12:34" */
 export function formatElapsed(totalSeconds: number): string {

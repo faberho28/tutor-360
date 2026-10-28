@@ -1,6 +1,7 @@
 "use client";
 
 import { FlaskConical } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,17 +14,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { STAGE_NAMES } from "@/lib/fixtures/dev-scenario";
 import {
+  playLiveScenario,
+  stopLiveScenario,
+} from "@/lib/fixtures/live-scenario";
+import {
   SCENARIO_NAMES,
   getScenario,
   type ScenarioName,
 } from "@/lib/fixtures/scenarios";
-import { useSession } from "@/lib/session/session-provider";
+import { useSession, useSessionStore } from "@/lib/session/session-provider";
 import type { StageState } from "@/lib/types";
 
 const SCENARIO_LABELS: Record<ScenarioName, string> = {
   empty: "Vacío",
   healthy: "Sin hallazgos",
   findings: "Con hallazgos",
+  live: "En vivo (guion de 11 s)",
 };
 
 const STAGE_LABELS: Record<StageState, string> = {
@@ -33,24 +39,37 @@ const STAGE_LABELS: Record<StageState, string> = {
   "loading-model": "Cargando modelo",
 };
 
+/** The scenario the page started with: the URL parameter, else findings. */
+function initialScenario(): ScenarioName {
+  if (typeof window === "undefined") return "findings";
+  const value = new URLSearchParams(window.location.search).get("scenario");
+  return (SCENARIO_NAMES as readonly string[]).includes(value ?? "")
+    ? (value as ScenarioName)
+    : "findings";
+}
+
 /**
  * Development-only switcher for the demo scenario and the camera state, so
  * every screen state can be reviewed without touching the URL.
  */
 export function DemoControls() {
-  const detections = useSession((s) => s.detections);
+  const store = useSessionStore();
   const stage = useSession((s) => s.stage);
   const setStage = useSession((s) => s.setStage);
-  const replaceDetections = useSession((s) => s.replaceDetections);
+  const [scenario, setScenario] = useState<ScenarioName>(initialScenario);
 
-  const ids = detections.map((d) => d.id).join();
-  const current =
-    SCENARIO_NAMES.find(
-      (name) =>
-        getScenario(name)
-          .map((d) => d.id)
-          .join() === ids,
-    ) ?? "findings";
+  function changeScenario(value: string) {
+    const next = value as ScenarioName;
+    setScenario(next);
+    stopLiveScenario();
+    if (next === "live") {
+      playLiveScenario(store);
+    } else {
+      const state = store.getState();
+      state.replaceDetections(getScenario(next));
+      state.setAnalysis({ phase: "idle" });
+    }
+  }
 
   return (
     <div className="absolute top-14 left-3 z-10">
@@ -68,10 +87,8 @@ export function DemoControls() {
         <DropdownMenuContent align="start" side="top">
           <DropdownMenuLabel>Escenario</DropdownMenuLabel>
           <DropdownMenuRadioGroup
-            value={current}
-            onValueChange={(value) =>
-              replaceDetections(getScenario(value as ScenarioName))
-            }
+            value={scenario}
+            onValueChange={changeScenario}
           >
             {SCENARIO_NAMES.map((name) => (
               <DropdownMenuRadioItem key={name} value={name}>

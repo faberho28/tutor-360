@@ -1,3 +1,4 @@
+import { LiveAutoplay } from "@/components/scan/live-autoplay";
 import { ScanScreen } from "@/components/scan/scan-screen";
 import {
   DEFAULT_SCENARIO,
@@ -42,6 +43,7 @@ export default async function Home({
         },
       }}
     >
+      {scenario === "live" ? <LiveAutoplay /> : null}
       <ScanScreen />
     </SessionProvider>
   );
