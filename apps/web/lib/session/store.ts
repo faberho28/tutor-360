@@ -12,9 +12,13 @@ import type {
 
 export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
+import type { LabCaseSnapshot } from "../lab/cases";
+
 export type SessionState = {
   sessionId: string;
   name: string;
+  /** What the user chose to scan in the Laboratorio; null on /demo. */
+  labCase: LabCaseSnapshot | null;
   stage: StageState;
   analysis: AnalysisState;
   detections: Detection[];
@@ -79,6 +83,7 @@ function initialAnalysis(): AnalysisState {
     phase: "idle",
     latencyMs: null,
     startedAt: null,
+    reason: null,
     stale: false,
   };
 }
@@ -87,6 +92,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
   return {
     sessionId: newSessionId(),
     name: DEFAULT_SESSION_NAME,
+    labCase: null,
     stage: "ready",
     analysis: initialAnalysis(),
     detections: [],
@@ -201,7 +207,8 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
           : [...state.reportIds, id],
       })),
 
-    reset: () => set(freshState()),
+    // A new session keeps the case: the user chose it before scanning.
+    reset: () => set((state) => freshState({ labCase: state.labCase })),
   }));
 }
 

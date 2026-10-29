@@ -77,9 +77,20 @@ function serverError(status: number, body: unknown): AnalyzeClientError {
 export async function requestAnalysis(
   frame: CapturedFrame,
   sessionId: string,
-  options: { signal?: AbortSignal; timeoutMs?: number; endpoint?: string } = {},
+  options: {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    endpoint?: string;
+    /** The Laboratorio case context, sent along for the server to use. */
+    context?: string;
+  } = {},
 ): Promise<AnalyzeResponse> {
-  const { signal, timeoutMs = TIMEOUT_MS, endpoint = "/api/analyze" } = options;
+  const {
+    signal,
+    timeoutMs = TIMEOUT_MS,
+    endpoint = "/api/analyze",
+    context,
+  } = options;
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => {
@@ -109,6 +120,7 @@ export async function requestAnalysis(
         width: frame.width,
         height: frame.height,
         sessionId,
+        context,
       }),
       signal: controller.signal,
     });

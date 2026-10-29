@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import { captureFrame, readyVideo } from "../camera/capture-frame";
 import type { ScanAnalysis } from "../services/types";
 import type { SessionStore } from "../session/store";
@@ -50,6 +49,7 @@ export class RealAnalysis implements ScanAnalysis {
       mode: "auto",
       phase: "waiting",
       startedAt: Date.now(),
+      reason: null,
     });
     this.scheduler.start();
   }
@@ -57,9 +57,12 @@ export class RealAnalysis implements ScanAnalysis {
   stop() {
     this.auto = false;
     this.scheduler.stop();
-    this.store
-      .getState()
-      .setAnalysis({ mode: "manual", phase: "paused", startedAt: null });
+    this.store.getState().setAnalysis({
+      mode: "manual",
+      phase: "paused",
+      startedAt: null,
+      reason: null,
+    });
   }
 
   /** Starts over: a failed automatic mode picks up again from a clean slate. */
@@ -100,11 +103,11 @@ export class RealAnalysis implements ScanAnalysis {
     }
     const startedAt = performance.now();
     const frame = await captureFrame(video);
-    const response = await requestAnalysis(
-      frame,
-      this.store.getState().sessionId,
-      { signal },
-    );
+    const { sessionId, labCase } = this.store.getState();
+    const response = await requestAnalysis(frame, sessionId, {
+      signal,
+      context: labCase?.context || undefined,
+    });
     return { response, latencyMs: Math.round(performance.now() - startedAt) };
   }
 
@@ -122,25 +125,23 @@ export class RealAnalysis implements ScanAnalysis {
     this.store.getState().setAnalysis({
       latencyMs,
       stale: false,
+      reason: null,
       phase: this.auto ? "analyzing" : "idle",
     });
   }
 
   private fail(error: unknown, info: { willRetry: boolean; manual: boolean }) {
-    // A failed "Capturar" is reported by the control bar, not by the banner.
+    // A failed "Capturar" is reported by the control bar's own toast.
     if (info.manual) return;
-    const phase = phaseFor(error);
+    // The phase and the reason are what the failure toast shows.
+    const failure = { phase: phaseFor(error), reason: messageFor(error) };
     if (info.willRetry) {
-      this.store.getState().setAnalysis({ phase });
+      this.store.getState().setAnalysis(failure);
     } else {
       this.auto = false;
       this.store
         .getState()
-        .setAnalysis({ phase, mode: "manual", startedAt: null });
-    }
-    // The offline and quota banners explain themselves; others need the reason.
-    if (phase === "error") {
-      toast.error(messageFor(error), { id: "analysis-error" });
+        .setAnalysis({ ...failure, mode: "manual", startedAt: null });
     }
   }
 

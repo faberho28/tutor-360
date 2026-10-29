@@ -64,6 +64,8 @@ export type AnalysisState = {
     "idle" | "waiting" | "analyzing" | "paused" | "offline" | "quota" | "error";
   latencyMs: number | null;
   startedAt: number | null;
+  /** Why the last analysis failed (offline, quota or error phases), for the toast. */
+  reason: string | null;
   /**
    * The detections no longer match the image (the camera moved) until the next
    * analysis arrives; the overlay dims them.

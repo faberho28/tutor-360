@@ -14,6 +14,11 @@ export const analyzeRequestSchema = z.object({
   width: z.number().int().min(1).max(4096),
   height: z.number().int().min(1).max(4096),
   sessionId: z.string().min(1).max(64),
+  /**
+   * What the user is scanning (the Laboratorio case). Validated but not used
+   * yet: HU-35 feeds it to the model that decides what to look for.
+   */
+  context: z.string().max(1200).optional(),
 });
 
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;
