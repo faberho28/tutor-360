@@ -1,6 +1,5 @@
 import { Camera, ScanSearch, Stethoscope, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { NavRail } from "@/components/scan/nav-rail";
 import { TopBar } from "@/components/scan/top-bar";
 import { Button } from "@/components/ui/button";
 
@@ -25,9 +24,8 @@ const STEPS = [
 /** Welcome screen: what the product does and the way into the scanner. */
 export function HomeScreen() {
   return (
-    <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[52px_minmax(0,1fr)] bg-background lg:grid-cols-[56px_minmax(0,1fr)]">
-      <TopBar className="lg:col-span-2" />
-      <NavRail active="home" className="hidden lg:flex" />
+    <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[52px_minmax(0,1fr)] bg-background">
+      <TopBar />
       <main className="flex min-h-0 flex-col items-center overflow-y-auto p-6">
         <div className="my-auto flex w-full max-w-3xl flex-col items-center gap-10 py-8 text-center">
           <div className="flex flex-col items-center gap-4">
@@ -39,7 +37,7 @@ export function HomeScreen() {
               mal y te guía paso a paso para repararlo.
             </p>
             <Button asChild size="lg" className="mt-2 rounded-full px-6">
-              <Link href="/scan">
+              <Link href="/laboratorio">
                 Escanear un equipo
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Link>

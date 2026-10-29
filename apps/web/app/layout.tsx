@@ -19,7 +19,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
-          <Toaster />
+          {/* On small screens the scanner's drawer peeks 96px at the bottom. */}
+          <Toaster position="bottom-right" mobileOffset={{ bottom: 112 }} />
         </ThemeProvider>
       </body>
     </html>

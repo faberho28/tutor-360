@@ -12,6 +12,13 @@ export const copy = {
     quota: "Cuota de la IA agotada",
     error: "Algo salió mal al analizar",
   } satisfies Record<AnalysisState["phase"], string>,
+  /** What the failure toast says under the title, per failed phase. */
+  failure: {
+    offline: "Revisa tu conexión y vuelve a intentar el análisis.",
+    quota:
+      "Pausamos el análisis automático. Actívalo de nuevo cuando haya créditos disponibles.",
+    error: "Conservamos los últimos componentes detectados.",
+  } satisfies Record<"offline" | "quota" | "error", string>,
   controls: {
     capture: "Capturar",
     autoOn: "Activar análisis automático",

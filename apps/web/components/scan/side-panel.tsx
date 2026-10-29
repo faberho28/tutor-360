@@ -25,7 +25,7 @@ function DesktopPanel() {
   return (
     <aside
       aria-label="Componentes y pasos"
-      className="flex min-h-0 flex-col gap-4 overflow-hidden p-4 pl-0"
+      className="flex min-h-0 flex-col gap-4 overflow-hidden"
     >
       {initialAnalysis ? (
         <FirstAnalysisSkeleton />

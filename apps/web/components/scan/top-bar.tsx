@@ -1,4 +1,5 @@
 import { Cpu, Settings } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { SettingsDialog } from "@/components/scan/settings-dialog";
@@ -19,35 +20,40 @@ export function TopBar({
   trailing?: ReactNode;
 }) {
   return (
-    <header
-      className={cn("flex items-center gap-2 border-b bg-card px-3", className)}
-    >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Cpu aria-hidden="true" className="size-4" strokeWidth={1.75} />
-      </div>
-      <h1 className="sr-only text-xs font-semibold text-muted-foreground sm:not-sr-only">
-        PC-Tutor 360
-      </h1>
-      <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
+    // No fill and no line: the bar sits on the page and only its buttons show.
+    <header className={cn("flex items-center gap-2 px-3", className)}>
+      <Link
+        href="/"
+        aria-label="PC-Tutor 360, ir al inicio"
+        className="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 pl-1 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Cpu aria-hidden="true" className="size-4" strokeWidth={1.75} />
+        </span>
+        <span
+          aria-hidden="true"
+          className="hidden text-xs font-semibold text-muted-foreground sm:block"
+        >
+          PC-Tutor 360
+        </span>
+      </Link>
       <div className="min-w-0 flex-1">{children}</div>
       <div className="flex shrink-0 items-center gap-2">
         {trailing}
-        <div className="lg:hidden">
-          <SettingsDialog>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Ajustes"
-            >
-              <Settings
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={1.75}
-              />
-            </Button>
-          </SettingsDialog>
-        </div>
+        <SettingsDialog>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Ajustes"
+          >
+            <Settings
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={1.75}
+            />
+          </Button>
+        </SettingsDialog>
       </div>
     </header>
   );
