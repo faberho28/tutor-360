@@ -8,6 +8,7 @@ import { LiveCameraSource } from "@/components/scan/live-camera-source";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
 import { StageCornerControls } from "@/components/scan/stage-corner-controls";
 import { StageEmptyState } from "@/components/scan/stage-empty-state";
+import { TrackingPreparation } from "@/components/scan/tracking-preparation";
 import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useChangeDetection } from "@/hooks/use-change-detection";
@@ -50,6 +51,7 @@ export function CameraStage() {
               onDimensions={setDims}
             />
             <OverlayCanvas source={dims} />
+            <TrackingPreparation />
           </>
         ) : (
           <StageEmptyState state={stage} />

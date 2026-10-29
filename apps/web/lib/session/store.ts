@@ -12,6 +12,7 @@ import type {
 export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
 import type { LabCaseSnapshot } from "../lab/cases";
+import type { View } from "../tracking/view";
 
 export type SessionState = {
   sessionId: string;
@@ -21,6 +22,13 @@ export type SessionState = {
   stage: StageState;
   analysis: AnalysisState;
   detections: Detection[];
+  /**
+   * Where the scene is now relative to the frame the detections were found on,
+   * one motion per object while the local tracking follows it; null draws them
+   * as they are. The detections themselves never change with it: the overlay
+   * applies it.
+   */
+  view: View | null;
   selectedId: string | null;
   captures: Capture[];
   /** The 3D reconstruction in progress or on screen; one at a time. */
@@ -48,6 +56,7 @@ export type SessionActions = {
   setStage: (stage: StageState) => void;
   setAnalysis: (patch: Partial<AnalysisState>) => void;
   replaceDetections: (detections: Detection[]) => void;
+  setView: (view: View | null) => void;
   select: (id: string) => void;
   clearSelection: () => void;
   /** Saves the given detections and their composed image; returns the capture. */
@@ -92,6 +101,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     stage: "ready",
     analysis: initialAnalysis(),
     detections: [],
+    view: null,
     selectedId: null,
     captures: [],
     model3d: { status: "idle" },
@@ -137,6 +147,8 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
           ? state.selectedId
           : null,
       })),
+
+    setView: (view) => set({ view }),
 
     select: (id) =>
       set((state) =>

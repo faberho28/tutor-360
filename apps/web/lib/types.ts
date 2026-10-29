@@ -65,7 +65,15 @@ export type Model3DState =
 export type AnalysisState = {
   mode: "auto" | "manual";
   phase:
-    "idle" | "waiting" | "analyzing" | "paused" | "offline" | "quota" | "error";
+    | "idle"
+    /** The local tracking is still downloading: the automatic mode starts after. */
+    | "preparing"
+    | "waiting"
+    | "analyzing"
+    | "paused"
+    | "offline"
+    | "quota"
+    | "error";
   latencyMs: number | null;
   startedAt: number | null;
   /** Why the last analysis failed (offline, quota or error phases), for the toast. */

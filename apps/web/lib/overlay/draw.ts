@@ -5,6 +5,8 @@ import {
   STROKE_REDUCED_MOTION,
   pulseAlpha,
 } from "../overlay-theme";
+import { applyHomography } from "../tracking/homography";
+import { viewFor, type View } from "../tracking/view";
 import type { BoundingBox, Detection, Point } from "../types";
 import {
   boundsOf,
@@ -40,6 +42,12 @@ export type OverlayScene = {
    * faint, without names and without pulsing, until a new analysis arrives.
    */
   stale?: boolean;
+  /**
+   * Where the scene is now relative to the frame the polygons were found on
+   * (the local tracking), one motion per object: each detection is drawn with
+   * the one it follows. The points are moved when drawn, never rewritten.
+   */
+  view?: View | null;
 };
 
 /** Opacity of the masks while they are out of date. */
@@ -88,9 +96,16 @@ export function drawOverlay(
 
   const transform = coverTransform(source.width, source.height, width, height);
 
+  const view = scene.view ?? null;
   const shapes: Shape[] = scene.detections.map((d) => {
+    const motion = viewFor(view, d.id);
     const points = d.polygon.map((p) =>
-      toCanvasPoint(p, transform, source.width, source.height),
+      toCanvasPoint(
+        motion ? applyHomography(motion, p[0], p[1]) : p,
+        transform,
+        source.width,
+        source.height,
+      ),
     );
     return {
       id: d.id,

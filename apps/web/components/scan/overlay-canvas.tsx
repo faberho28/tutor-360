@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { drawOverlay, hitTest, type OverlayLayout } from "@/lib/overlay/draw";
+import { drawTrackingDebug } from "@/lib/overlay/draw-debug";
+import { getTrackingDebug, subscribeTrackingDebug } from "@/lib/tracking/debug";
 import { OVERLAY } from "@/lib/overlay-theme";
-import { useSession } from "@/lib/session/session-provider";
+import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 /**
  * Canvas on top of the video: masks, labels and tap-to-select. It matches the
@@ -21,10 +23,18 @@ export function OverlayCanvas({
   const select = useSession((s) => s.select);
   const clearSelection = useSession((s) => s.clearSelection);
   const stale = useSession((s) => s.analysis.stale);
+  const store = useSessionStore();
   const reducedMotion = useReducedMotion();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layoutRef = useRef<OverlayLayout | null>(null);
+  // The tracking moves the masks up to 30 times a second: it goes around React
+  // (no re-render, no new effect) and only asks the canvas to redraw.
+  const viewRef = useRef(store.getState().view);
+  const redrawRef = useRef<() => void>(() => {});
+  const fontRef = useRef<string | null>(null);
+  // Development only (D): the debug view of the tracking.
+  const debugRef = useRef(false);
   const [size, setSize] = useState({ w: 0, h: 0 });
   // Mouse hover only: touch has no hover, a tap selects instead.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -43,6 +53,18 @@ export function OverlayCanvas({
     return () => observer.disconnect();
   }, []);
 
+  // The canvas buffer is only reallocated when its size really changes:
+  // assigning width or height clears and reallocates it even with the same value.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || size.w === 0 || size.h === 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.round(size.w * dpr);
+    const height = Math.round(size.h * dpr);
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+  }, [size]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || size.w === 0 || size.h === 0) return;
@@ -50,17 +72,16 @@ export function OverlayCanvas({
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(size.w * dpr);
-    canvas.height = Math.round(size.h * dpr);
-
-    const font = `500 12px ${getComputedStyle(document.body).fontFamily}`;
+    // Reading the computed style forces a layout: once is enough.
+    fontRef.current ??= `500 12px ${getComputedStyle(document.body).fontFamily}`;
+    const font = fontRef.current;
     const animate =
       !reducedMotion &&
       !stale &&
       detections.some((d) => OVERLAY[d.status].pulse);
     let frame = 0;
 
-    const render = (now: number) => {
+    const draw = (now: number) => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       layoutRef.current = drawOverlay(ctx, {
         width: size.w,
@@ -73,13 +94,81 @@ export function OverlayCanvas({
         reducedMotion,
         font,
         stale,
+        view: viewRef.current,
       });
-      if (animate) frame = requestAnimationFrame(render);
+      if (process.env.NODE_ENV !== "production" && debugRef.current) {
+        drawTrackingDebug(ctx, getTrackingDebug(), {
+          width: size.w,
+          height: size.h,
+          source,
+        });
+      }
     };
-    render(performance.now());
+    const loop = (now: number) => {
+      draw(now);
+      if (animate) frame = requestAnimationFrame(loop);
+    };
+    loop(performance.now());
+    // While something pulses the loop already redraws every frame.
+    redrawRef.current = () => {
+      if (!animate) draw(performance.now());
+    };
 
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      redrawRef.current = () => {};
+    };
   }, [detections, selectedId, hoveredId, size, source, reducedMotion, stale]);
+
+  // The tracking's motions: redraw on the next animation frame, once however
+  // many times they changed before it.
+  useEffect(() => {
+    let pending = 0;
+    const schedule = () => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => {
+        pending = 0;
+        redrawRef.current();
+      });
+    };
+    const unsubscribe = store.subscribe((state, previous) => {
+      if (state.view === previous.view) return;
+      viewRef.current = state.view;
+      schedule();
+    });
+
+    // Development only: D shows the corners the tracking follows.
+    let stopDebug = () => {};
+    if (process.env.NODE_ENV !== "production") {
+      const unsubscribeDebug = subscribeTrackingDebug(() => {
+        if (debugRef.current) schedule();
+      });
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key.toLowerCase() !== "d") return;
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        const target = event.target;
+        if (
+          target instanceof Element &&
+          target.closest("input, textarea, select, [contenteditable='true']")
+        ) {
+          return;
+        }
+        debugRef.current = !debugRef.current;
+        schedule();
+      };
+      window.addEventListener("keydown", onKey);
+      stopDebug = () => {
+        unsubscribeDebug();
+        window.removeEventListener("keydown", onKey);
+      };
+    }
+
+    return () => {
+      unsubscribe();
+      stopDebug();
+      cancelAnimationFrame(pending);
+    };
+  }, [store]);
 
   function pointFrom(event: PointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();

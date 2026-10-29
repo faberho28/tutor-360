@@ -68,7 +68,7 @@ export function ControlBar() {
       const state = store.getState();
       const saved = state.addCapture(
         state.detections,
-        composeCapture(image, state.detections),
+        composeCapture(image, state.detections, state.view),
       );
       // Read again: `state` is the snapshot from before the capture was added.
       toast.success(`Captura ${store.getState().captures.length} guardada`, {

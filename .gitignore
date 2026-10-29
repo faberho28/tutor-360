@@ -14,6 +14,9 @@ node_modules/
 out/
 next-env.d.ts
 
+# OpenCV.js copied from node_modules by scripts/copy-opencv.mjs
+apps/web/public/opencv/
+
 # Build and test output
 dist/
 coverage/

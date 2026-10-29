@@ -5,6 +5,7 @@ import type { AnalysisState } from "./types";
 export const copy = {
   status: {
     idle: "Listo",
+    preparing: "Preparando el seguimiento",
     waiting: "Esperando imagen estable",
     analyzing: "Analizando",
     paused: "En pausa",

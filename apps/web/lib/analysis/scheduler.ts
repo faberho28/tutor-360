@@ -8,7 +8,7 @@ export const MIN_GAP_FLOOR_MS = 500;
  * that crosses and leaves is not worth a request. Shorter than the engine's
  * 3 s reference adoption, so a real change is analyzed before it becomes normal.
  */
-export const DEFAULT_CHANGE_HOLD_MS = 800;
+export const DEFAULT_CHANGE_HOLD_MS = 250;
 const BACKOFF_MS = [1000, 2000, 4000, 8000] as const;
 
 /** The image holds still: the engine only reports these after it settled. */

@@ -1,3 +1,4 @@
+import type { View } from "../tracking/view";
 import type { Detection } from "../types";
 import { coverTransform } from "./geometry";
 import { drawOverlay } from "./draw";
@@ -30,6 +31,8 @@ function createCanvas(width: number, height: number) {
 export function composeCapture(
   image: HTMLImageElement | HTMLVideoElement,
   detections: readonly Detection[],
+  /** Where the scene is now relative to the detections' frame (tracking). */
+  view: View | null = null,
   size: { width: number; height: number } = CAPTURE_SIZE,
 ): string {
   const { width, height } = size;
@@ -60,6 +63,7 @@ export function composeCapture(
     now: 0,
     reducedMotion: true,
     font: "500 12px sans-serif",
+    view,
   });
   base.ctx.drawImage(masks.canvas, 0, 0);
 

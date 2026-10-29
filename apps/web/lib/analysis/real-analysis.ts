@@ -6,6 +6,13 @@ import {
 import type { ScanAnalysis } from "../services/types";
 import { readApiKey } from "../settings/api-key";
 import type { SessionStore } from "../session/store";
+import { TRACKING_ENABLED } from "../tracking/enabled";
+import { moveBox, movePolygon } from "../tracking/homography";
+import { getOpenCv, loadOpenCv } from "../tracking/opencv-loader";
+import {
+  TrackingSession,
+  type TrackingStatus,
+} from "../tracking/track-session";
 import type { ChangeStatus } from "../vision/change-detector";
 import { AnalyzeClientError, requestAnalysis } from "./analyze-client";
 import { messageFor, phaseFor } from "./error-map";
@@ -13,6 +20,7 @@ import { PartReviews } from "./part-reviews";
 import type { PlannedPart } from "./scene";
 import { AnalysisScheduler, type SchedulerPhase } from "./scheduler";
 import { trackDetections } from "./track";
+import { viewFor } from "../tracking/view";
 import type { AnalyzeResponse } from "./types";
 
 type Outcome = {
@@ -22,6 +30,8 @@ type Outcome = {
   frame: CapturedFrame;
   /** True when the plan of the scene was reused (Spark was not asked). */
   planReused: boolean;
+  /** Whether the local tracking took this frame as its new reference. */
+  tracked: boolean;
 };
 
 const FAILED_PHASES = new Set(["offline", "quota", "error"]);
@@ -51,6 +61,18 @@ export class RealAnalysis implements ScanAnalysis {
   private plan: PlannedPart[] | null = null;
   /** Spark's second look: final names and condition, part by part. */
   private readonly reviews = new PartReviews();
+  /**
+   * Follows the scene between analyses so the masks move with it instead of
+   * costing a new analysis. Created when it is needed and OpenCV is ready; null
+   * otherwise (and if OpenCV cannot load everything works as before, analyzing
+   * on every change). `dispose` empties it but the object stays usable: React's
+   * Strict Mode mounts, unmounts and mounts the same one again.
+   */
+  private session: TrackingSession | null = null;
+  /** The OpenCV download, so that every caller waits for the same one. */
+  private download: Promise<void> | null = null;
+  /** The change engine's latest status (the tracking refines it). */
+  private detector: ChangeStatus = "calibrating";
 
   constructor(store: SessionStore, getVideo: () => HTMLVideoElement | null) {
     this.store = store;
@@ -62,10 +84,60 @@ export class RealAnalysis implements ScanAnalysis {
       onPhase: (phase) => this.showPhase(phase),
       minGapMs: minGapFromEnv(),
     });
+    // The download starts as soon as the screen opens: by the time the user
+    // turns the automatic mode on it is usually ready.
+    void this.downloadOpenCv();
+  }
+
+  /** Downloads OpenCV once; resolves when it is ready or failed (never rejects). */
+  private downloadOpenCv(): Promise<void> {
+    if (!TRACKING_ENABLED) return Promise.resolve();
+    this.download ??= loadOpenCv()
+      .then(() => undefined)
+      .catch(() => {
+        // Without OpenCV the scan still works: it analyzes on every change.
+        // A later start tries the download again.
+        console.warn("[tracking] OpenCV could not load; tracking is off");
+        this.download = null;
+      });
+    return this.download;
+  }
+
+  /** The tracking, created the first time it is needed; null without OpenCV. */
+  private ensureSession(): TrackingSession | null {
+    if (!TRACKING_ENABLED) return null;
+    if (this.session) return this.session;
+    const cv = getOpenCv();
+    if (!cv) return null;
+    this.session = new TrackingSession(cv, this.getVideo, {
+      onView: (view) => this.store.getState().setView(view),
+      onStatus: () => this.refresh(),
+    });
+    return this.session;
   }
 
   start() {
     this.auto = true;
+    if (!TRACKING_ENABLED || this.ensureSession()) {
+      this.begin();
+      return;
+    }
+    // Still downloading: the stage shows the progress and the loop starts after.
+    this.store.getState().setAnalysis({
+      mode: "auto",
+      phase: "preparing",
+      startedAt: Date.now(),
+      reason: null,
+    });
+    void this.downloadOpenCv().then(() => {
+      // The user may have paused it while it downloaded.
+      if (!this.auto) return;
+      this.ensureSession();
+      this.begin();
+    });
+  }
+
+  private begin() {
     this.store.getState().setAnalysis({
       mode: "auto",
       phase: "waiting",
@@ -105,15 +177,41 @@ export class RealAnalysis implements ScanAnalysis {
 
   /** The change engine's latest status. */
   report(status: ChangeStatus) {
+    this.detector = status;
+    this.refresh();
+  }
+
+  /**
+   * What the scheduler is told. While the tracking follows the scene, the
+   * engine's "camera moved" and "scene lost" (it only understands a shift) are
+   * not changes: the masks move with the scene. The models are asked again only
+   * when the tracking is lost or when, motion aside, some regions differ.
+   */
+  private effectiveStatus(tracking: TrackingStatus): ChangeStatus {
+    const detector = this.detector;
+    if (tracking === "off") return detector;
+    // Still settling: never analyze a frame in motion.
+    if (detector === "calibrating" || detector === "moving") return detector;
+    if (tracking === "lost") return "scene-lost";
+    return this.session?.changed() ? "changed" : "stable";
+  }
+
+  /** Recomputes what to tell the scheduler and whether the masks are stale. */
+  private refresh() {
     const state = this.store.getState();
-    const moved = status === "camera-moved" || status === "scene-lost";
-    if (moved && state.detections.length > 0 && !state.analysis.stale) {
-      state.setAnalysis({ stale: true });
-    }
-    // Another object in front of the camera: what Spark planned no longer applies.
-    if (status === "scene-lost") {
+    const tracking = this.session?.status() ?? "off";
+    // Another object in front of the camera: what Spark planned no longer
+    // applies. A scene the tracking still follows (a board turned around) is
+    // the same one, even if the engine no longer recognizes it.
+    if (this.detector === "scene-lost" && tracking !== "tracking") {
       this.plan = null;
       this.reviews.reset();
+    }
+    const status = this.effectiveStatus(tracking);
+    const moved = status === "camera-moved" || status === "scene-lost";
+    const stale = tracking === "lost" || (tracking === "off" && moved);
+    if (stale && state.detections.length > 0 && !state.analysis.stale) {
+      state.setAnalysis({ stale: true });
     }
     this.scheduler.report(status);
   }
@@ -121,6 +219,8 @@ export class RealAnalysis implements ScanAnalysis {
   dispose() {
     this.scheduler.dispose();
     this.reviews.reset();
+    this.session?.dispose();
+    this.session = null;
   }
 
   private async run(signal: AbortSignal): Promise<Outcome> {
@@ -129,27 +229,51 @@ export class RealAnalysis implements ScanAnalysis {
       throw new AnalyzeClientError("unknown", "La cámara aún no está lista");
     }
     const startedAt = performance.now();
-    const frame = await captureFrame(video);
-    const { sessionId, labCase } = this.store.getState();
-    // Only the automatic mode watches the scene: a manual capture is
-    // deliberate and may be of something else, so it asks Spark again.
-    const plan = this.auto && this.plan ? this.plan : undefined;
-    const response = await requestAnalysis(frame, sessionId, {
-      signal,
-      context: labCase?.context || undefined,
-      judgesCondition: labCase?.judgesCondition,
-      apiKey: readApiKey() ?? undefined,
-      plan,
-    });
-    return {
-      response,
-      latencyMs: Math.round(performance.now() - startedAt),
-      frame,
-      planReused: plan !== undefined,
-    };
+    // The tracking takes THIS frame as the reference of what comes back, and
+    // keeps following the video while the request is in flight. The masks on
+    // screen are the objects, wherever each one is now: the tracking follows
+    // what is inside their outlines and ignores the table and the hands.
+    const { detections, view } = this.store.getState();
+    const tracked =
+      this.ensureSession()?.mark(
+        detections.map((d) => {
+          const motion = viewFor(view, d.id);
+          return motion ? movePolygon(d.polygon, motion) : d.polygon;
+        }),
+      ) ?? false;
+    try {
+      const frame = await captureFrame(video);
+      const { sessionId, labCase } = this.store.getState();
+      // Only the automatic mode watches the scene: a manual capture is
+      // deliberate and may be of something else, so it asks Spark again.
+      const plan = this.auto && this.plan ? this.plan : undefined;
+      const response = await requestAnalysis(frame, sessionId, {
+        signal,
+        context: labCase?.context || undefined,
+        judgesCondition: labCase?.judgesCondition,
+        apiKey: readApiKey() ?? undefined,
+        plan,
+      });
+      return {
+        response,
+        latencyMs: Math.round(performance.now() - startedAt),
+        frame,
+        planReused: plan !== undefined,
+        tracked,
+      };
+    } catch (error) {
+      this.session?.discard();
+      throw error;
+    }
   }
 
-  private publish({ response, latencyMs, frame, planReused }: Outcome) {
+  private publish({
+    response,
+    latencyMs,
+    frame,
+    planReused,
+    tracked,
+  }: Outcome) {
     const state = this.store.getState();
     const now = Date.now();
     // A plan Spark just made is a new scene: what was reviewed no longer applies.
@@ -158,15 +282,38 @@ export class RealAnalysis implements ScanAnalysis {
     this.plan = response.plan.length > 0 ? response.plan : null;
     this.reviews.learn(response.plan);
     // Every analysis is a full picture of the frame: replace the list, keeping
-    // the ids of what is still there.
-    const next = trackDetections(
-      state.detections,
-      response.components.map((detection) => ({ ...detection, seenAt: now })),
+    // the ids of what is still there. The new masks were found on a frame taken
+    // seconds ago: the tracking carries each one to where its object is now, so
+    // that they and the old ones (shown where their objects are) can be matched.
+    const incoming = response.components.map((detection) => ({
+      ...detection,
+      seenAt: now,
+    }));
+    const session = tracked ? this.session : null;
+    const placed = session ? session.place(incoming) : incoming;
+    const onScreen = state.detections.map((d) => {
+      const motion = viewFor(state.view, d.id);
+      return motion ? { ...d, bbox: moveBox(d.bbox, motion) } : d;
+    });
+    const matched = trackDetections(
+      onScreen,
+      placed,
       () => `object-${++this.idCounter}`,
     );
+    // Only the ids come from the match. `next` is where the objects are now;
+    // `analyzed` is the same masks on the frame the models looked at, which is
+    // what Spark's review must be shown.
+    const next = placed.map((detection, i) => ({
+      ...detection,
+      id: matched[i]!.id,
+    }));
+    const analyzed = incoming.map((detection, i) => ({
+      ...detection,
+      id: matched[i]!.id,
+    }));
     const { labCase } = state;
     this.reviews.begin(
-      next,
+      analyzed,
       frame,
       {
         context: labCase?.context || undefined,
@@ -181,6 +328,11 @@ export class RealAnalysis implements ScanAnalysis {
             this.reviews.decorate(this.store.getState().detections),
           ),
     );
+    // From here the tracking follows the masks where their objects are now.
+    if (this.session) {
+      if (tracked) this.session.commit(next);
+      else this.session.clear();
+    }
     state.replaceDetections(this.reviews.decorate(next));
     this.store.getState().setAnalysis({
       latencyMs,

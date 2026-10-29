@@ -106,6 +106,27 @@ async function segmentPhrases(
     for (const rank of ranked.slice(1)) losers.add(rank.phrase);
   }
 
+  if (process.env.NODE_ENV !== "production") {
+    // Development only: what each wording returned, to tell a weak analysis
+    // from a failed call (a failed phrase is otherwise silent).
+    const byPhrase = new Map(settled.map((s) => [s.phrase, s]));
+    const describe = (phrase: string) => {
+      const s = byPhrase.get(phrase)!;
+      const count = s.error ? `ERROR ${s.error.kind}` : s.instances.length;
+      return `"${phrase}" -> ${count}${losers.has(phrase) ? " (dropped)" : ""}`;
+    };
+    const lines = (options.groups ?? []).map(
+      (group) =>
+        `  ${group
+          .filter((phrase) => byPhrase.has(phrase))
+          .map(describe)
+          .join(" | ")}`,
+    );
+    console.info(
+      `[analyze] SAM: ${phrases.length} wordings, ${failed.length} failed, ${Date.now() - startedAt} ms\n${lines.join("\n")}`,
+    );
+  }
+
   // Every mask of every phrase, in reading order inside its phrase.
   const candidates: PhraseCandidate[] = settled.flatMap(
     ({ phrase, instances }, phraseIndex) =>
@@ -186,6 +207,7 @@ export async function analyzeScene(
         signal,
       });
 
+  const planMs = Date.now() - startedAt;
   if (parts.length === 0) {
     return {
       components: [],
@@ -209,6 +231,11 @@ export async function analyzeScene(
     signal,
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info(
+      `[analyze] ${options.plan?.length ? "plan reused" : "plan asked to Spark"}: ${parts.length} parts in ${planMs} ms · total ${Date.now() - startedAt} ms · ${components.length} masks`,
+    );
+  }
   return {
     components,
     plan: parts,
