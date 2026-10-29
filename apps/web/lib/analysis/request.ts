@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_SAM_PHRASES, partSchema } from "./scene";
 
 /** About 3 MB of JPEG once decoded; a 1280 px frame is far smaller. */
 const MAX_IMAGE_CHARS = 4_000_000;
@@ -18,6 +19,11 @@ export const analyzeRequestSchema = z.object({
   context: z.string().max(1200).optional(),
   /** False for inventory cases (Legos): everything is reported as ok. */
   judgesCondition: z.boolean().default(true),
+  /**
+   * The parts a previous analysis of this same scene planned: Spark is not
+   * called again. It comes from the browser, so it is validated like any input.
+   */
+  plan: z.array(partSchema).max(MAX_SAM_PHRASES).optional(),
 });
 
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;

@@ -1,35 +1,25 @@
 import { z } from "zod";
-import { COMPONENT_STATUSES } from "../component-status";
 
-/** Most objects one analysis will segment: bounds cost and latency. */
-export const MAX_SCENE_OBJECTS = 12;
+/** Most parts (what Spark asks SAM to find) one analysis may plan. */
+export const MAX_SAM_PHRASES = 8;
 
-/** Side of the grid Muse Spark reports boxes on. */
-export const GRID = 1000;
+/** Most wordings Spark may give for one part (each one is a SAM call). */
+export const MAX_VARIANTS = 3;
 
 /**
- * One thing the AI found in the frame, before it is segmented. This is what
- * Muse Spark returns (validated) and what SAM receives as an object prompt.
+ * One part of what Muse Spark sees that is worth inspecting, with several
+ * wordings of it: SAM reacts very differently to near-synonyms, so the analysis
+ * asks with all of them and keeps the one SAM understood best.
  */
-export const sceneObjectSchema = z.object({
+export const partSchema = z.object({
   /** Name for the user, in Spanish. */
   label: z.string().trim().min(1).max(60),
-  /** Short English noun phrase naming the object. */
-  concept: z.string().trim().min(1).max(60),
-  /** [x_min, y_min, x_max, y_max] on a 0..1000 grid over the frame. */
-  box: z.tuple([
-    z.number().min(0).max(GRID),
-    z.number().min(0).max(GRID),
-    z.number().min(0).max(GRID),
-    z.number().min(0).max(GRID),
-  ]),
-  status: z.enum(COMPONENT_STATUSES),
-  /** One sentence in Spanish saying why; empty when the object is fine. */
-  reason: z.string().trim().max(200),
+  /** Different English wordings of the SAME single part. */
+  phrases: z.array(z.string().trim().min(1).max(60)).min(1).max(MAX_VARIANTS),
 });
 
-export type SceneObject = z.infer<typeof sceneObjectSchema>;
-
-export const sceneSchema = z.object({
-  objects: z.array(sceneObjectSchema),
+export const partPlanSchema = z.object({
+  parts: z.array(partSchema),
 });
+
+export type PlannedPart = z.infer<typeof partSchema>;

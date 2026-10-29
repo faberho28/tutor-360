@@ -1,7 +1,9 @@
 import {
   parseImageStream,
   recordsOfKind,
+  type ResponseStreamOutcome,
   type SegmentationDiagnostic,
+  type SegmentationRecord,
 } from "@meta-sam/parser";
 import type { BoundingBox, Point } from "../types";
 import { ModelError, toModelError } from "./errors";
@@ -21,6 +23,9 @@ export type SegmentationReading = {
   instances: SegmentedInstance[];
   /** Lines the parser could not use; kept so callers can log them. */
   diagnostics: readonly SegmentationDiagnostic[];
+  /** What the parser understood, untouched; the lab writes it down. */
+  records: readonly SegmentationRecord[];
+  outcome: ResponseStreamOutcome;
 };
 
 /** Reads a SAM response stream (real or simulated) into normalized instances. */
@@ -58,5 +63,10 @@ export async function readSegmentation(
       ...shape,
     });
   }
-  return { instances, diagnostics: result.diagnostics };
+  return {
+    instances,
+    diagnostics: result.diagnostics,
+    records: result.records,
+    outcome: result.outcome,
+  };
 }
