@@ -1,7 +1,6 @@
 import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
 import { formatAgo, statusLabel } from "@/lib/copy";
-import { LABELS_ES } from "@/lib/overlay-theme";
 import { useServices } from "@/lib/services/context";
 import type { Detection } from "@/lib/types";
 
@@ -50,9 +49,7 @@ export function ComponentRow({
     >
       <Thumbnail detection={detection} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium">
-          {LABELS_ES[detection.cls]}
-        </p>
+        <p className="truncate text-xs font-medium">{detection.label}</p>
         <p className="truncate text-xs text-muted-foreground">{meta}</p>
       </div>
       <Badge variant={detection.status}>{statusLabel[detection.status]}</Badge>

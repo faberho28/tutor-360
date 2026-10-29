@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { LABELS_ES } from "@/lib/overlay-theme";
 import { useSession } from "@/lib/session/session-provider";
 
 export function useNewAnomalyToast() {
@@ -21,7 +20,7 @@ export function useNewAnomalyToast() {
     for (const detection of anomalies) {
       if (announced.current.has(detection.id)) continue;
       announced.current.add(detection.id);
-      toast.warning(`${LABELS_ES[detection.cls]} detectado`, {
+      toast.warning(`${detection.label} detectado`, {
         id: `anomaly-${detection.id}`,
       });
     }

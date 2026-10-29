@@ -5,7 +5,6 @@ import type {
   Capture,
   Detection,
   DiagnosisEntry,
-  FrameSource,
   Model3DState,
   StageState,
 } from "../types";
@@ -17,7 +16,7 @@ import type { LabCaseSnapshot } from "../lab/cases";
 export type SessionState = {
   sessionId: string;
   name: string;
-  /** What the user chose to scan in the Laboratorio; null on /demo. */
+  /** What the user chose to scan in the Laboratorio. */
   labCase: LabCaseSnapshot | null;
   stage: StageState;
   analysis: AnalysisState;
@@ -33,8 +32,6 @@ export type SessionState = {
   skippedSteps: Record<string, number[]>;
   /** Detections the user added to the report. */
   reportIds: string[];
-  /** "demo" only when requested via URL params. */
-  source: FrameSource;
   cameraDevices: CameraDevice[];
   /** Requested device (null = default). */
   cameraDeviceId: string | null;
@@ -43,7 +40,6 @@ export type SessionState = {
 };
 
 export type SessionActions = {
-  setSource: (source: FrameSource) => void;
   setCameraDevices: (devices: CameraDevice[]) => void;
   setCameraDeviceId: (id: string | null) => void;
   setCameraActiveId: (id: string | null) => void;
@@ -103,7 +99,6 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     completedSteps: {},
     skippedSteps: {},
     reportIds: [],
-    source: "camera",
     cameraDevices: [],
     cameraDeviceId: null,
     cameraActiveId: null,
@@ -121,7 +116,6 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
   return createStore<SessionSlice>()((set) => ({
     ...freshState(initial),
 
-    setSource: (source) => set({ source }),
     setCameraDevices: (cameraDevices) => set({ cameraDevices }),
     setCameraDeviceId: (cameraDeviceId) => set({ cameraDeviceId }),
     setCameraActiveId: (cameraActiveId) => set({ cameraActiveId }),

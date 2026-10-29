@@ -30,7 +30,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 /**
  * Session summary and captures, with the report generation the page provides
- * (simulated on /demo, unavailable on the main page until HU-26 and HU-27).
+ * (unavailable until HU-26 and HU-27).
  */
 export function ReportDialog({
   open,

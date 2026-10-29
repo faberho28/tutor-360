@@ -1,7 +1,8 @@
-import { Cpu, Settings } from "lucide-react";
+import { Cpu, KeyRound, Settings } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
+import { ApiKeyDialog } from "@/components/scan/api-key-dialog";
 import { SettingsDialog } from "@/components/scan/settings-dialog";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +41,20 @@ export function TopBar({
       <div className="min-w-0 flex-1">{children}</div>
       <div className="flex shrink-0 items-center gap-2">
         {trailing}
+        <ApiKeyDialog>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Llave de la IA"
+          >
+            <KeyRound
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={1.75}
+            />
+          </Button>
+        </ApiKeyDialog>
         <SettingsDialog>
           <Button
             type="button"

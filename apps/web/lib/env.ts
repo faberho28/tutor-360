@@ -1,27 +1,16 @@
 import "server-only";
 import { z } from "zod";
-import { COMPONENT_CLASSES } from "./component-status";
 
-const classListSchema = z
-  .string()
-  .transform((value) =>
-    value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-  )
-  .pipe(z.array(z.enum(COMPONENT_CLASSES)).min(1))
-  .default([...COMPONENT_CLASSES]);
-
-// Only the key is mandatory; everything else has a documented default.
+// Everything has a default. The key is optional here because the user can send
+// their own from Ajustes; without either, the model calls fail as not_configured.
 const envSchema = z.object({
-  MODEL_API_KEY: z.string().min(1),
+  MODEL_API_KEY: z.string().min(1).optional(),
   MODEL_API_BASE_URL: z.string().min(1).default("https://api.meta.ai/v1"),
   SEGMENTATION_MODEL: z.string().min(1).default("sam-3.1"),
+  /** Reads the scene: names and locates what is in the frame (Muse Spark). */
+  SCENE_MODEL: z.string().min(1).default("muse-spark-1.3"),
   DIAGNOSIS_MODEL: z.string().min(1).default("muse-spark-1.3"),
   SEGMENT_SCORE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.85),
-  /** Comma-separated subset of component classes to analyze. */
-  ANALYSIS_CLASSES: classListSchema,
 });
 
 export type Env = z.infer<typeof envSchema>;

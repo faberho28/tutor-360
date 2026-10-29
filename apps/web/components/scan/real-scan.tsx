@@ -7,8 +7,7 @@ import { realServices } from "@/lib/services/real";
 import { SessionProvider } from "@/lib/session/session-provider";
 
 /**
- * The real scan screen: real camera and no simulated results. Nothing here may
- * depend on lib/fixtures or components/demo.
+ * The scan screen: real camera and no simulated results.
  */
 export function RealScan({ labCase }: { labCase: LabCaseSnapshot }) {
   return (

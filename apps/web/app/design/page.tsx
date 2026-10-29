@@ -4,8 +4,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { COMPONENT_CLASSES } from "@/lib/component-status";
-import { LABELS_ES, OVERLAY } from "@/lib/overlay-theme";
+import { COMPONENT_STATUSES } from "@/lib/component-status";
+import { OVERLAY } from "@/lib/overlay-theme";
 
 // Static class names so Tailwind can generate each utility.
 const SWATCHES = [
@@ -107,13 +107,13 @@ export default function DesignPage() {
         </div>
       </Section>
 
-      <Section title="Overlay por clase">
+      <Section title="Overlay por estado">
         <ul className="grid gap-2 sm:grid-cols-2">
-          {COMPONENT_CLASSES.map((cls) => {
-            const entry = OVERLAY[cls];
+          {COMPONENT_STATUSES.map((status) => {
+            const entry = OVERLAY[status];
             return (
               <li
-                key={cls}
+                key={status}
                 className="flex items-center gap-3 rounded-xl bg-muted p-3"
               >
                 <span
@@ -131,15 +131,21 @@ export default function DesignPage() {
                   }}
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-sm font-medium">{LABELS_ES[cls]}</span>
+                  <span className="text-sm font-medium">
+                    {status === "anomaly"
+                      ? "Anomalía"
+                      : status === "warning"
+                        ? "Revisar"
+                        : "OK"}
+                  </span>
                   <span className="text-xs text-muted-foreground">
-                    {cls} · {entry.color}
+                    {status} · {entry.color}
                   </span>
                 </div>
-                <Badge variant={entry.status}>
-                  {entry.status === "anomaly"
+                <Badge variant={status}>
+                  {status === "anomaly"
                     ? "Anomalía"
-                    : entry.status === "warning"
+                    : status === "warning"
                       ? "Revisar"
                       : "OK"}
                 </Badge>

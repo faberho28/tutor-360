@@ -10,8 +10,7 @@ const TOAST_ID = "analysis-failure";
 
 /**
  * Tells the user, in a toast that stays until it is solved or closed, that the
- * analysis failed. It follows the store, so the real and the demo analysis
- * share it. One toast: a failure that repeats updates it instead of stacking.
+ * analysis failed. It follows the store. One toast: a failure that repeats updates it instead of stacking.
  */
 export function useAnalysisFailureToast(analysis: ScanAnalysis) {
   const phase = useSession((s) => s.analysis.phase);

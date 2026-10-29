@@ -1,7 +1,6 @@
 /**
- * Where detections come from. The simulated source (lib/fixtures/mock-source)
- * and the real one (HU-18, camera + /api/analyze) implement the same contract,
- * so the screen does not change when the data becomes real.
+ * Where detections come from (the camera + /api/analyze). The screen only
+ * depends on this contract.
  *
  * A source writes its results into the session store.
  */

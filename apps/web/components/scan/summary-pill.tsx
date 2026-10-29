@@ -11,7 +11,7 @@ import { useSession } from "@/lib/session/session-provider";
 
 const MAX_DOTS = 4;
 
-/** "8 componentes · 2 anomalías · 1 por revisar" with a dot per class found. */
+/** "8 componentes · 2 anomalías · 1 por revisar" with a dot per status found. */
 export function SummaryPill() {
   const detections = useSession(useShallow((s) => s.detections));
 
@@ -20,7 +20,7 @@ export function SummaryPill() {
     [detections],
   );
   const colors = useMemo(
-    () => [...new Set(detections.map((d) => OVERLAY[d.cls].color))],
+    () => [...new Set(detections.map((d) => OVERLAY[d.status].color))],
     [detections],
   );
 

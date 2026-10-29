@@ -12,17 +12,14 @@ export type ScanAnalysis = AnalysisSource & {
   report(status: ChangeStatus): void;
   /** The "retry" button of the connection banner. */
   retry(): void;
-  /**
-   * The image to save in a capture, or null when it is not ready. A simulated
-   * source runs one analysis first so the capture has detections.
-   */
+  /** The image to save in a capture, or null when it is not ready. */
   snapshot(): Promise<HTMLImageElement | HTMLVideoElement | null>;
 };
 
 /**
- * Everything the scan screen needs that can be simulated. The real page and
- * the demo page provide different implementations (see lib/services/real.tsx
- * and demo.tsx), so shared components never import fixtures.
+ * Everything the scan screen needs from the outside world (analysis,
+ * diagnosis, 3D, report). Where a real implementation does not exist yet,
+ * lib/services/real.ts says so instead of faking a result.
  */
 export type ScanServices = {
   /** Writes the progress of a diagnosis for `detection` into the store. */
@@ -39,8 +36,4 @@ export type ScanServices = {
     store: SessionStore,
     getVideo: () => HTMLVideoElement | null,
   ): ScanAnalysis;
-  /** The demo photo and its overlay, in place of the camera. Demo only. */
-  DemoStage: ComponentType | null;
-  /** The development menu to switch scenarios. Demo only. */
-  DevTools: ComponentType | null;
 };

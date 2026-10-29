@@ -1,6 +1,5 @@
 import {
   LABEL_BG,
-  LABELS_ES,
   OVERLAY,
   SELECTED_DIM_FILL,
   STROKE_REDUCED_MOTION,
@@ -109,7 +108,7 @@ export function drawOverlay(
 
   for (const d of ordered) {
     const shape = byId.get(d.id)!;
-    const style = OVERLAY[d.cls];
+    const style = OVERLAY[d.status];
     const isSelected = d.id === selectedId;
     const isHovered = d.id === hoveredId && !isSelected;
     const dimmed = selectedId !== null && !isSelected;
@@ -130,7 +129,7 @@ export function drawOverlay(
     ctx.fill();
 
     if (isSelected) {
-      // White border with a ring in the class color around it.
+      // White border with a ring in the status color around it.
       ctx.lineJoin = "round";
       ctx.setLineDash([]);
       ctx.strokeStyle = style.color;
@@ -165,7 +164,7 @@ export function drawOverlay(
   );
   const specs: LabelSpec[] = labeled.map((id, index) => ({
     id,
-    text: LABELS_ES[detectionById.get(id)!.cls],
+    text: detectionById.get(id)!.label,
     anchor: byId.get(id)!.bounds,
     priority: index,
   }));
@@ -176,7 +175,7 @@ export function drawOverlay(
   for (const placement of placements) {
     if (!placement.rect) continue;
     const r = placement.rect;
-    const text = LABELS_ES[detectionById.get(placement.id)!.cls];
+    const text = detectionById.get(placement.id)!.label;
     ctx.fillStyle = LABEL_BG;
     ctx.beginPath();
     ctx.roundRect(r.x, r.y, r.w, r.h, LABEL_HEIGHT / 2);

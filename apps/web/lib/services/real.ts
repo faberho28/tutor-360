@@ -4,9 +4,8 @@ import { RealAnalysis } from "../analysis/real-analysis";
 import type { ScanServices } from "./types";
 
 /**
- * Services of the real page. This file must not import anything from
- * lib/fixtures or components/demo (ESLint enforces it): where a real
- * implementation does not exist yet, it says so instead of faking a result.
+ * Services of the scan page: where a real implementation does not exist yet,
+ * it says so instead of faking a result.
  */
 export const realServices: ScanServices = {
   // The real diagnosis arrives with HU-20 and HU-21.
@@ -27,6 +26,4 @@ export const realServices: ScanServices = {
   // Cut from the analyzed frame once the diagnosis crops exist (HU-21).
   Thumbnail: PlaceholderThumbnail,
   createAnalysis: (store, getVideo) => new RealAnalysis(store, getVideo),
-  DemoStage: null,
-  DevTools: null,
 };

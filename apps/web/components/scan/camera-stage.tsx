@@ -12,25 +12,21 @@ import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useChangeDetection } from "@/hooks/use-change-detection";
 import { useCamera } from "@/lib/camera/use-camera";
-import { useServices } from "@/lib/services/context";
 import { useSession } from "@/lib/session/session-provider";
 
 /**
- * The camera stage: the live camera (the demo photo only on /demo), the mask
- * overlay on top, and the corner controls.
+ * The camera stage: the live camera, the mask overlay on top, and the corner
+ * controls.
  */
 export function CameraStage() {
-  const { DemoStage, DevTools } = useServices();
   const stage = useSession((s) => s.stage);
-  const source = useSession((s) => s.source);
   const deviceId = useSession((s) => s.cameraDeviceId);
-  const demo = DemoStage !== null && source === "demo";
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [dims, setDims] = useState({ width: 1280, height: 720 });
   const { analysis, videoRef } = useAnalysis();
   const fullscreen = useFullscreen();
-  const stream = useCamera(!demo, deviceId);
-  const live = !demo && stage === "ready" && stream !== null;
+  const stream = useCamera(true, deviceId);
+  const live = stage === "ready" && stream !== null;
   const change = useChangeDetection(() => videoRef.current, live);
 
   // The analysis reacts to the engine: when to analyze, and when masks are stale.
@@ -47,18 +43,14 @@ export function CameraStage() {
         className="relative size-full overflow-hidden rounded-3xl bg-black [&:fullscreen]:rounded-none"
       >
         {stage === "ready" ? (
-          demo ? (
-            <DemoStage />
-          ) : (
-            <>
-              <LiveCameraSource
-                stream={stream}
-                videoRef={videoRef}
-                onDimensions={setDims}
-              />
-              <OverlayCanvas source={dims} />
-            </>
-          )
+          <>
+            <LiveCameraSource
+              stream={stream}
+              videoRef={videoRef}
+              onDimensions={setDims}
+            />
+            <OverlayCanvas source={dims} />
+          </>
         ) : (
           <StageEmptyState state={stage} />
         )}
@@ -70,7 +62,6 @@ export function CameraStage() {
         <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-3">
           <ControlBar />
         </div>
-        {DevTools ? <DevTools /> : null}
       </div>
     </PortalContainerProvider>
   );

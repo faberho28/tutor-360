@@ -23,7 +23,7 @@ export function sortDetections(detections: readonly Detection[]): Detection[] {
       return b.score - a.score;
     }
 
-    return compareText(a.cls, b.cls) || compareText(a.id, b.id);
+    return compareText(a.label, b.label) || compareText(a.id, b.id);
   });
 }
 

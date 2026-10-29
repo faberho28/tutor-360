@@ -10,7 +10,6 @@ const first = (value: string | string[] | undefined) =>
 /**
  * The scanner needs to know what is being scanned, so it opens with a case
  * from the Laboratorio. Without a valid one the user goes there to pick it.
- * (The simulated experience lives in /demo, which does not exist in production.)
  */
 export default async function ScanPage({
   searchParams,

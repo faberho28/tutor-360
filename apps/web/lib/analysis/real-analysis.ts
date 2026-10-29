@@ -1,5 +1,6 @@
 import { captureFrame, readyVideo } from "../camera/capture-frame";
 import type { ScanAnalysis } from "../services/types";
+import { readApiKey } from "../settings/api-key";
 import type { SessionStore } from "../session/store";
 import type { ChangeStatus } from "../vision/change-detector";
 import { AnalyzeClientError, requestAnalysis } from "./analyze-client";
@@ -107,6 +108,8 @@ export class RealAnalysis implements ScanAnalysis {
     const response = await requestAnalysis(frame, sessionId, {
       signal,
       context: labCase?.context || undefined,
+      judgesCondition: labCase?.judgesCondition,
+      apiKey: readApiKey() ?? undefined,
     });
     return { response, latencyMs: Math.round(performance.now() - startedAt) };
   }
@@ -119,7 +122,7 @@ export class RealAnalysis implements ScanAnalysis {
     const next = trackDetections(
       state.detections,
       response.components.map((detection) => ({ ...detection, seenAt: now })),
-      (cls) => `${cls}-${++this.idCounter}`,
+      () => `object-${++this.idCounter}`,
     );
     state.replaceDetections(next);
     this.store.getState().setAnalysis({

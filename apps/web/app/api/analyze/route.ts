@@ -5,7 +5,9 @@ import type {
   AnalyzeErrorResponse,
 } from "@/lib/analysis/types";
 import { getEnv } from "@/lib/env";
+import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
 import { ModelError, toModelError } from "@/lib/models/errors";
+import { MetaScenePlanner } from "@/lib/models/planner";
 import { MetaSegmenter } from "@/lib/models/segmenter";
 
 const STATUS: Record<AnalyzeErrorKind, number> = {
@@ -55,6 +57,11 @@ export async function POST(request: Request) {
   const parsed = analyzeRequestSchema.safeParse(payload);
   if (!parsed.success) return fail("invalid_input");
 
+  // The user's own key (from Ajustes) wins over the server's. It is only
+  // passed on to the model client: never stored, never logged.
+  const sentKey = request.headers.get(API_KEY_HEADER);
+  if (sentKey !== null && !API_KEY_PATTERN.test(sentKey)) return fail("auth");
+
   try {
     let env;
     try {
@@ -71,8 +78,11 @@ export async function POST(request: Request) {
         height: parsed.data.height,
       },
       {
+        planner: new MetaScenePlanner(),
         segmenter: new MetaSegmenter(),
-        classes: env.ANALYSIS_CLASSES,
+        context: parsed.data.context,
+        judgesCondition: parsed.data.judgesCondition,
+        apiKey: sentKey ?? undefined,
         threshold: env.SEGMENT_SCORE_THRESHOLD,
         signal: request.signal,
       },

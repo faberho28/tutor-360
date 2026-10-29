@@ -33,12 +33,10 @@ export function StageCornerControls({
 }) {
   const latencyMs = useSession((s) => s.analysis.latencyMs);
   const ready = useSession((s) => s.stage === "ready");
-  const source = useSession((s) => s.source);
   const devices = useSession((s) => s.cameraDevices);
   const activeId = useSession((s) => s.cameraActiveId);
   const setCameraDeviceId = useSession((s) => s.setCameraDeviceId);
-  const demo = source === "demo";
-  const value = demo ? "demo" : (activeId ?? "");
+  const value = activeId ?? "";
   const fullscreen = useFullscreen();
 
   function toggleFullscreen() {
@@ -77,7 +75,7 @@ export function StageCornerControls({
             setCameraDeviceId(id);
             savePreferredDevice(id);
           }}
-          disabled={demo || devices.length === 0}
+          disabled={devices.length === 0}
         >
           <SelectTrigger
             aria-label="Cámara"
@@ -89,9 +87,6 @@ export function StageCornerControls({
             <SelectValue placeholder="Sin cámaras" />
           </SelectTrigger>
           <SelectContent align="end">
-            {demo ? (
-              <SelectItem value="demo">Foto de ejemplo</SelectItem>
-            ) : null}
             {devices.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 {item.label}

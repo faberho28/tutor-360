@@ -1,4 +1,4 @@
-import type { ComponentClass, ComponentStatus } from "./component-status";
+import type { ComponentStatus } from "./component-status";
 
 /** Normalized coordinates (0..1) over the analyzed image. */
 export type Point = [number, number];
@@ -8,23 +8,25 @@ export type BoundingBox = { x: number; y: number; w: number; h: number };
 export type Detection = {
   /** Stable while the component stays visible. */
   id: string;
-  cls: ComponentClass;
+  /** Name shown to the user (Spanish), given by the AI. */
+  label: string;
+  /** Short English noun phrase naming the object; used to match it across analyses. */
+  concept: string;
   /** At least three points. */
   polygon: Point[];
   bbox: BoundingBox;
   /** null when the model does not provide a confidence. */
   score: number | null;
-  /** Always equal to STATUS_BY_CLASS[cls]. */
+  /** Condition of the object, decided by the AI ("ok" when the case does not judge). */
   status: ComponentStatus;
+  /** Why the AI gave that status (Spanish, one sentence); null when it gave none. */
+  reason: string | null;
   /** Epoch milliseconds, used for "hace 3 s". */
   seenAt: number;
 };
 
 export type StageState =
   "ready" | "no-permission" | "no-camera" | "loading-model" | "insecure";
-
-/** Where the stage image comes from: the real camera or the demo photo. */
-export type FrameSource = "camera" | "demo";
 
 export type CameraDevice = { id: string; label: string };
 

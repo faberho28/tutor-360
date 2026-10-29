@@ -12,10 +12,7 @@ export function StageEmptyState({
 }: {
   state: Exclude<StageState, "ready">;
 }) {
-  const setStage = useSession((s) => s.setStage);
-  const retryCamera = useSession((s) => s.retryCamera);
-  const source = useSession((s) => s.source);
-  const retry = () => (source === "camera" ? retryCamera() : setStage("ready"));
+  const retry = useSession((s) => s.retryCamera);
 
   if (state === "loading-model") {
     return (

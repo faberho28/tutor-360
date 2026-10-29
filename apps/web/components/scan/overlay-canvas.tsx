@@ -55,7 +55,9 @@ export function OverlayCanvas({
 
     const font = `500 12px ${getComputedStyle(document.body).fontFamily}`;
     const animate =
-      !reducedMotion && !stale && detections.some((d) => OVERLAY[d.cls].pulse);
+      !reducedMotion &&
+      !stale &&
+      detections.some((d) => OVERLAY[d.status].pulse);
     let frame = 0;
 
     const render = (now: number) => {

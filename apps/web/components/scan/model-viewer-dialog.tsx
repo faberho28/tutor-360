@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReturnFocus } from "@/hooks/use-return-focus";
-import { LABELS_ES } from "@/lib/overlay-theme";
 import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
@@ -33,11 +32,11 @@ export function ModelViewerDialog() {
   const detections = useSession((s) => s.detections);
   const open = model.status !== "idle";
   const returnFocus = useReturnFocus(open);
-  const cls =
+  const name =
     model.status === "idle"
-      ? null
-      : (detections.find((d) => d.id === model.detectionId)?.cls ?? null);
-  const name = cls ? LABELS_ES[cls] : "Componente";
+      ? "Componente"
+      : (detections.find((d) => d.id === model.detectionId)?.label ??
+        "Componente");
 
   return (
     <Dialog

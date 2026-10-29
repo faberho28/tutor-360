@@ -1,4 +1,3 @@
-import type { ComponentClass } from "../component-status";
 import type { ModelErrorKind } from "../models/errors";
 import type { Detection } from "../types";
 
@@ -10,8 +9,6 @@ export type AnalyzeResponse = {
   timestamp: number;
   /** Server time spent analyzing, not the full round trip. */
   latencyMs: number;
-  /** Classes whose call failed while others succeeded (partial result). */
-  failedClasses: ComponentClass[];
 };
 
 export type AnalyzeErrorKind = ModelErrorKind | "invalid_input";

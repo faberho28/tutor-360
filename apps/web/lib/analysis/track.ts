@@ -1,8 +1,11 @@
 import type { Detection } from "../types";
 import { bboxIou } from "./iou";
 
-/** Same class and at least this much overlap: it is the same component. */
+/** Same concept and at least this much overlap: it is the same component. */
 export const TRACK_IOU = 0.5;
+
+const sameConcept = (a: Detection, b: Detection) =>
+  a.concept.trim().toLowerCase() === b.concept.trim().toLowerCase();
 
 /**
  * Gives the new detections the ids of the previous ones they match, so the
@@ -14,12 +17,12 @@ export const TRACK_IOU = 0.5;
 export function trackDetections(
   previous: readonly Detection[],
   incoming: readonly Detection[],
-  newId: (cls: Detection["cls"]) => string,
+  newId: () => string,
 ): Detection[] {
   const pairs: { prev: number; next: number; iou: number }[] = [];
   incoming.forEach((next, nextIndex) => {
     previous.forEach((prev, prevIndex) => {
-      if (prev.cls !== next.cls) return;
+      if (!sameConcept(prev, next)) return;
       const iou = bboxIou(prev.bbox, next.bbox);
       if (iou >= TRACK_IOU)
         pairs.push({ prev: prevIndex, next: nextIndex, iou });
@@ -39,6 +42,6 @@ export function trackDetections(
 
   return incoming.map((detection, index) => ({
     ...detection,
-    id: idFor.get(index) ?? newId(detection.cls),
+    id: idFor.get(index) ?? newId(),
   }));
 }

@@ -3,7 +3,7 @@
 import { Loader } from "lucide-react";
 import { useEffect, type RefObject } from "react";
 
-/** The camera video, filling the stage like the demo photo does. */
+/** The camera video, filling the stage. */
 export function LiveCameraSource({
   stream,
   videoRef,

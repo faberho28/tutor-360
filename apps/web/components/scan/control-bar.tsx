@@ -46,7 +46,7 @@ function Hint({
 
 /**
  * Floating bar: capture, automatic analysis, 3D view and report. It drives the
- * analysis the page provides: simulated on /demo, real on the main page.
+ * analysis the page provides.
  */
 export function ControlBar() {
   const store = useSessionStore();

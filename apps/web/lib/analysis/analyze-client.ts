@@ -1,4 +1,5 @@
 import type { CapturedFrame } from "../camera/capture-frame";
+import { API_KEY_HEADER } from "../settings/api-key";
 import type {
   AnalyzeErrorKind,
   AnalyzeErrorResponse,
@@ -46,11 +47,7 @@ export class AnalyzeClientError extends Error {
 function isAnalyzeResponse(body: unknown): body is AnalyzeResponse {
   if (typeof body !== "object" || body === null) return false;
   const value = body as Partial<AnalyzeResponse>;
-  return (
-    Array.isArray(value.components) &&
-    Array.isArray(value.failedClasses) &&
-    typeof value.timestamp === "number"
-  );
+  return Array.isArray(value.components) && typeof value.timestamp === "number";
 }
 
 function serverError(status: number, body: unknown): AnalyzeClientError {
@@ -83,6 +80,10 @@ export async function requestAnalysis(
     endpoint?: string;
     /** The Laboratorio case context, sent along for the server to use. */
     context?: string;
+    /** Whether the case judges condition; false reports everything as ok. */
+    judgesCondition?: boolean;
+    /** The user's own model API key (Ajustes); sent in a header, not the body. */
+    apiKey?: string;
   } = {},
 ): Promise<AnalyzeResponse> {
   const {
@@ -90,6 +91,8 @@ export async function requestAnalysis(
     timeoutMs = TIMEOUT_MS,
     endpoint = "/api/analyze",
     context,
+    judgesCondition,
+    apiKey,
   } = options;
   const controller = new AbortController();
   let timedOut = false;
@@ -114,13 +117,17 @@ export async function requestAnalysis(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(apiKey ? { [API_KEY_HEADER]: apiKey } : {}),
+      },
       body: JSON.stringify({
         image: frame.dataUrl,
         width: frame.width,
         height: frame.height,
         sessionId,
         context,
+        judgesCondition,
       }),
       signal: controller.signal,
     });

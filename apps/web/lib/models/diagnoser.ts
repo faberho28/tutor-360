@@ -1,8 +1,11 @@
-import type { ComponentClass } from "../component-status";
+import type { ComponentStatus } from "../component-status";
 import type { Diagnosis } from "../types";
 
 export type DiagnoseInput = {
-  cls: ComponentClass;
+  /** Name of the object (Spanish) and what the scene reading said about it. */
+  label: string;
+  status: ComponentStatus;
+  reason: string | null;
   /** `data:image/jpeg;base64,...` of the component crop. */
   cropDataUrl: string;
   signal?: AbortSignal;
