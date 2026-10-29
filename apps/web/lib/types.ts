@@ -23,6 +23,8 @@ export type Detection = {
   reason: string | null;
   /** Epoch milliseconds, used for "hace 3 s". */
   seenAt: number;
+  /** True while Spark is still reviewing the name and the status of this part. */
+  reviewing?: boolean;
 };
 
 export type StageState =

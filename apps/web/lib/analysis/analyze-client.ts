@@ -1,13 +1,17 @@
 import type { CapturedFrame } from "../camera/capture-frame";
 import { API_KEY_HEADER } from "../settings/api-key";
+import type { PlannedPart } from "./scene";
 import type {
   AnalyzeErrorKind,
   AnalyzeErrorResponse,
   AnalyzeResponse,
 } from "./types";
 
-/** Past this the screen treats the AI as offline. */
-const TIMEOUT_MS = 10_000;
+/**
+ * Past this the screen treats the AI as offline. The first analysis of a scene
+ * asks Spark (3 to 5 s) and then runs up to 24 SAM calls (2 to 3 s).
+ */
+const TIMEOUT_MS = 20_000;
 
 const KINDS: readonly AnalyzeErrorKind[] = [
   "invalid_input",
@@ -47,7 +51,11 @@ export class AnalyzeClientError extends Error {
 function isAnalyzeResponse(body: unknown): body is AnalyzeResponse {
   if (typeof body !== "object" || body === null) return false;
   const value = body as Partial<AnalyzeResponse>;
-  return Array.isArray(value.components) && typeof value.timestamp === "number";
+  return (
+    Array.isArray(value.components) &&
+    Array.isArray(value.plan) &&
+    typeof value.timestamp === "number"
+  );
 }
 
 function serverError(status: number, body: unknown): AnalyzeClientError {
@@ -84,6 +92,8 @@ export async function requestAnalysis(
     judgesCondition?: boolean;
     /** The user's own model API key (Ajustes); sent in a header, not the body. */
     apiKey?: string;
+    /** The parts planned for this scene: the server then skips Spark. */
+    plan?: PlannedPart[];
   } = {},
 ): Promise<AnalyzeResponse> {
   const {
@@ -93,6 +103,7 @@ export async function requestAnalysis(
     context,
     judgesCondition,
     apiKey,
+    plan,
   } = options;
   const controller = new AbortController();
   let timedOut = false;
@@ -128,6 +139,7 @@ export async function requestAnalysis(
         sessionId,
         context,
         judgesCondition,
+        plan,
       }),
       signal: controller.signal,
     });

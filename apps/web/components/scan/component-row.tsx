@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { Loader } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatAgo, statusLabel } from "@/lib/copy";
 import { useServices } from "@/lib/services/context";
@@ -49,10 +50,26 @@ export function ComponentRow({
     >
       <Thumbnail detection={detection} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium">{detection.label}</p>
+        <p className="flex items-center gap-1.5 text-xs font-medium">
+          {detection.reviewing ? (
+            <Loader
+              aria-hidden="true"
+              className="size-3 shrink-0 text-muted-foreground motion-safe:animate-spin"
+            />
+          ) : null}
+          <span className="truncate">{detection.label}</span>
+        </p>
         <p className="truncate text-xs text-muted-foreground">{meta}</p>
       </div>
-      <Badge variant={detection.status}>{statusLabel[detection.status]}</Badge>
+      {detection.reviewing ? (
+        <span role="status" className="sr-only">
+          Revisando
+        </span>
+      ) : (
+        <Badge variant={detection.status}>
+          {statusLabel[detection.status]}
+        </Badge>
+      )}
     </div>
   );
 }
