@@ -51,11 +51,11 @@ export type TrackedMask = {
  */
 export const TRACKING = {
   /** Corners looked for in the reference frame. */
-  maxPoints: 300,
+  maxPoints: 1000,
   /** Fraction of the strongest corner a candidate must reach. */
-  quality: 0.01,
+  quality: 0.001,
   /** Minimum distance between corners, in pixels of the tracked frame. */
-  minDistance: 8,
+  minDistance: 2,
   /** A whole frame with fewer corners is too bare to follow (a blank wall). */
   minReferencePoints: 25,
   /** An object's region needs fewer: it is small, and what matters is that they are its own. */
@@ -81,6 +81,19 @@ export const TRACKING = {
   levels: 3,
   /** Optical-flow residual (mean gray levels) above which a point is dropped. */
   maxFlowError: 30,
+  /**
+   * A point tracked back to the previous frame must land this close (pixels) to
+   * where it started: one that does not was dragged by something else (a hand).
+   */
+  forwardBackward: 1.5,
+  /**
+   * An object with fewer than this share of its starting corners alive gets new
+   * ones inside where its motion says it is now (the lab's biggest win: points
+   * are lost to hands and blur, and without new ones the track starves).
+   */
+  replenishBelow: 0.6,
+  /** Pixels an object's region is pulled in when looking for new corners. */
+  replenishMargin: 8,
   /** The homography may not squash or blow up the image beyond this scale. */
   minScale: 0.4,
   maxScale: 2.5,
@@ -139,16 +152,20 @@ export class MaskTracker {
   /** The latest pixel homography (reference -> current), for `changedCells`. */
   private lastPixelH: number[] | null = null;
   /** Reference position of each corner, [x0, y0, x1, y1...] in pixels. */
-  private readonly reference: Float32Array;
+  private reference: Float32Array;
   /** Current position of each corner. */
-  private readonly current: Float32Array;
-  private readonly alive: Uint8Array;
+  private current: Float32Array;
+  private alive: Uint8Array;
   /**
    * Which object (separate piece of the region) each corner belongs to. The
    * objects are told apart by where they are, once, when the tracker starts.
    */
-  private readonly component: Uint16Array;
+  private component: Uint16Array;
   private readonly componentCount: number;
+  /** Corners each object started with: the top-up aims for this many. */
+  private readonly target: number[];
+  /** Each object's pixels pulled in from its edge: where new corners may go. */
+  private core: Uint8Array | null = null;
   /** The biggest object: if its motion is lost, the scene is lost. */
   private readonly mainComponent: number;
   /** The main object's pixels (null: the whole frame), what changes are judged on. */
@@ -218,6 +235,8 @@ export class MaskTracker {
       this.mainComponent = 0;
       this.mainRegion = null;
     }
+    this.target = new Array<number>(this.componentCount).fill(0);
+    for (let i = 0; i < points; i++) this.target[this.component[i]!]!++;
   }
 
   /**
@@ -327,6 +346,24 @@ export class MaskTracker {
         TRACKING.levels,
         criteria,
       );
+      // Track back to where each point came from: one that does not return
+      // was dragged along by something else.
+      const back = new cv.Mat();
+      const backStatus = new cv.Mat();
+      const backErr = new cv.Mat();
+      owned.push(back, backStatus, backErr);
+      cv.calcOpticalFlowPyrLK(
+        now,
+        this.previous,
+        nextPts,
+        back,
+        backStatus,
+        backErr,
+        window,
+        TRACKING.levels,
+        criteria,
+      );
+      const returned = back.data32F;
       const next = nextPts.data32F;
       const ok = status.data;
       const residual = err.data32F;
@@ -335,7 +372,18 @@ export class MaskTracker {
         const x = next[2 * k]!;
         const y = next[2 * k + 1]!;
         const inside = x >= 0 && y >= 0 && x < this.width && y < this.height;
-        if (ok[k] === 1 && residual[k]! < TRACKING.maxFlowError && inside) {
+        const returns =
+          backStatus.data[k] === 1 &&
+          Math.hypot(
+            returned[2 * k]! - this.current[2 * i]!,
+            returned[2 * k + 1]! - this.current[2 * i + 1]!,
+          ) < TRACKING.forwardBackward;
+        if (
+          ok[k] === 1 &&
+          residual[k]! < TRACKING.maxFlowError &&
+          inside &&
+          returns
+        ) {
           this.current[2 * i] = x;
           this.current[2 * i + 1] = y;
           kept.push(i);
@@ -438,6 +486,8 @@ export class MaskTracker {
         return [a, -b, tx, b, a, ty, 0, 0, 1];
       });
 
+      this.replenish(now, found);
+
       // The next update follows from this frame.
       this.previous.delete();
       this.previous = now;
@@ -461,6 +511,128 @@ export class MaskTracker {
       // are plain objects.
       for (const mat of owned) mat.delete();
     }
+  }
+
+  /**
+   * New corners for the objects that ran short, found in the current frame
+   * inside where each one's motion says it is. Dead points are dropped on the way
+   * so the arrays do not grow without end. The new corners keep their position
+   * in the REFERENCE (the motion undone), so the fit stays one fit.
+   */
+  private replenish(
+    now: Mat,
+    found: ({
+      fit: { a: number; b: number; tx: number; ty: number };
+      count: number;
+    } | null)[],
+  ) {
+    const alive = new Array<number>(this.componentCount).fill(0);
+    for (let i = 0; i < this.alive.length; i++) {
+      if (this.alive[i] === 1) alive[this.component[i]!]!++;
+    }
+    const needy: number[] = [];
+    found.forEach((f, object) => {
+      if (
+        f &&
+        f.count >= TRACKING.minInliers &&
+        alive[object]! < this.target[object]! * TRACKING.replenishBelow
+      ) {
+        needy.push(object);
+      }
+    });
+    if (needy.length === 0) return;
+
+    const { width, height, cv } = this;
+    if (this.roi && !this.core) {
+      const outside = new Uint8Array(this.roi.length);
+      for (let i = 0; i < outside.length; i++) {
+        outside[i] = this.roi[i] === 1 ? 0 : 1;
+      }
+      const grown = growMask(outside, width, height, TRACKING.replenishMargin);
+      this.core = new Uint8Array(outside.length);
+      for (let i = 0; i < grown.length; i++) {
+        this.core[i] = grown[i] === 1 ? 0 : 1;
+      }
+    }
+
+    const strength = new cv.Mat();
+    const addedRef: number[] = [];
+    const addedNow: number[] = [];
+    const addedObject: number[] = [];
+    try {
+      cv.cornerMinEigenVal(now, strength, 3, 3);
+      for (const object of needy) {
+        const { a, b, tx, ty } = found[object]!.fit;
+        const scale = a * a + b * b;
+        if (scale <= 1e-6) continue;
+        // Where the object is in the current frame: its core, carried by its motion.
+        const region = new Uint8Array(width * height);
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const dx = x - tx;
+            const dy = y - ty;
+            const rx = Math.round((a * dx + b * dy) / scale);
+            const ry = Math.round((-b * dx + a * dy) / scale);
+            if (rx < 0 || ry < 0 || rx >= width || ry >= height) continue;
+            const at = ry * width + rx;
+            if (this.labels) {
+              if (this.core![at] !== 1 || this.labels[at] !== object + 1) {
+                continue;
+              }
+            }
+            region[y * width + x] = 1;
+          }
+        }
+        const want = this.target[object]! - alive[object]!;
+        const corners = pickCorners(strength.data32F, width, height, {
+          max: want,
+          quality: TRACKING.quality,
+          minDistance: TRACKING.minDistance,
+          margin: Math.ceil(TRACKING.window / 2),
+          roi: region,
+        });
+        for (let i = 0; i < corners.length / 2; i++) {
+          const x = corners[2 * i]!;
+          const y = corners[2 * i + 1]!;
+          const dx = x - tx;
+          const dy = y - ty;
+          addedNow.push(x, y);
+          addedRef.push((a * dx + b * dy) / scale, (-b * dx + a * dy) / scale);
+          addedObject.push(object);
+        }
+      }
+    } finally {
+      strength.delete();
+    }
+
+    // Rebuild the arrays: the points still alive, then the new ones.
+    const keep: number[] = [];
+    for (let i = 0; i < this.alive.length; i++) {
+      if (this.alive[i] === 1) keep.push(i);
+    }
+    const total = keep.length + addedObject.length;
+    const reference = new Float32Array(total * 2);
+    const current = new Float32Array(total * 2);
+    const component = new Uint16Array(total);
+    keep.forEach((i, n) => {
+      reference[2 * n] = this.reference[2 * i]!;
+      reference[2 * n + 1] = this.reference[2 * i + 1]!;
+      current[2 * n] = this.current[2 * i]!;
+      current[2 * n + 1] = this.current[2 * i + 1]!;
+      component[n] = this.component[i]!;
+    });
+    addedObject.forEach((object, m) => {
+      const n = keep.length + m;
+      reference[2 * n] = addedRef[2 * m]!;
+      reference[2 * n + 1] = addedRef[2 * m + 1]!;
+      current[2 * n] = addedNow[2 * m]!;
+      current[2 * n + 1] = addedNow[2 * m + 1]!;
+      component[n] = object;
+    });
+    this.reference = reference;
+    this.current = current;
+    this.component = component;
+    this.alive = new Uint8Array(total).fill(1);
   }
 
   /**

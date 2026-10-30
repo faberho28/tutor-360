@@ -4,4 +4,4 @@
  * decides when to analyze, exactly as before the tracking existed. A code
  * constant on purpose: analysis behavior is not configured through env vars.
  */
-export const TRACKING_ENABLED = false;
+export const TRACKING_ENABLED = true;
