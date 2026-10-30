@@ -72,6 +72,9 @@ export function useCamera(enabled: boolean, deviceId: string | null) {
           return;
         }
         current = s;
+        // A camera that failed before must not leave the stage in its error
+        // state once a later one opens.
+        if (store.getState().stage !== "ready") setStage("ready");
         const track = s.getVideoTracks()[0];
         setCameraActiveId(track?.getSettings().deviceId ?? null);
         track?.addEventListener("ended", () => {
