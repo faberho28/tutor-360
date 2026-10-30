@@ -29,7 +29,8 @@ export function CameraStage() {
   const fullscreen = useFullscreen();
   const stream = useCamera(true, deviceId);
   const live = stage === "ready" && stream !== null;
-  const change = useChangeDetection(() => videoRef.current, live);
+  const showGrid = useSession((s) => s.showChangeGrid);
+  const change = useChangeDetection(() => videoRef.current, live, showGrid);
 
   // The analysis reacts to the engine: when to analyze, and when masks are stale.
   useEffect(() => {
@@ -51,7 +52,14 @@ export function CameraStage() {
               videoRef={videoRef}
               onDimensions={setDims}
             />
-            <OverlayCanvas source={dims} />
+            <OverlayCanvas
+              source={dims}
+              changeGrid={
+                showGrid
+                  ? { heat: change.reading.heat, status: change.reading.status }
+                  : null
+              }
+            />
             <TrackingPreparation />
             <EnvironmentPreparation />
           </>

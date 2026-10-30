@@ -30,6 +30,7 @@ export const copy = {
     reportNeedsCapture: "Haz al menos una captura",
     more: "Más",
     reset: "Reiniciar contexto",
+    changeGrid: "Ver grilla de cambios",
   },
 } as const;
 

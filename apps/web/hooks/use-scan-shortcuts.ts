@@ -6,12 +6,16 @@ type Handlers = {
   capture: () => void;
   toggleAuto: () => void;
   report: () => void;
+  toggleGrid: () => void;
 };
 
 const INTERACTIVE =
   "input, textarea, select, button, a, [role='checkbox'], [role='combobox'], [role='menuitem'], [role='option'], [contenteditable='true']";
 
-/** Space captures, A toggles auto-analysis, R opens the report. */
+/**
+ * Space captures, A toggles auto-analysis, R opens the report, G shows the
+ * change detector's grid.
+ */
 export function useScanShortcuts(handlers: Handlers) {
   const ref = useRef(handlers);
   useEffect(() => {
@@ -35,6 +39,8 @@ export function useScanShortcuts(handlers: Handlers) {
         ref.current.toggleAuto();
       } else if (event.key.toLowerCase() === "r") {
         ref.current.report();
+      } else if (event.key.toLowerCase() === "g") {
+        ref.current.toggleGrid();
       }
     }
 

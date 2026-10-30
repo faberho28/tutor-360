@@ -19,8 +19,10 @@ import { ReportDialog } from "@/components/scan/report-dialog";
 import { ResetContextDialog } from "@/components/scan/reset-context-dialog";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -144,7 +146,10 @@ export function ControlBar() {
     toast.success("Contexto reiniciado");
   }
 
-  useScanShortcuts({ capture, toggleAuto, report });
+  const showGrid = useSession((s) => s.showChangeGrid);
+  const toggleGrid = useSession((s) => s.toggleChangeGrid);
+
+  useScanShortcuts({ capture, toggleAuto, report, toggleGrid });
 
   return (
     <>
@@ -289,7 +294,14 @@ export function ControlBar() {
                 </Button>
               </DropdownMenuTrigger>
             </Hint>
-            <DropdownMenuContent align="end" side="top">
+            <DropdownMenuContent align="end" side="top" className="min-w-56">
+              <DropdownMenuCheckboxItem
+                checked={showGrid}
+                onCheckedChange={() => toggleGrid()}
+              >
+                {copy.controls.changeGrid}
+                <DropdownMenuShortcut>G</DropdownMenuShortcut>
+              </DropdownMenuCheckboxItem>
               <DropdownMenuItem onSelect={requestReset}>
                 <RotateCcw aria-hidden="true" />
                 {copy.controls.reset}

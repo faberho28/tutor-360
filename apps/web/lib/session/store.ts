@@ -39,6 +39,8 @@ export type SessionState = {
    * noise. They stay in the list and keep their diagnosis.
    */
   hiddenIds: string[];
+  /** Paints the change detector's grid over the camera (to tune it). */
+  showChangeGrid: boolean;
   captures: Capture[];
   /** The 3D reconstruction in progress or on screen; one at a time. */
   model3d: Model3DState;
@@ -77,6 +79,8 @@ export type SessionActions = {
   clearSelection: () => void;
   /** Hides the mask of a part, or shows it again. */
   toggleHidden: (id: string) => void;
+  /** Shows or hides the change detector's grid over the camera. */
+  toggleChangeGrid: () => void;
   /** Saves the given detections and their composed image; returns the capture. */
   addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
   removeCapture: (id: string) => void;
@@ -127,6 +131,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     view: null,
     selectedId: null,
     hiddenIds: [],
+    showChangeGrid: false,
     captures: [],
     model3d: { status: "idle" },
     diagnoses: {},
@@ -213,6 +218,9 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
         };
       }),
 
+    toggleChangeGrid: () =>
+      set((state) => ({ showChangeGrid: !state.showChangeGrid })),
+
     toggleHidden: (id) =>
       set((state) => ({
         hiddenIds: state.hiddenIds.includes(id)
@@ -270,6 +278,7 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
       set((state) =>
         freshState({
           labCase: state.labCase,
+          showChangeGrid: state.showChangeGrid,
           stage: state.stage,
           cameraDevices: state.cameraDevices,
           cameraDeviceId: state.cameraDeviceId,

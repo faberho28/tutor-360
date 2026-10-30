@@ -13,8 +13,12 @@ import {
 export const THRESHOLDS = {
   /** Previous-frame diff above this means the image is still moving. */
   motion: 0.03,
-  /** The image must stay below `motion` this long to count as settled. */
-  settleMs: 800,
+  /**
+   * The image must stay below `motion` this long to count as settled. With
+   * the detector looking every 100 ms, the first settled look comes 300 ms
+   * after the last movement and the status is reported `confirm` looks later.
+   */
+  settleMs: 250,
   /** Aligned diff vs the reference above this: a different scene. */
   sceneLost: 0.15,
   /** Per-cell diff above this: that region changed. */
@@ -23,8 +27,12 @@ export const THRESHOLDS = {
   shift: 16,
   /** A changed scene that holds still this long becomes the new reference. */
   adoptMs: 3000,
-  /** Consecutive identical readings needed before a status is reported. */
-  confirm: 2,
+  /**
+   * Consecutive identical readings needed before a status is reported: 5 looks
+   * at 100 ms is the same half second that 2 looks at 250 ms were. Looking more
+   * often catches quicker movement; it must not make the status quicker.
+   */
+  confirm: 5,
 } as const;
 
 type Draft = Omit<ChangeReading, "adoptions">;

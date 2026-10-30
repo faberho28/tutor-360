@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { drawOverlay, hitTest, type OverlayLayout } from "@/lib/overlay/draw";
 import { drawTrackingDebug } from "@/lib/overlay/draw-debug";
+import { drawChangeGrid } from "@/lib/overlay/draw-grid";
+import type { ChangeStatus } from "@/lib/vision/change-detector";
 import { getTrackingDebug, subscribeTrackingDebug } from "@/lib/tracking/debug";
 import { OVERLAY } from "@/lib/overlay-theme";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
@@ -18,8 +20,11 @@ const DOUBLE_CLICK_MS = 500;
  */
 export function OverlayCanvas({
   source,
+  changeGrid = null,
 }: {
   source: { width: number; height: number };
+  /** The change detector's grid to paint (to tune it), or null. */
+  changeGrid?: { heat: readonly number[]; status: ChangeStatus } | null;
 }) {
   const detections = useSession((s) => s.detections);
   // Hidden masks are not painted but still answer to the pointer.
@@ -107,6 +112,16 @@ export function OverlayCanvas({
         view: viewRef.current,
         hiddenIds,
       });
+      if (changeGrid) {
+        // On top of the masks (drawOverlay clears the canvas first); the cells
+        // are translucent, so the masks and the camera still show through.
+        drawChangeGrid(ctx, changeGrid.heat, {
+          width: size.w,
+          height: size.h,
+          source,
+          status: changeGrid.status,
+        });
+      }
       if (process.env.NODE_ENV !== "production" && debugRef.current) {
         drawTrackingDebug(ctx, getTrackingDebug(), {
           width: size.w,
@@ -132,6 +147,7 @@ export function OverlayCanvas({
   }, [
     detections,
     hiddenIds,
+    changeGrid,
     selectedId,
     hoveredId,
     size,
