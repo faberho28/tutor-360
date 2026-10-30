@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import type { AnalysisSource } from "../analysis-source";
 import type { SessionStore } from "../session/store";
 import type { Detection } from "../types";
@@ -12,6 +11,8 @@ export type ScanAnalysis = AnalysisSource & {
   report(status: ChangeStatus): void;
   /** The "retry" button of the connection banner. */
   retry(): void;
+  /** Forgets the whole scan (detections, plan, diagnoses, captures) and starts over. */
+  reset(): void;
   /** The image to save in a capture, or null when it is not ready. */
   snapshot(): Promise<HTMLImageElement | HTMLVideoElement | null>;
 };
@@ -28,10 +29,11 @@ export type ScanServices = {
   requestModel(store: SessionStore, detectionId: string): void;
   closeModel(store: SessionStore): void;
   reportAvailable: boolean;
-  /** Resolves when the report is ready; rejects when it cannot be produced. */
-  generateReport(): Promise<void>;
-  /** Small picture of a detection for the list. */
-  Thumbnail: ComponentType<{ detection: Detection }>;
+  /**
+   * Resolves when the report is ready and downloaded; rejects when it cannot be
+   * produced. An aborted `signal` stops it before the download.
+   */
+  generateReport(store: SessionStore, signal?: AbortSignal): Promise<void>;
   createAnalysis(
     store: SessionStore,
     getVideo: () => HTMLVideoElement | null,

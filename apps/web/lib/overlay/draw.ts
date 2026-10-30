@@ -48,6 +48,12 @@ export type OverlayScene = {
    * the one it follows. The points are moved when drawn, never rewritten.
    */
   view?: View | null;
+  /**
+   * Masks the user hid. They are not painted, but they stay in the layout so
+   * the pointer still finds them: hovered or selected, only their outline (and
+   * name) is drawn.
+   */
+  hiddenIds?: readonly string[];
 };
 
 /** Opacity of the masks while they are out of date. */
@@ -121,11 +127,26 @@ export function drawOverlay(
     (a, b) => Number(a.id === selectedId) - Number(b.id === selectedId),
   );
 
+  const hidden = new Set(scene.hiddenIds ?? []);
+
   for (const d of ordered) {
     const shape = byId.get(d.id)!;
     const style = OVERLAY[d.status];
     const isSelected = d.id === selectedId;
     const isHovered = d.id === hoveredId && !isSelected;
+
+    if (hidden.has(d.id)) {
+      // Hidden: nothing is painted unless the pointer is on it or it is the
+      // selected one, and then only the outline (no fill: the camera stays clear).
+      if (!isSelected && !isHovered) continue;
+      tracePath(ctx, shape.points);
+      ctx.lineJoin = "round";
+      ctx.setLineDash([]);
+      ctx.strokeStyle = style.color;
+      ctx.lineWidth = isSelected ? 3.5 : 2.5;
+      ctx.stroke();
+      continue;
+    }
     const dimmed = selectedId !== null && !isSelected;
     const pulsing = Boolean(style.pulse) && !stale;
 

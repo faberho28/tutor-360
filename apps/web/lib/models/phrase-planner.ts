@@ -78,6 +78,7 @@ export function buildPartsPrompt(input: {
     '- Never single out one item among identical ones by a printed letter or number (not "letter L key"): the segmentation model cannot read them.',
     '- Never group things ("set of keys", "row of keys", "all cables").',
     `- Each part is ONE entry with exactly ${variants} different wordings in "phrases": the same single physical part described with different words (change the adjectives, the material or the noun, for example "red plastic bottle cap", "small red round lid", "red screw cap"). The segmentation model understands some wordings better than others, so give it ${variants} ways to recognise the part. Never put two different parts in one entry, and never make two entries for the same part.`,
+    "- Never ask for holes (screw holes, mounting holes, vias, ring holes), solder pads, traces, printed markings, the empty background, or the surface or board that the other parts sit on: only separate parts that someone could inspect, replace or take out.",
     "- Only things you can actually see. Never invent.",
     `- At most ${MAX_SAM_PHRASES} parts, the most useful first.`,
     '- "label": a short name for the user in Spanish (Colombia). "phrases": the English wordings for the segmentation model.',

@@ -1,11 +1,19 @@
 import {
   captureFrame,
+  DETAIL_MAX_SIDE,
+  FRAME_MAX_SIDE,
   readyVideo,
   type CapturedFrame,
 } from "../camera/capture-frame";
 import type { ScanAnalysis } from "../services/types";
 import { readApiKey } from "../settings/api-key";
 import type { SessionStore } from "../session/store";
+import {
+  clearAnalyzedFrame,
+  setAnalyzedFrame,
+} from "../diagnosis/analyzed-frame";
+import { autoDiagnose } from "../diagnosis/request-diagnosis";
+import { requestGeneralSteps } from "../diagnosis/steps-client";
 import { TRACKING_ENABLED } from "../tracking/enabled";
 import { moveBox, movePolygon } from "../tracking/homography";
 import { getOpenCv, loadOpenCv } from "../tracking/opencv-loader";
@@ -20,6 +28,7 @@ import { PartReviews } from "./part-reviews";
 import type { PlannedPart } from "./scene";
 import { AnalysisScheduler, type SchedulerPhase } from "./scheduler";
 import { trackDetections } from "./track";
+import type { Detection } from "../types";
 import { viewFor } from "../tracking/view";
 import type { AnalyzeResponse } from "./types";
 
@@ -28,6 +37,12 @@ type Outcome = {
   latencyMs: number;
   /** The frame the masks were found on: Spark's review looks at a copy of it. */
   frame: CapturedFrame;
+  /**
+   * The same instant at the camera's own resolution (up to 2560 px), kept on the
+   * device: the diagnosis crops come from it. Equal to `frame` when the camera
+   * is not bigger than that.
+   */
+  detail: CapturedFrame;
   /** True when the plan of the scene was reused (Spark was not asked). */
   planReused: boolean;
   /** Whether the local tracking took this frame as its new reference. */
@@ -61,6 +76,8 @@ export class RealAnalysis implements ScanAnalysis {
   private plan: PlannedPart[] | null = null;
   /** Spark's second look: final names and condition, part by part. */
   private readonly reviews = new PartReviews();
+  /** Cancels the general steps request of the current context. */
+  private stepsRun = new AbortController();
   /**
    * Follows the scene between analyses so the masks move with it instead of
    * costing a new analysis. Created when it is needed and OpenCV is ready; null
@@ -242,7 +259,14 @@ export class RealAnalysis implements ScanAnalysis {
         }),
       ) ?? false;
     try {
-      const frame = await captureFrame(video);
+      // Both copies are drawn from the video in the same synchronous step, so
+      // they show the same instant; the big one never leaves the device.
+      const bigger =
+        Math.max(video.videoWidth, video.videoHeight) > FRAME_MAX_SIDE;
+      const [frame, detail] = await Promise.all([
+        captureFrame(video),
+        bigger ? captureFrame(video, DETAIL_MAX_SIDE) : null,
+      ]);
       const { sessionId, labCase } = this.store.getState();
       // Only the automatic mode watches the scene: a manual capture is
       // deliberate and may be of something else, so it asks Spark again.
@@ -258,6 +282,7 @@ export class RealAnalysis implements ScanAnalysis {
         response,
         latencyMs: Math.round(performance.now() - startedAt),
         frame,
+        detail: detail ?? frame,
         planReused: plan !== undefined,
         tracked,
       };
@@ -267,15 +292,78 @@ export class RealAnalysis implements ScanAnalysis {
     }
   }
 
+  /**
+   * The general step-by-step: written by the AI from the first analyzed frame of
+   * the scan (once per session; a failure is tried again with the next frame).
+   */
+  private loadGeneralSteps(frame: CapturedFrame) {
+    const { generalSteps, labCase, setGeneralSteps } = this.store.getState();
+    if (generalSteps.status === "loading" || generalSteps.status === "ready") {
+      return;
+    }
+    setGeneralSteps({ status: "loading" });
+    const { signal } = this.stepsRun;
+    requestGeneralSteps(frame.dataUrl, {
+      context: labCase?.context || undefined,
+      apiKey: readApiKey() ?? undefined,
+      signal,
+    }).then(
+      (steps) => {
+        // A reset in between: these steps belong to the old context.
+        if (signal.aborted) return;
+        this.store.getState().setGeneralSteps({ status: "ready", steps });
+      },
+      () => {
+        if (signal.aborted) return;
+        this.store.getState().setGeneralSteps({ status: "error" });
+      },
+    );
+  }
+
+  /**
+   * What Spark's reviews say about the parts, then what the diagnosis decided
+   * after a closer look (it wins: it saw the part up close).
+   */
+  private decorated(detections: readonly Detection[]): Detection[] {
+    const { statusOverrides } = this.store.getState();
+    return this.reviews.decorate(detections).map((d) => {
+      const override = statusOverrides[d.id];
+      return override ? { ...d, ...override } : d;
+    });
+  }
+
+  /**
+   * Forgets everything about the scan and starts over: the request in flight is
+   * cancelled, the plan, the reviews and the tracking are dropped, and the
+   * session store goes back to its initial state (case and camera are kept).
+   * Detection ids keep counting, so a late answer cannot land on a new part.
+   */
+  reset() {
+    this.auto = false;
+    this.scheduler.stop();
+    this.plan = null;
+    this.reviews.reset();
+    this.session?.clear();
+    this.stepsRun.abort();
+    this.stepsRun = new AbortController();
+    clearAnalyzedFrame(this.store);
+    this.store.getState().reset();
+  }
+
   private publish({
     response,
     latencyMs,
     frame,
+    detail,
     planReused,
     tracked,
   }: Outcome) {
     const state = this.store.getState();
     const now = Date.now();
+    // The diagnosis crops are cut from the same instant at the camera's own
+    // resolution, where a small part still has detail.
+    setAnalyzedFrame(this.store, detail);
+    this.loadGeneralSteps(frame);
     // A plan Spark just made is a new scene: what was reviewed no longer applies.
     if (!planReused) this.reviews.reset();
     // An empty plan means Spark found nothing: ask it again next time.
@@ -320,20 +408,24 @@ export class RealAnalysis implements ScanAnalysis {
         judgesCondition: labCase?.judgesCondition,
         apiKey: readApiKey() ?? undefined,
       },
-      // A review finished: redraw with whatever the list is by now.
-      () =>
+      // A review finished: redraw with whatever the list is by now, and the
+      // parts that came out as a problem get their diagnosis right away.
+      () => {
         this.store
           .getState()
-          .replaceDetections(
-            this.reviews.decorate(this.store.getState().detections),
-          ),
+          .replaceDetections(this.decorated(this.store.getState().detections));
+        autoDiagnose(this.store);
+      },
     );
     // From here the tracking follows the masks where their objects are now.
     if (this.session) {
       if (tracked) this.session.commit(next);
       else this.session.clear();
     }
-    state.replaceDetections(this.reviews.decorate(next));
+    state.replaceDetections(this.decorated(next));
+    // Reviews already known (the scene is the same) can name and judge the new
+    // masks at once, with no review settling later to trigger this.
+    autoDiagnose(this.store);
     this.store.getState().setAnalysis({
       latencyMs,
       stale: false,

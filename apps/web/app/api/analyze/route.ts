@@ -60,3 +60,6 @@ export async function POST(request: Request) {
     return fail(modelError.kind);
   }
 }
+
+/** Vercel cuts a function at its default limit: the analysis runs up to 24 SAM calls. */
+export const maxDuration = 60;

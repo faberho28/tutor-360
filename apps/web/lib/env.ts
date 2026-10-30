@@ -10,6 +10,8 @@ const envSchema = z.object({
   /** Reads the scene: names and locates what is in the frame (Muse Spark). */
   SCENE_MODEL: z.string().min(1).default("muse-spark-1.3"),
   DIAGNOSIS_MODEL: z.string().min(1).default("muse-spark-1.3"),
+  /** Standard-mode model the diagnosis falls back to (never a contributor one). */
+  DIAGNOSIS_FALLBACK_MODEL: z.string().min(1).default("muse-spark-1.2"),
   SEGMENT_SCORE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.85),
 });
 

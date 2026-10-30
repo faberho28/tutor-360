@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReturnFocus } from "@/hooks/use-return-focus";
 import { useServices } from "@/lib/services/context";
-import { useSession } from "@/lib/session/session-provider";
+import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 type ReportPhase = "idle" | "generating" | "done" | "error";
 
@@ -29,8 +29,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 /**
- * Session summary and captures, with the report generation the page provides
- * (unavailable until HU-26 and HU-27).
+ * Session summary and captures, with the report generation the page provides.
  */
 export function ReportDialog({
   open,
@@ -43,8 +42,10 @@ export function ReportDialog({
   const captures = useSession((s) => s.captures);
   const included = useSession((s) => s.reportIds.length);
   const [phase, setPhase] = useState<ReportPhase>("idle");
+  const store = useSessionStore();
   // Bumped to ignore the result of a generation that was cancelled.
   const run = useRef(0);
+  const controller = useRef<AbortController | null>(null);
   const returnFocus = useReturnFocus(open);
 
   const anomalies = captures.reduce(
@@ -60,6 +61,7 @@ export function ReportDialog({
   function handleOpenChange(next: boolean) {
     if (!next) {
       run.current += 1;
+      controller.current?.abort();
       setPhase("idle");
     }
     onOpenChange(next);
@@ -68,6 +70,7 @@ export function ReportDialog({
   useEffect(
     () => () => {
       run.current += 1;
+      controller.current?.abort();
     },
     [],
   );
@@ -75,8 +78,10 @@ export function ReportDialog({
   function generate() {
     if (captures.length === 0 || !reportAvailable) return;
     const id = ++run.current;
+    controller.current?.abort();
+    controller.current = new AbortController();
     setPhase("generating");
-    generateReport().then(
+    generateReport(store, controller.current.signal).then(
       () => {
         if (run.current !== id) return;
         setPhase("done");

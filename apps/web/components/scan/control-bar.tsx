@@ -1,6 +1,14 @@
 "use client";
 
-import { Aperture, Box, Ellipsis, FileDown, Pause, Play } from "lucide-react";
+import {
+  Aperture,
+  Box,
+  Ellipsis,
+  FileDown,
+  Pause,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { cn } from "cn";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,15 +16,24 @@ import { useAnalysis } from "@/components/scan/analysis-provider";
 import { Button } from "@/components/ui/button";
 import { ModelViewerDialog } from "@/components/scan/model-viewer-dialog";
 import { ReportDialog } from "@/components/scan/report-dialog";
+import { ResetContextDialog } from "@/components/scan/reset-context-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useScanShortcuts } from "@/hooks/use-scan-shortcuts";
+import { useUnsavedCapturesWarning } from "@/hooks/use-unsaved-captures";
 import { AnalyzeClientError } from "@/lib/analysis/analyze-client";
+import { waitForReviews } from "@/lib/analysis/wait-reviews";
 import { copy } from "@/lib/copy";
-import { composeCapture } from "@/lib/overlay/compose-capture";
+import { composeCapture, MAX_CAPTURES } from "@/lib/overlay/compose-capture";
 import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
@@ -56,19 +73,35 @@ export function ControlBar() {
   const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
   const [reportOpen, setReportOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const autoAvailable = analysis.autoAvailable;
+  useUnsavedCapturesWarning(hasCaptures);
 
   async function capture() {
+    if (store.getState().captures.length >= MAX_CAPTURES) {
+      toast.error(
+        `Llegaste al máximo de ${MAX_CAPTURES} capturas. Genera el reporte o elimina alguna.`,
+      );
+      return;
+    }
     try {
       const image = await analysis.snapshot();
       if (!image) {
         toast.error("La cámara aún no está lista");
         return;
       }
+      // The names and statuses come from Spark's second look, a moment later.
+      await waitForReviews(store);
       const state = store.getState();
       const saved = state.addCapture(
         state.detections,
-        composeCapture(image, state.detections, state.view),
+        // The picture shows what the user sees: hidden masks are not drawn
+        // (the findings of the capture still list every part).
+        composeCapture(
+          image,
+          state.detections.filter((d) => !state.hiddenIds.includes(d.id)),
+          state.view,
+        ),
       );
       // Read again: `state` is the snapshot from before the capture was added.
       toast.success(`Captura ${store.getState().captures.length} guardada`, {
@@ -100,12 +133,28 @@ export function ControlBar() {
     setReportOpen(true);
   }
 
+  // Captures are the only thing that cannot be recovered: ask before losing them.
+  function requestReset() {
+    if (store.getState().captures.length > 0) setResetOpen(true);
+    else resetContext();
+  }
+
+  function resetContext() {
+    analysis.reset();
+    toast.success("Contexto reiniciado");
+  }
+
   useScanShortcuts({ capture, toggleAuto, report });
 
   return (
     <>
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} />
       <ModelViewerDialog />
+      <ResetContextDialog
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        onConfirm={resetContext}
+      />
       <div
         role="toolbar"
         aria-label="Controles de captura"
@@ -222,21 +271,31 @@ export function ControlBar() {
             </Button>
           </Hint>
 
-          <Hint label={copy.controls.more}>
-            <Button
-              type="button"
-              size="control"
-              variant="secondary"
-              aria-label={copy.controls.more}
-              className="border"
-            >
-              <Ellipsis
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={1.75}
-              />
-            </Button>
-          </Hint>
+          <DropdownMenu>
+            <Hint label={copy.controls.more}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  size="control"
+                  variant="secondary"
+                  aria-label={copy.controls.more}
+                  className="border"
+                >
+                  <Ellipsis
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={1.75}
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+            </Hint>
+            <DropdownMenuContent align="end" side="top">
+              <DropdownMenuItem onSelect={requestReset}>
+                <RotateCcw aria-hidden="true" />
+                {copy.controls.reset}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </>

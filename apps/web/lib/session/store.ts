@@ -1,10 +1,12 @@
 import { createStore } from "zustand/vanilla";
+import type { ComponentStatus } from "../component-status";
 import type {
   AnalysisState,
   CameraDevice,
   Capture,
   Detection,
   DiagnosisEntry,
+  GeneralStepsEntry,
   Model3DState,
   StageState,
 } from "../types";
@@ -13,6 +15,8 @@ export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
 import type { LabCaseSnapshot } from "../lab/cases";
 import type { View } from "../tracking/view";
+
+export type StatusOverride = { status: ComponentStatus; reason: string };
 
 export type SessionState = {
   sessionId: string;
@@ -30,11 +34,23 @@ export type SessionState = {
    */
   view: View | null;
   selectedId: string | null;
+  /**
+   * Parts whose mask the user hid (double click) to see the camera without
+   * noise. They stay in the list and keep their diagnosis.
+   */
+  hiddenIds: string[];
   captures: Capture[];
   /** The 3D reconstruction in progress or on screen; one at a time. */
   model3d: Model3DState;
   /** Diagnosis per detection id. */
   diagnoses: Record<string, DiagnosisEntry>;
+  /** The step-by-step shown when no part needs fixing (the "general" key). */
+  generalSteps: GeneralStepsEntry;
+  /**
+   * What the diagnosis decided about a part after a closer look (it could not
+   * confirm the fault), per detection id. It wins over the review's verdict.
+   */
+  statusOverrides: Record<string, StatusOverride>;
   /** Step indexes marked done / skipped, per detection id ("general" for the generic list). */
   completedSteps: Record<string, number[]>;
   skippedSteps: Record<string, number[]>;
@@ -59,11 +75,17 @@ export type SessionActions = {
   setView: (view: View | null) => void;
   select: (id: string) => void;
   clearSelection: () => void;
+  /** Hides the mask of a part, or shows it again. */
+  toggleHidden: (id: string) => void;
   /** Saves the given detections and their composed image; returns the capture. */
   addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
   removeCapture: (id: string) => void;
   setModel3d: (model3d: Model3DState) => void;
   setDiagnosis: (id: string, entry: DiagnosisEntry) => void;
+  /** A new list of general steps starts with none of them marked. */
+  setGeneralSteps: (entry: GeneralStepsEntry) => void;
+  /** Changes a part's status now and in every later analysis of the session. */
+  overrideStatus: (id: string, override: StatusOverride) => void;
   /** Marks a step done, or undoes it (also clears "skipped"). */
   toggleStep: (key: string, index: number) => void;
   skipStep: (key: string, index: number) => void;
@@ -103,9 +125,12 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     detections: [],
     view: null,
     selectedId: null,
+    hiddenIds: [],
     captures: [],
     model3d: { status: "idle" },
     diagnoses: {},
+    generalSteps: { status: "idle" },
+    statusOverrides: {},
     completedSteps: {},
     skippedSteps: {},
     reportIds: [],
@@ -177,6 +202,31 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
     setDiagnosis: (id, entry) =>
       set((state) => ({ diagnoses: { ...state.diagnoses, [id]: entry } })),
 
+    setGeneralSteps: (entry) =>
+      set((state) => {
+        if (entry.status !== "ready") return { generalSteps: entry };
+        return {
+          generalSteps: entry,
+          completedSteps: { ...state.completedSteps, general: [] },
+          skippedSteps: { ...state.skippedSteps, general: [] },
+        };
+      }),
+
+    toggleHidden: (id) =>
+      set((state) => ({
+        hiddenIds: state.hiddenIds.includes(id)
+          ? state.hiddenIds.filter((x) => x !== id)
+          : [...state.hiddenIds, id],
+      })),
+
+    overrideStatus: (id, override) =>
+      set((state) => ({
+        statusOverrides: { ...state.statusOverrides, [id]: override },
+        detections: state.detections.map((d) =>
+          d.id === id ? { ...d, ...override } : d,
+        ),
+      })),
+
     toggleStep: (key, index) =>
       set((state) => {
         const done = state.completedSteps[key] ?? [];
@@ -213,8 +263,19 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
           : [...state.reportIds, id],
       })),
 
-    // A new session keeps the case: the user chose it before scanning.
-    reset: () => set((state) => freshState({ labCase: state.labCase })),
+    // A new scan context keeps the case the user chose and the camera they
+    // are using (the stage would flicker and might pick another one).
+    reset: () =>
+      set((state) =>
+        freshState({
+          labCase: state.labCase,
+          stage: state.stage,
+          cameraDevices: state.cameraDevices,
+          cameraDeviceId: state.cameraDeviceId,
+          cameraActiveId: state.cameraActiveId,
+          cameraAttempt: state.cameraAttempt,
+        }),
+      ),
   }));
 }
 

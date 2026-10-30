@@ -2,6 +2,7 @@ import { ModelError, toModelError } from "../models/errors";
 import type { PhrasePlanner } from "../models/phrase-planner";
 import type { Segmenter } from "../models/segmenter";
 import type { Detection } from "../types";
+import { isHoleLike, keepParts } from "./mask-quality";
 import { mergeNamedMasks, type PhraseCandidate } from "./merge-phrases";
 import { MAX_SAM_PHRASES, MAX_VARIANTS, type PlannedPart } from "./scene";
 import type { AnalyzeFrameInput, AnalyzeResponse } from "./types";
@@ -67,6 +68,11 @@ async function segmentPhrases(
     throw new ModelError("invalid_response", "No phrase to look for");
   }
 
+  const dropped: Record<string, number> = {};
+  const drop = (reason: string) => {
+    dropped[reason] = (dropped[reason] ?? 0) + 1;
+  };
+
   const settled = await Promise.all(
     phrases.map(async (phrase) => {
       try {
@@ -78,7 +84,9 @@ async function segmentPhrases(
           apiKey: options.apiKey,
           signal: options.signal,
         });
-        return { phrase, instances, error: null };
+        // Noise, holes' specks, the surface that covers the camera and bodies
+        // that hold other masks are not parts: they must not win a wording.
+        return { phrase, instances: keepParts(instances, drop), error: null };
       } catch (error) {
         return { phrase, instances: [], error: toModelError(error) };
       }
@@ -123,7 +131,7 @@ async function segmentPhrases(
           .join(" | ")}`,
     );
     console.info(
-      `[analyze] SAM: ${phrases.length} wordings, ${failed.length} failed, ${Date.now() - startedAt} ms\n${lines.join("\n")}`,
+      `[analyze] SAM: ${phrases.length} wordings, ${failed.length} failed, ${Date.now() - startedAt} ms, filtered ${JSON.stringify(dropped)}\n${lines.join("\n")}`,
     );
   }
 
@@ -196,7 +204,7 @@ export async function analyzeScene(
   const startedAt = Date.now();
   const { planner, segmenter, threshold, signal, apiKey } = options;
 
-  const parts = options.plan?.length
+  const planned = options.plan?.length
     ? [...options.plan]
     : await planner.planParts({
         imageDataUrl: frame.imageDataUrl,
@@ -206,6 +214,10 @@ export async function analyzeScene(
         apiKey,
         signal,
       });
+  // Nobody inspects a hole: whatever Spark (or an older plan) asked for.
+  const parts = planned.filter(
+    (part) => ![part.label, ...part.phrases].some(isHoleLike),
+  );
 
   const planMs = Date.now() - startedAt;
   if (parts.length === 0) {

@@ -6,6 +6,9 @@ import { drawOverlay } from "./draw";
 /** Same 16:9 box the stage shows, so a capture crops like the live view. */
 export const CAPTURE_SIZE = { width: 640, height: 360 } as const;
 
+/** Captures one session keeps: each one is a picture held in memory. */
+export const MAX_CAPTURES = 20;
+
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();

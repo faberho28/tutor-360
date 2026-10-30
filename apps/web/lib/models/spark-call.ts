@@ -12,6 +12,8 @@ export type SparkCall = {
   reasoningEffort?: "minimal" | "low" | "medium" | "high";
   /** Sampling temperature; absent means Meta's default (1). */
   temperature?: number;
+  /** Model to use instead of `SCENE_MODEL`. */
+  model?: string;
   apiKey?: string;
   signal?: AbortSignal;
 };
@@ -24,7 +26,7 @@ export async function callSpark(call: SparkCall): Promise<string> {
   const client = getModelClient(call.apiKey);
   const response = await client.responses.create(
     {
-      model: getEnv().SCENE_MODEL,
+      model: call.model ?? getEnv().SCENE_MODEL,
       input: [
         {
           type: "message",

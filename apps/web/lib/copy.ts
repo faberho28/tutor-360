@@ -29,6 +29,7 @@ export const copy = {
     report: "Generar reporte",
     reportNeedsCapture: "Haz al menos una captura",
     more: "Más",
+    reset: "Reiniciar contexto",
   },
 } as const;
 

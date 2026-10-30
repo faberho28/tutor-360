@@ -1,8 +1,11 @@
+"use client";
+
 import { cn } from "cn";
-import { Loader } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatAgo, statusLabel } from "@/lib/copy";
-import { useServices } from "@/lib/services/context";
+import { useSession } from "@/lib/session/session-provider";
 import type { Detection } from "@/lib/types";
 
 export const rowId = (id: string) => `component-${id}`;
@@ -26,7 +29,8 @@ export function ComponentRow({
   animateIn: boolean;
   onSelect: (id: string) => void;
 }) {
-  const { Thumbnail } = useServices();
+  const hidden = useSession((s) => s.hiddenIds.includes(detection.id));
+  const toggleHidden = useSession((s) => s.toggleHidden);
   const meta = [
     detection.score === null ? null : `conf. ${detection.score.toFixed(2)}`,
     formatAgo(now, detection.seenAt),
@@ -48,7 +52,6 @@ export function ComponentRow({
           "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2",
       )}
     >
-      <Thumbnail detection={detection} />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 text-xs font-medium">
           {detection.reviewing ? (
@@ -70,6 +73,25 @@ export function ComponentRow({
           {statusLabel[detection.status]}
         </Badge>
       )}
+      <Button
+        type="button"
+        size="icon-xs"
+        variant="ghost"
+        aria-pressed={hidden}
+        aria-label={hidden ? "Mostrar máscara" : "Ocultar máscara"}
+        title={
+          hidden
+            ? "Mostrar máscara"
+            : "Ocultar máscara (también con doble clic sobre ella)"
+        }
+        onClick={(event) => {
+          // The row selects on click: this button only toggles the mask.
+          event.stopPropagation();
+          toggleHidden(detection.id);
+        }}
+      >
+        {hidden ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+      </Button>
     </div>
   );
 }

@@ -8,6 +8,9 @@ import { getTrackingDebug, subscribeTrackingDebug } from "@/lib/tracking/debug";
 import { OVERLAY } from "@/lib/overlay-theme";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
+/** Browsers count a double click up to about this long between clicks. */
+const DOUBLE_CLICK_MS = 500;
+
 /**
  * Canvas on top of the video: masks, labels and tap-to-select. It matches the
  * size of the stage and redraws on resize, selection or data changes. The
@@ -19,6 +22,8 @@ export function OverlayCanvas({
   source: { width: number; height: number };
 }) {
   const detections = useSession((s) => s.detections);
+  // Hidden masks are not painted but still answer to the pointer.
+  const hiddenIds = useSession((s) => s.hiddenIds);
   const selectedId = useSession((s) => s.selectedId);
   const select = useSession((s) => s.select);
   const clearSelection = useSession((s) => s.clearSelection);
@@ -35,6 +40,9 @@ export function OverlayCanvas({
   const fontRef = useRef<string | null>(null);
   // Development only (D): the debug view of the tracking.
   const debugRef = useRef(false);
+  // The mask a click just made visible, so the double click it belongs to does
+  // not hide it again.
+  const justShown = useRef<{ id: string; at: number } | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   // Mouse hover only: touch has no hover, a tap selects instead.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -78,7 +86,9 @@ export function OverlayCanvas({
     const animate =
       !reducedMotion &&
       !stale &&
-      detections.some((d) => OVERLAY[d.status].pulse);
+      detections.some(
+        (d) => OVERLAY[d.status].pulse && !hiddenIds.includes(d.id),
+      );
     let frame = 0;
 
     const draw = (now: number) => {
@@ -95,6 +105,7 @@ export function OverlayCanvas({
         font,
         stale,
         view: viewRef.current,
+        hiddenIds,
       });
       if (process.env.NODE_ENV !== "production" && debugRef.current) {
         drawTrackingDebug(ctx, getTrackingDebug(), {
@@ -118,7 +129,16 @@ export function OverlayCanvas({
       cancelAnimationFrame(frame);
       redrawRef.current = () => {};
     };
-  }, [detections, selectedId, hoveredId, size, source, reducedMotion, stale]);
+  }, [
+    detections,
+    hiddenIds,
+    selectedId,
+    hoveredId,
+    size,
+    source,
+    reducedMotion,
+    stale,
+  ]);
 
   // The tracking's motions: redraw on the next animation frame, once however
   // many times they changed before it.
@@ -197,8 +217,37 @@ export function OverlayCanvas({
           event.clientX - rect.left,
           event.clientY - rect.top,
         );
-        if (id) select(id);
-        else clearSelection();
+        if (!id) {
+          clearSelection();
+          return;
+        }
+        // A click on a hidden mask makes it visible for good.
+        if (store.getState().hiddenIds.includes(id)) {
+          store.getState().toggleHidden(id);
+          justShown.current = { id, at: performance.now() };
+        }
+        select(id);
+      }}
+      onDoubleClick={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const id = hitTest(
+          layoutRef.current,
+          event.clientX - rect.left,
+          event.clientY - rect.top,
+        );
+        if (!id) return;
+        // The first click of this double click just showed it: do not hide it
+        // again. (A double click on a hidden mask is a click that shows it.)
+        const shown = justShown.current;
+        if (
+          shown?.id === id &&
+          performance.now() - shown.at < DOUBLE_CLICK_MS
+        ) {
+          return;
+        }
+        if (!store.getState().hiddenIds.includes(id)) {
+          store.getState().toggleHidden(id);
+        }
       }}
     />
   );

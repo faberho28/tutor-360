@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 import {
-  GENERAL_STEPS,
   GENERAL_STEPS_KEY,
   currentStepIndex,
   stepProgress,
@@ -48,11 +47,18 @@ export function StepsCard() {
   const toggleStep = useSession((s) => s.toggleStep);
   const skipStep = useSession((s) => s.skipStep);
 
+  const general = useSession((s) => s.generalSteps);
   const steps: readonly string[] | null = !needsDiagnosis
-    ? GENERAL_STEPS
+    ? general.status === "ready"
+      ? general.steps
+      : null
     : entry?.status === "ready"
       ? entry.data.steps
       : null;
+  // What to say while there are no steps to show.
+  const failed = !needsDiagnosis
+    ? general.status === "error"
+    : entry?.status === "error" || entry?.status === "unavailable";
 
   const total = steps?.length ?? 0;
   const current = steps ? currentStepIndex(total, done, skipped) : null;
@@ -60,6 +66,9 @@ export function StepsCard() {
 
   // Real environment: no steps until a real analysis produces detections.
   if (!hasDetections) return null;
+  // A part that is fine has no steps of its own, and the general ones are about
+  // the whole scene: listing them under a selected part would confuse.
+  if (selected && !needsDiagnosis) return null;
 
   const counter = !steps
     ? ""
@@ -103,9 +112,11 @@ export function StepsCard() {
             ))}
           </ul>
         </>
-      ) : entry?.status === "error" || entry?.status === "unavailable" ? (
+      ) : failed ? (
         <p className="text-xs text-muted-foreground">
-          Los pasos aparecen cuando el diagnóstico se carga.
+          {needsDiagnosis
+            ? "Los pasos aparecen cuando el diagnóstico se carga."
+            : "No pudimos preparar los pasos. Se intentará de nuevo con el próximo análisis."}
         </p>
       ) : (
         <div className="flex flex-col gap-2" role="status">

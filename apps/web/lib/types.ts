@@ -37,6 +37,11 @@ export type Diagnosis = {
   severity: "low" | "medium" | "high";
   /** What to do, in order. */
   steps: string[];
+  /**
+   * Whether the close-up supports the condition the review reported. False when
+   * it looks like dust, a shadow or too little detail to tell (HU-19).
+   */
+  confirmed?: boolean;
 };
 
 export type DiagnosisEntry =
@@ -45,6 +50,13 @@ export type DiagnosisEntry =
   /** No real diagnosis exists yet (the API is not wired): never fake one. */
   | { status: "unavailable" }
   | { status: "ready"; data: Diagnosis };
+
+/** The general step-by-step of the scene, written by the AI once per scan. */
+export type GeneralStepsEntry =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; steps: string[] };
 
 /** A saved moment of the scan. */
 export type Capture = {

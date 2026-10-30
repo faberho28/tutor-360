@@ -1,13 +1,9 @@
+/**
+ * Progress key of the general list, shown when nothing needs fixing yet or no
+ * component is selected. Its steps are written by the AI (`generalSteps` in the
+ * store), never fixed in the code.
+ */
 export const GENERAL_STEPS_KEY = "general";
-
-/** Shown when nothing needs fixing yet or no component is selected. */
-export const GENERAL_STEPS: readonly string[] = [
-  "Apaga la PC y desconéctala de la corriente.",
-  "Descarga la electricidad estática tocando una parte metálica del chasis.",
-  "Retira la tapa lateral con cuidado.",
-  "Revisa a simple vista: capacitores abultados, polvo y cables sueltos.",
-  "Apunta la cámara a cada zona para identificar los componentes.",
-];
 
 export type StepStatus = "done" | "skipped" | "pending";
 

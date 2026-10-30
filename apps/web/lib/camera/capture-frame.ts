@@ -1,5 +1,11 @@
 /** Longest side sent to the model; keeps the upload light on slow networks. */
 export const FRAME_MAX_SIDE = 1280;
+/**
+ * Longest side of the copy kept on the device for the diagnosis crops: a small
+ * part is a few dozen pixels in the 1280 px frame sent to the models, and the
+ * camera usually has far more.
+ */
+export const DETAIL_MAX_SIDE = 2560;
 const FRAME_QUALITY = 0.8;
 
 export type CapturedFrame = {
@@ -56,6 +62,7 @@ function toDataUrl(blob: Blob): Promise<string> {
  */
 export async function captureFrame(
   source: HTMLVideoElement | HTMLImageElement,
+  maxSide: number = FRAME_MAX_SIDE,
 ): Promise<CapturedFrame> {
   const natural =
     source instanceof HTMLVideoElement
@@ -65,11 +72,7 @@ export async function captureFrame(
     throw new Error("El frame aún no está listo");
   }
 
-  const { width, height } = fitWithin(
-    natural.width,
-    natural.height,
-    FRAME_MAX_SIDE,
-  );
+  const { width, height } = fitWithin(natural.width, natural.height, maxSide);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
