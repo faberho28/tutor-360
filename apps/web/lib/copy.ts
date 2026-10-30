@@ -24,8 +24,6 @@ export const copy = {
     capture: "Capturar",
     autoOn: "Activar análisis automático",
     autoOff: "Pausar análisis automático",
-    view3d: "Ver en 3D",
-    view3dNeedsSelection: "Selecciona un componente",
     report: "Generar reporte",
     reportNeedsCapture: "Haz al menos una captura",
     more: "Más",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Check, Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { DiagnosisView } from "@/components/scan/diagnosis-view";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import type { Detection } from "@/lib/types";
  */
 export function ComponentDetail({ detection }: { detection: Detection }) {
   const store = useSessionStore();
-  const { requestDiagnosis, requestModel } = useServices();
+  const { requestDiagnosis } = useServices();
   const entry = useSession((s) => s.diagnoses[detection.id]);
   const inReport = useSession((s) => s.reportIds.includes(detection.id));
   const toggleReportItem = useSession((s) => s.toggleReportItem);
@@ -35,15 +35,6 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
         onRetry={() => requestDiagnosis(store, detection)}
       />
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => requestModel(store, detection.id)}
-        >
-          <Box aria-hidden="true" data-icon="inline-start" />
-          Ver en 3D
-        </Button>
         <Button
           type="button"
           size="sm"

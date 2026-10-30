@@ -2,7 +2,6 @@
 
 import {
   Aperture,
-  Box,
   Ellipsis,
   FileDown,
   Pause,
@@ -14,7 +13,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAnalysis } from "@/components/scan/analysis-provider";
 import { Button } from "@/components/ui/button";
-import { ModelViewerDialog } from "@/components/scan/model-viewer-dialog";
 import { ReportDialog } from "@/components/scan/report-dialog";
 import { ResetContextDialog } from "@/components/scan/reset-context-dialog";
 import {
@@ -36,7 +34,6 @@ import { AnalyzeClientError } from "@/lib/analysis/analyze-client";
 import { waitForReviews } from "@/lib/analysis/wait-reviews";
 import { copy } from "@/lib/copy";
 import { composeCapture, MAX_CAPTURES } from "@/lib/overlay/compose-capture";
-import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
 
 function Hint({
@@ -64,15 +61,13 @@ function Hint({
 }
 
 /**
- * Floating bar: capture, automatic analysis, 3D view and report. It drives the
+ * Floating bar: capture, automatic analysis and report. It drives the
  * analysis the page provides.
  */
 export function ControlBar() {
   const store = useSessionStore();
-  const services = useServices();
   const { analysis } = useAnalysis();
   const auto = useSession((s) => s.analysis.mode === "auto");
-  const hasSelection = useSession((s) => s.selectedId !== null);
   const hasCaptures = useSession((s) => s.captures.length > 0);
   const [reportOpen, setReportOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -125,11 +120,6 @@ export function ControlBar() {
     else analysis.start();
   }
 
-  function view3d() {
-    const { selectedId } = store.getState();
-    if (selectedId) services.requestModel(store, selectedId);
-  }
-
   function report() {
     if (store.getState().captures.length === 0) return;
     setReportOpen(true);
@@ -154,7 +144,6 @@ export function ControlBar() {
   return (
     <>
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} />
-      <ModelViewerDialog />
       <ResetContextDialog
         open={resetOpen}
         onOpenChange={setResetOpen}
@@ -168,7 +157,7 @@ export function ControlBar() {
           "[@media(hover:hover)]:grid-cols-[0px_32px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_32px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_32px_68px] [@media(hover:hover)]:focus-within:gap-1",
         )}
       >
-        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+        <div className="flex items-center justify-center opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
           <Hint
             label={
               autoAvailable
@@ -207,27 +196,6 @@ export function ControlBar() {
                   strokeWidth={1.75}
                 />
               )}
-            </Button>
-          </Hint>
-
-          <Hint
-            label={
-              hasSelection
-                ? copy.controls.view3d
-                : copy.controls.view3dNeedsSelection
-            }
-          >
-            <Button
-              type="button"
-              size="control"
-              variant="secondary"
-              // aria-disabled keeps it focusable so the hint also shows with the keyboard.
-              aria-disabled={!hasSelection || undefined}
-              aria-label={copy.controls.view3d}
-              onClick={view3d}
-              className={cn("border", !hasSelection && "opacity-50")}
-            >
-              <Box aria-hidden="true" className="size-4" strokeWidth={1.75} />
             </Button>
           </Hint>
         </div>

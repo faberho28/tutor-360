@@ -7,7 +7,6 @@ import type {
   Detection,
   DiagnosisEntry,
   GeneralStepsEntry,
-  Model3DState,
   StageState,
 } from "../types";
 
@@ -42,8 +41,6 @@ export type SessionState = {
   /** Paints the change detector's grid over the camera (to tune it). */
   showChangeGrid: boolean;
   captures: Capture[];
-  /** The 3D reconstruction in progress or on screen; one at a time. */
-  model3d: Model3DState;
   /** Diagnosis per detection id. */
   diagnoses: Record<string, DiagnosisEntry>;
   /** The step-by-step shown when no part needs fixing (the "general" key). */
@@ -84,7 +81,6 @@ export type SessionActions = {
   /** Saves the given detections and their composed image; returns the capture. */
   addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
   removeCapture: (id: string) => void;
-  setModel3d: (model3d: Model3DState) => void;
   setDiagnosis: (id: string, entry: DiagnosisEntry) => void;
   /** A new list of general steps starts with none of them marked. */
   setGeneralSteps: (entry: GeneralStepsEntry) => void;
@@ -133,7 +129,6 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     hiddenIds: [],
     showChangeGrid: false,
     captures: [],
-    model3d: { status: "idle" },
     diagnoses: {},
     generalSteps: { status: "idle" },
     statusOverrides: {},
@@ -202,8 +197,6 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
 
     removeCapture: (id) =>
       set((state) => ({ captures: state.captures.filter((c) => c.id !== id) })),
-
-    setModel3d: (model3d) => set({ model3d }),
 
     setDiagnosis: (id, entry) =>
       set((state) => ({ diagnoses: { ...state.diagnoses, [id]: entry } })),

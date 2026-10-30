@@ -19,15 +19,12 @@ export type ScanAnalysis = AnalysisSource & {
 
 /**
  * Everything the scan screen needs from the outside world (analysis,
- * diagnosis, 3D, report). Where a real implementation does not exist yet,
+ * diagnosis, report). Where a real implementation does not exist yet,
  * lib/services/real.ts says so instead of faking a result.
  */
 export type ScanServices = {
   /** Writes the progress of a diagnosis for `detection` into the store. */
   requestDiagnosis(store: SessionStore, detection: Detection): void;
-  /** Starts a 3D reconstruction; the dialog follows `model3d` in the store. */
-  requestModel(store: SessionStore, detectionId: string): void;
-  closeModel(store: SessionStore): void;
   reportAvailable: boolean;
   /**
    * Resolves when the report is ready and downloaded; rejects when it cannot be

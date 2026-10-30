@@ -68,12 +68,6 @@ export type Capture = {
   imageDataUrl: string;
 };
 
-export type Model3DState =
-  | { status: "idle" }
-  | { status: "generating"; detectionId: string }
-  | { status: "ready"; detectionId: string; glbUrl: string }
-  | { status: "error"; detectionId: string };
-
 export type AnalysisState = {
   mode: "auto" | "manual";
   phase:
