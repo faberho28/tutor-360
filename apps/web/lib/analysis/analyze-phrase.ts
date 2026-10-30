@@ -2,7 +2,7 @@ import { ModelError, toModelError } from "../models/errors";
 import type { PhrasePlanner } from "../models/phrase-planner";
 import type { Segmenter } from "../models/segmenter";
 import type { Detection } from "../types";
-import { isHoleLike, keepParts } from "./mask-quality";
+import { dropOverlaps, isHoleLike, keepParts } from "./mask-quality";
 import { mergeNamedMasks, type PhraseCandidate } from "./merge-phrases";
 import { MAX_SAM_PHRASES, MAX_VARIANTS, type PlannedPart } from "./scene";
 import type { AnalyzeFrameInput, AnalyzeResponse } from "./types";
@@ -166,7 +166,9 @@ async function segmentPhrases(
         }),
       ),
   );
-  const { kept } = mergeNamedMasks(candidates);
+  // Two parts of the plan that landed on the same object keep one mask.
+  const { kept: merged } = mergeNamedMasks(candidates);
+  const kept = dropOverlaps(merged, drop);
 
   const components = kept
     .filter((c) => c.score === null || c.score >= MIN_MASK_SCORE)

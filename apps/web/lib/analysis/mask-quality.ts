@@ -17,7 +17,7 @@ export const MASK_LIMITS = {
   minArea: 0.0004,
 } as const;
 
-export type MaskRejection = "too-large" | "too-small" | "container";
+export type MaskRejection = "too-large" | "too-small" | "container" | "overlap";
 
 type Shape = {
   polygon: readonly Point[];
@@ -91,6 +91,72 @@ export function keepParts<T extends Shape>(
     }
     return true;
   });
+}
+
+/** Two masks over this IoU are one object seen by two parts of the plan. */
+export const OVERLAP_IOU = 0.5;
+/** Resolution of the grid the overlap is measured on. */
+const OVERLAP_GRID = 160;
+
+/** The grid cells a mask covers (centres inside its polygon). */
+function cellsOf(mask: Shape): Set<number> {
+  const n = OVERLAP_GRID;
+  const cells = new Set<number>();
+  const { x, y, w, h } = mask.bbox;
+  const x0 = Math.max(0, Math.floor(x * n));
+  const x1 = Math.min(n - 1, Math.ceil((x + w) * n));
+  const y0 = Math.max(0, Math.floor(y * n));
+  const y1 = Math.min(n - 1, Math.ceil((y + h) * n));
+  for (let gy = y0; gy <= y1; gy++) {
+    for (let gx = x0; gx <= x1; gx++) {
+      if (pointInPolygon([(gx + 0.5) / n, (gy + 0.5) / n], mask.polygon)) {
+        cells.add(gy * n + gx);
+      }
+    }
+  }
+  return cells;
+}
+
+/**
+ * Two parts of the plan can land on the same object ("black square chip" and
+ * "tiny integrated circuit"), and then the same mask is painted twice, reviewed
+ * twice and diagnosed twice. Of two masks that overlap (IoU at or over
+ * `OVERLAP_IOU`) the more confident one stays; on a tie, the first. `onDrop`
+ * hears each removal.
+ */
+export function dropOverlaps<T extends Shape & { score: number | null }>(
+  masks: readonly T[],
+  onDrop?: (reason: MaskRejection) => void,
+): T[] {
+  const cells = masks.map(cellsOf);
+  const order = masks
+    .map((_, i) => i)
+    .sort((a, b) => (masks[b]!.score ?? -1) - (masks[a]!.score ?? -1) || a - b);
+  const kept: number[] = [];
+  for (const i of order) {
+    const a = masks[i]!;
+    const overlaps = kept.some((j) => {
+      const b = masks[j]!;
+      const apart =
+        a.bbox.x > b.bbox.x + b.bbox.w ||
+        b.bbox.x > a.bbox.x + a.bbox.w ||
+        a.bbox.y > b.bbox.y + b.bbox.h ||
+        b.bbox.y > a.bbox.y + a.bbox.h;
+      if (apart) return false;
+      const [small, big] =
+        cells[i]!.size < cells[j]!.size
+          ? [cells[i]!, cells[j]!]
+          : [cells[j]!, cells[i]!];
+      let inter = 0;
+      for (const cell of small) if (big.has(cell)) inter++;
+      const union = cells[i]!.size + cells[j]!.size - inter;
+      return union > 0 && inter / union >= OVERLAP_IOU;
+    });
+    if (overlaps) onDrop?.("overlap");
+    else kept.push(i);
+  }
+  const keep = new Set(kept);
+  return masks.filter((_, i) => keep.has(i));
 }
 
 /** Holes, vias and screw holes are not parts: nobody inspects a hole. */
