@@ -109,6 +109,7 @@ function initialAnalysis(): AnalysisState {
     mode: "manual",
     phase: "idle",
     latencyMs: null,
+    busy: false,
     startedAt: null,
     reason: null,
     stale: false,

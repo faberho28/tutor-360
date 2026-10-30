@@ -87,6 +87,11 @@ export type AnalysisState = {
     | "quota"
     | "error";
   latencyMs: number | null;
+  /**
+   * A request to the models is in flight (manual or automatic). Unlike `phase`,
+   * which also says "analyzing" while the automatic mode merely watches.
+   */
+  busy: boolean;
   startedAt: number | null;
   /** Why the last analysis failed (offline, quota or error phases), for the toast. */
   reason: string | null;

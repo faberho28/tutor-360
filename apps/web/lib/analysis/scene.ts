@@ -3,7 +3,11 @@ import { z } from "zod";
 /** Most parts (what Spark asks SAM to find) one analysis may plan. */
 export const MAX_SAM_PHRASES = 8;
 
-/** Most wordings Spark may give for one part (each one is a SAM call). */
+/**
+ * Wordings Spark gives for each part (each one is a SAM call): the best of
+ * three is kept. Once SAM has chosen, the next analyses of the scene ask only
+ * for the winner.
+ */
 export const MAX_VARIANTS = 3;
 
 /**

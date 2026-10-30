@@ -258,6 +258,7 @@ export class RealAnalysis implements ScanAnalysis {
           return motion ? movePolygon(d.polygon, motion) : d.polygon;
         }),
       ) ?? false;
+    this.store.getState().setAnalysis({ busy: true });
     try {
       // Both copies are drawn from the video in the same synchronous step, so
       // they show the same instant; the big one never leaves the device.
@@ -289,6 +290,8 @@ export class RealAnalysis implements ScanAnalysis {
     } catch (error) {
       this.session?.discard();
       throw error;
+    } finally {
+      this.store.getState().setAnalysis({ busy: false });
     }
   }
 

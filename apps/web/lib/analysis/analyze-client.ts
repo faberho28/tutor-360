@@ -9,9 +9,10 @@ import type {
 
 /**
  * Past this the screen treats the AI as offline. The first analysis of a scene
- * asks Spark (3 to 5 s) and then runs up to 24 SAM calls (2 to 3 s).
+ * asks Spark to plan the parts (several seconds) and then runs one SAM
+ * call per wording (2 to 3 s); the screen shows "preparing" meanwhile, so it can be slow.
  */
-const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 30_000;
 
 const KINDS: readonly AnalyzeErrorKind[] = [
   "invalid_input",

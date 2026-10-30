@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAnalysis } from "@/components/scan/analysis-provider";
 import { ChangeIndicator } from "@/components/scan/change-indicator";
 import { ControlBar } from "@/components/scan/control-bar";
+import { EnvironmentPreparation } from "@/components/scan/environment-preparation";
 import { LiveCameraSource } from "@/components/scan/live-camera-source";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
 import { StageCornerControls } from "@/components/scan/stage-corner-controls";
@@ -52,6 +53,7 @@ export function CameraStage() {
             />
             <OverlayCanvas source={dims} />
             <TrackingPreparation />
+            <EnvironmentPreparation />
           </>
         ) : (
           <StageEmptyState state={stage} />

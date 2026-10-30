@@ -60,7 +60,11 @@ function uniquePhrases(input: readonly string[]): string[] {
 async function segmentPhrases(
   frame: AnalyzeFrameInput,
   options: AnalyzeByPhrasesOptions,
-): Promise<Detection[]> {
+): Promise<{
+  components: Detection[];
+  /** Wordings that lost to a better one that did find something. */
+  pruned: ReadonlySet<string>;
+}> {
   const startedAt = Date.now();
   const { segmenter, threshold } = options;
   const phrases = uniquePhrases(options.phrases);
@@ -97,6 +101,7 @@ async function segmentPhrases(
 
   // Wordings of one part compete: only the one SAM understood best keeps its masks.
   const losers = new Set<string>();
+  const pruned = new Set<string>();
   const asked = new Set(phrases);
   for (const group of options.groups ?? []) {
     const members = group.filter((phrase) => asked.has(phrase));
@@ -112,6 +117,11 @@ async function segmentPhrases(
       threshold,
     );
     for (const rank of ranked.slice(1)) losers.add(rank.phrase);
+    // The next analyses of this scene ask only for the winner, but only when it
+    // found something: a part nobody found keeps every wording for another try.
+    if (ranked[0]!.masks > 0) {
+      for (const rank of ranked.slice(1)) pruned.add(rank.phrase);
+    }
   }
 
   if (process.env.NODE_ENV !== "production") {
@@ -158,7 +168,7 @@ async function segmentPhrases(
   );
   const { kept } = mergeNamedMasks(candidates);
 
-  return kept
+  const components = kept
     .filter((c) => c.score === null || c.score >= MIN_MASK_SCORE)
     .map((c) => ({
       id: c.id,
@@ -171,6 +181,7 @@ async function segmentPhrases(
       reason: c.reason,
       seenAt: c.seenAt,
     }));
+  return { components, pruned };
 }
 
 export type AnalyzeSceneOptions = {
@@ -229,7 +240,7 @@ export async function analyzeScene(
     };
   }
 
-  const components = await segmentPhrases(frame, {
+  const { components, pruned } = await segmentPhrases(frame, {
     segmenter,
     phrases: parts.flatMap((part) => part.phrases),
     groups: parts.map((part) => part.phrases),
@@ -250,7 +261,13 @@ export async function analyzeScene(
   }
   return {
     components,
-    plan: parts,
+    // The plan the next analyses of this scene reuse: each part keeps only the
+    // wording SAM understood best (one call per wording becomes one per part). A manual
+    // capture or a new scene plans again, with every wording.
+    plan: parts.map((part) => ({
+      ...part,
+      phrases: part.phrases.filter((phrase) => !pruned.has(phrase)),
+    })),
     timestamp: Date.now(),
     latencyMs: Date.now() - startedAt,
   };

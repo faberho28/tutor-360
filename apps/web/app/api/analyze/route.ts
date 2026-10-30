@@ -61,5 +61,5 @@ export async function POST(request: Request) {
   }
 }
 
-/** Vercel cuts a function at its default limit: the analysis runs up to 24 SAM calls. */
+/** Vercel cuts a function at its default limit: the first analysis runs one SAM call per wording. */
 export const maxDuration = 60;
