@@ -1,12 +1,9 @@
 "use client";
 
-import { Volume2, VolumeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSpeech } from "@/hooks/use-speech";
 import { severityLabel } from "@/lib/copy";
-import { speechText } from "@/lib/diagnosis/speech-text";
 import type { Diagnosis, DiagnosisEntry } from "@/lib/types";
 
 /** Diagnosis text with its loading and error states. */
@@ -52,28 +49,11 @@ export function DiagnosisView({
 }
 
 function ReadyDiagnosis({ data }: { data: Diagnosis }) {
-  const { available, speaking, speak, stop } = useSpeech();
   const severity = severityLabel[data.severity];
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <Badge variant={severity.variant}>{severity.text}</Badge>
-        {available ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            aria-pressed={speaking}
-            onClick={() => (speaking ? stop() : speak(speechText(data)))}
-          >
-            {speaking ? (
-              <VolumeOff aria-hidden="true" data-icon="inline-start" />
-            ) : (
-              <Volume2 aria-hidden="true" data-icon="inline-start" />
-            )}
-            {speaking ? "Detener" : "Escuchar"}
-          </Button>
-        ) : null}
       </div>
       <p className="text-xs leading-relaxed">{data.summary}</p>
       {data.confirmed === false ? (
