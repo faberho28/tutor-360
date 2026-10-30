@@ -13,6 +13,8 @@ import { sampleVideo } from "@/lib/vision/sample-frame";
  * rate: change one and the other must follow.
  */
 const SAMPLE_INTERVAL_MS = 100;
+/** The wait after a look is at least this many times what the look took. */
+const BUSY_FACTOR = 5;
 
 const WAITING: ChangeReading = {
   status: "calibrating",
@@ -62,18 +64,28 @@ export function useChangeDetection(
   useEffect(() => {
     if (!enabled) return;
     detector.current.reset();
-    const id = window.setInterval(() => {
+    let timer = 0;
+    const look = () => {
+      const started = performance.now();
       const video = getVideoRef.current();
-      if (!video || document.hidden) return;
-      const sig = sampleVideo(video);
-      if (!sig) return;
-      const next = detector.current.push(sig, performance.now());
-      setReading((prev) =>
-        sameReading(prev, next, trackHeatRef.current) ? prev : next,
+      const sig = video && !document.hidden ? sampleVideo(video) : null;
+      if (sig) {
+        const next = detector.current.push(sig, started);
+        setReading((prev) =>
+          sameReading(prev, next, trackHeatRef.current) ? prev : next,
+        );
+      }
+      // A look must never take more than a fifth of the main thread: a slow
+      // machine looks less often instead of freezing the buttons and dialogs.
+      const took = performance.now() - started;
+      timer = window.setTimeout(
+        look,
+        Math.max(SAMPLE_INTERVAL_MS, took * BUSY_FACTOR),
       );
-    }, SAMPLE_INTERVAL_MS);
+    };
+    timer = window.setTimeout(look, SAMPLE_INTERVAL_MS);
     return () => {
-      window.clearInterval(id);
+      window.clearTimeout(timer);
       setReading(WAITING);
     };
   }, [enabled]);

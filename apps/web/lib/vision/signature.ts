@@ -80,6 +80,13 @@ function overlapDiff(
  * +-MAX_SHIFT pixels, comparing only the overlap) and the remaining diff.
  */
 export function align(ref: Signature, cur: Signature): Alignment {
+  // A shift has to lower the diff by SHIFT_GAIN to beat staying still. When
+  // staying still is already under that, no shift can: skip the search of 289
+  // shifts, which is the whole cost of a look and the common case (a steady
+  // scene). The result is the same as running it.
+  const steady = overlapDiff(ref, cur, 0, 0);
+  if (steady < SHIFT_GAIN) return { dx: 0, dy: 0, diff: steady };
+
   let best: Alignment = { dx: 0, dy: 0, diff: Infinity };
   for (let dy = -MAX_SHIFT; dy <= MAX_SHIFT; dy += STEP) {
     for (let dx = -MAX_SHIFT; dx <= MAX_SHIFT; dx += STEP) {
@@ -88,8 +95,9 @@ export function align(ref: Signature, cur: Signature): Alignment {
     }
   }
   // Noise must not read as movement: keep (0, 0) unless a shift is clearly better.
-  const still = overlapDiff(ref, cur, 0, 0);
-  return still - best.diff < SHIFT_GAIN ? { dx: 0, dy: 0, diff: still } : best;
+  return steady - best.diff < SHIFT_GAIN
+    ? { dx: 0, dy: 0, diff: steady }
+    : best;
 }
 
 /** Mean diff per grid cell (row-major, GRID_COLS x GRID_ROWS), realigned. */
