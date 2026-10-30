@@ -56,13 +56,13 @@ export function StageCornerControls({
               "flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium tabular-nums",
               GLASS,
             )}
-            aria-label={`Latencia de la IA ${(latencyMs / 1000).toFixed(1)} segundos, ${tone.word}`}
+            aria-label={`Latencia de la IA ${tone.word}`}
           >
             <span
               aria-hidden="true"
               className={cn("size-2 rounded-full", tone.dot)}
             />
-            IA {(latencyMs / 1000).toFixed(1)} s
+            IA
           </p>
         ) : null}
         {children}
