@@ -29,8 +29,14 @@ function isResult(value: unknown): value is VerifyResult {
 export async function requestVerify(
   image: string,
   options: {
-    finding: string;
     goal: string;
+    scene?: string;
+    reports?: readonly ({
+      result: "yes" | "no" | "unsure";
+      note?: string;
+    } | null)[];
+    remarks?: readonly string[];
+    log?: readonly string[];
     signal?: AbortSignal;
     apiKey?: string;
   },
@@ -50,8 +56,11 @@ export async function requestVerify(
       },
       body: JSON.stringify({
         image,
-        finding: options.finding,
         goal: options.goal,
+        scene: options.scene,
+        reports: options.reports,
+        remarks: options.remarks,
+        log: options.log,
       }),
       signal: controller.signal,
     });

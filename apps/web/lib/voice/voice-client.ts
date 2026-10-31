@@ -10,16 +10,20 @@ export type VoiceOutcome = {
   note: string;
   /** What the tutor says out loud (a question only). */
   reply: string;
+  /** New information or an instruction: the steps must be rewritten. */
+  replan: boolean;
 };
 
 export type VoiceRequestContext = {
   goal: string;
-  assessment?: string;
   steps: string[];
   current: number;
   reports: ({ result: "yes" | "no" | "unsure"; note?: string } | null)[];
   awaiting: boolean;
   conclusion?: string;
+  scene?: string;
+  remarks?: string[];
+  log?: string[];
 };
 
 async function post<T>(
@@ -75,7 +79,10 @@ export async function transcribe(
 
 function isOutcome(value: unknown): value is VoiceOutcome {
   if (typeof value !== "object" || value === null) return false;
-  const { intent, result, note, reply } = value as Record<string, unknown>;
+  const { intent, result, note, reply, replan } = value as Record<
+    string,
+    unknown
+  >;
   return (
     (intent === "answer" || intent === "question" || intent === "ignore") &&
     (result === null ||
@@ -83,7 +90,8 @@ function isOutcome(value: unknown): value is VoiceOutcome {
       result === "no" ||
       result === "unsure") &&
     typeof note === "string" &&
-    typeof reply === "string"
+    typeof reply === "string" &&
+    typeof replan === "boolean"
   );
 }
 

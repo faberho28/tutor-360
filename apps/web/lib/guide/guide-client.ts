@@ -1,8 +1,8 @@
 import { API_KEY_HEADER } from "../settings/api-key";
 import type { Detection, Guide, GuideStep } from "../types";
 
-/** Spark took about 7 s for a small board; this leaves room for a slow one. */
-const TIMEOUT_MS = 30_000;
+/** The first guide writes a goal, every step and a description: 10 s on a small board, 30 s or more on a crowded one. The route allows 60 s. */
+const TIMEOUT_MS = 70_000;
 
 /** What the tutor is told about each part. */
 export type GuidePartInput = Pick<Detection, "id" | "label" | "status">;
@@ -27,10 +27,19 @@ export async function requestGuide(
     parts: readonly GuidePartInput[];
     signal?: AbortSignal;
     context?: string;
-    /** Spark's first judgment of the state of the scene. */
-    assessment?: string;
     /** The procedure being followed: the answer is the steps still to do. */
-    progress?: { goal: string; steps: readonly string[]; current: number };
+    progress?: {
+      goal: string;
+      steps: readonly string[];
+      current: number;
+      reports?: readonly ({
+        result: "yes" | "no" | "unsure";
+        note?: string;
+      } | null)[];
+      remarks?: readonly string[];
+      scene?: string;
+      log?: readonly string[];
+    };
     apiKey?: string;
   },
 ): Promise<Guide> {
@@ -50,7 +59,6 @@ export async function requestGuide(
       body: JSON.stringify({
         image: imageDataUrl,
         context: options.context,
-        assessment: options.assessment,
         progress: options.progress,
         parts: options.parts.map(({ id, label, status }) => ({
           id,
@@ -61,10 +69,11 @@ export async function requestGuide(
       signal: controller.signal,
     });
     const body: unknown = await response.json().catch(() => null);
-    const { goal, steps, conclusion } = (body ?? {}) as {
+    const { goal, steps, conclusion, observation } = (body ?? {}) as {
       goal?: unknown;
       steps?: unknown;
       conclusion?: unknown;
+      observation?: unknown;
     };
     if (
       !response.ok ||
@@ -78,7 +87,12 @@ export async function requestGuide(
     ) {
       throw new Error(`Guide failed (${response.status})`);
     }
-    return { goal, steps, conclusion };
+    return {
+      goal,
+      steps,
+      conclusion,
+      observation: typeof observation === "string" ? observation : "",
+    };
   } finally {
     clearTimeout(timer);
     options.signal?.removeEventListener("abort", onAbort);

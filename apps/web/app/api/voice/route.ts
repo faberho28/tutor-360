@@ -12,7 +12,6 @@ const requestSchema = z.object({
   caseContext: analyzeRequestSchema.shape.context,
   context: z.object({
     goal: z.string().max(400),
-    assessment: z.string().max(500).optional(),
     steps: z.array(z.string().max(600)).max(80),
     current: z.number().int().min(0).max(80),
     reports: z
@@ -26,6 +25,9 @@ const requestSchema = z.object({
       )
       .max(80),
     awaiting: z.boolean(),
+    scene: z.string().max(2500).optional(),
+    remarks: z.array(z.string().max(500)).max(40).optional(),
+    log: z.array(z.string().max(1700)).max(40).optional(),
     conclusion: z.string().max(800).optional(),
   }),
 });

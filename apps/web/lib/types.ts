@@ -66,6 +66,8 @@ export type Guide = {
   goal: string;
   steps: GuideStep[];
   conclusion: string;
+  /** A detailed description of what the picture showed (Spanish). */
+  observation: string;
 };
 
 /** What the student says happened after a step: as the step said, not, or they could not tell. */
@@ -93,12 +95,17 @@ export type GuideEntry =
   | { status: "error" }
   | {
       status: "ready";
-      finding: string;
       goal: string;
       steps: GuideStep[];
       current: number;
       /** What the student reported after each step done (same order as the steps). */
       reports: GuideReport[];
+      /** What the student told the tutor out loud that changes the plan. */
+      remarks: string[];
+      /** A detailed description of the scene when the guide began (Spanish). */
+      scene: string;
+      /** What the student asked, what the tutor answered and what Spark saw at each revision, oldest first. */
+      log: string[];
       /** Said when no step is left: what was found and done. */
       conclusion: string;
       /** The tutor is working out what comes after the last report. */

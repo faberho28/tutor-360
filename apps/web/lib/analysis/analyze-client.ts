@@ -55,7 +55,6 @@ function isAnalyzeResponse(body: unknown): body is AnalyzeResponse {
   return (
     Array.isArray(value.components) &&
     Array.isArray(value.plan) &&
-    typeof value.assessment === "string" &&
     typeof value.timestamp === "number"
   );
 }

@@ -92,6 +92,10 @@ export type SessionActions = {
   setGuide: (guide: GuideEntry) => void;
   /** Notes what the student says happened in the current step and moves on to the next. */
   reportGuideStep: (report: GuideReport) => void;
+  /** Keeps something the student told the tutor (a fact or an instruction). */
+  addGuideRemark: (text: string) => void;
+  /** Adds a line to the guide's memory (the last 40 are kept). */
+  logGuide: (line: string) => void;
   setGuideThinking: (thinking: boolean) => void;
   /**
    * Replaces the steps still to do from step `from` on. With none left, the
@@ -102,6 +106,7 @@ export type SessionActions = {
     steps: GuideStep[],
     from: number,
     conclusion: string,
+    observation: string,
   ) => void;
   /** The camera's comparison at the end of the steps. */
   setGuideCheck: (check: GuideCheck) => void;
@@ -241,6 +246,30 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
         };
       }),
 
+    addGuideRemark: (text) =>
+      set((state) =>
+        state.guide.status === "ready"
+          ? {
+              guide: {
+                ...state.guide,
+                remarks: [...state.guide.remarks, text],
+              },
+            }
+          : {},
+      ),
+
+    logGuide: (line) =>
+      set((state) =>
+        state.guide.status === "ready"
+          ? {
+              guide: {
+                ...state.guide,
+                log: [...state.guide.log, line].slice(-40),
+              },
+            }
+          : {},
+      ),
+
     setGuideThinking: (thinking) =>
       set((state) =>
         state.guide.status === "ready"
@@ -248,12 +277,20 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
           : {},
       ),
 
-    reviseGuide: (goal, revised, from, conclusion) =>
+    reviseGuide: (goal, revised, from, conclusion, observation) =>
       set((state) => {
         const { guide } = state;
         if (guide.status !== "ready") return {};
+        // What the camera showed is kept as text: the picture itself is not.
+        const log = observation
+          ? [
+              ...guide.log,
+              `Lo que se veía en ese momento: ${observation}`,
+            ].slice(-40)
+          : guide.log;
         // No steps left and nothing to say is not an answer.
-        if (revised.length === 0 && !conclusion) return {};
+        if (revised.length === 0 && !conclusion)
+          return { guide: { ...guide, log } };
         const remaining = guide.steps.slice(from);
         // A step that came back word for word keeps the part it already pointed at.
         const steps = revised.map((step) => {
@@ -271,12 +308,13 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
                 step.target === steps[i]!.target),
           );
         // Nothing changed: leave the panel alone (and the blinking part).
-        if (same) return {};
+        if (same) return { guide: { ...guide, log } };
         return {
           guide: {
             ...guide,
             goal,
             conclusion,
+            log,
             steps: [...guide.steps.slice(0, from), ...steps],
           },
         };

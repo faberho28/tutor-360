@@ -4,7 +4,7 @@ import {
   MAX_SAM_PHRASES,
   MAX_VARIANTS,
   partPlanSchema,
-  type ScenePlan,
+  type PlannedPart,
 } from "../analysis/scene";
 import { ModelError, toModelError } from "./errors";
 import { callSpark } from "./spark-call";
@@ -29,7 +29,7 @@ export type PlanPartsInput = {
  * several wordings each, never boxes: SAM finds the instances itself.
  */
 export interface PhrasePlanner {
-  planParts(input: PlanPartsInput): Promise<ScenePlan>;
+  planParts(input: PlanPartsInput): Promise<PlannedPart[]>;
 }
 
 function partsFormat(variants: number) {
@@ -40,9 +40,8 @@ function partsFormat(variants: number) {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["assessment", "parts"],
+      required: ["parts"],
       properties: {
-        assessment: { type: "string" },
         parts: {
           type: "array",
           maxItems: MAX_SAM_PHRASES,
@@ -74,8 +73,6 @@ export function buildPartsPrompt(input: {
     "You assist a technician who points a camera at something to inspect it. An image segmentation model will look for what you ask, one phrase at a time. Decide what to ask for.",
     input.context ? `Task context: ${input.context}` : null,
     "Rules:",
-    '- "assessment": ONE or TWO sentences in Spanish (Colombia), with correct spelling and accents, saying in what state this object is, as a careful inspector of this kind of object would say it. Decide it first, by looking: say plainly when it looks fine, and never invent a problem.',
-    "- Then decide what to ask the segmentation model for, so that it paints what your assessment is about: each problem you found and the parts worth inspecting. The problems go first.",
     "- Ask for the PARTS worth inspecting one by one, not for the whole device when its parts are what matters. For a keyboard ask for its keys and its notable parts; for a Rubik's cube ask for its faces by colour; for a ball ask for the markings on it.",
     '- Each phrase names ONE concrete kind of physical thing that is visible, as a short singular English noun phrase, for example "keyboard key", "space bar", "enter key", "touchpad", "usb cable", "white face of a rubik\'s cube".',
     '- Describe each thing by how it LOOKS (shape, colour, material), as someone who has never seen the device would, not by its technical name or jargon: "red plastic bottle cap", "long wooden handle", "yellow rubber duck", "thin glass tube", "tall steel cylinder". Plain names that are also what the thing looks like ("space bar", "usb port", "keyboard key") are fine.',
@@ -93,7 +90,7 @@ export function buildPartsPrompt(input: {
 }
 
 /** Trims; each wording appears once in the whole plan (SAM is not asked twice). */
-export function parsePartPlan(text: string): ScenePlan {
+export function parsePartPlan(text: string): PlannedPart[] {
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -110,7 +107,7 @@ export function parsePartPlan(text: string): ScenePlan {
     );
   }
   const seen = new Set<string>();
-  const parts = parsed.data.parts
+  return parsed.data.parts
     .map((part) => ({
       label: part.label,
       phrases: part.phrases.slice(0, MAX_VARIANTS).filter((phrase) => {
@@ -122,7 +119,6 @@ export function parsePartPlan(text: string): ScenePlan {
     }))
     .filter((part) => part.phrases.length > 0)
     .slice(0, MAX_SAM_PHRASES);
-  return { assessment: parsed.data.assessment, parts };
 }
 
 /**
@@ -133,7 +129,7 @@ export function parsePartPlan(text: string): ScenePlan {
 const PARTS_TEMPERATURE = 0.2;
 
 export class MetaPhrasePlanner implements PhrasePlanner {
-  async planParts(input: PlanPartsInput): Promise<ScenePlan> {
+  async planParts(input: PlanPartsInput): Promise<PlannedPart[]> {
     const variants = Math.min(
       Math.max(Math.floor(input.variants), 1),
       MAX_VARIANTS,

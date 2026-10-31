@@ -7,10 +7,23 @@ import { MetaVerifyWriter } from "@/lib/models/verify-writer";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
 
 const requestSchema = z.object({
-  /** The picture from before and the one from now, side by side. */
+  /** What the camera sees now (the scene at the start travels as text). */
   image: analyzeRequestSchema.shape.image,
-  finding: z.string().min(1).max(400),
   goal: z.string().min(1).max(300),
+  scene: z.string().max(2500).optional(),
+  reports: z
+    .array(
+      z
+        .object({
+          result: z.enum(["yes", "no", "unsure"]),
+          note: z.string().max(500).optional(),
+        })
+        .nullable(),
+    )
+    .max(80)
+    .optional(),
+  remarks: z.array(z.string().max(500)).max(40).optional(),
+  log: z.array(z.string().max(1700)).max(40).optional(),
 });
 
 /**
@@ -44,8 +57,11 @@ export async function POST(request: Request) {
     }
     const verification = await new MetaVerifyWriter().write({
       imageDataUrl: parsed.data.image,
-      finding: parsed.data.finding,
       goal: parsed.data.goal,
+      scene: parsed.data.scene,
+      reports: parsed.data.reports,
+      remarks: parsed.data.remarks,
+      log: parsed.data.log,
       apiKey: sentKey ?? undefined,
       signal: request.signal,
     });

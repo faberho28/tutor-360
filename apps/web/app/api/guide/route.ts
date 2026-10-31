@@ -10,13 +10,30 @@ import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
 const requestSchema = z.object({
   image: analyzeRequestSchema.shape.image,
   context: analyzeRequestSchema.shape.context,
-  assessment: z.string().max(400).optional(),
   /** The procedure being followed, when the steps are revised. */
   progress: z
     .object({
       goal: z.string().max(300),
       steps: z.array(z.string().max(500)).max(80),
       current: z.number().int().min(0).max(80),
+      /** What the student reported after each step done. */
+      reports: z
+        .array(
+          z
+            .object({
+              result: z.enum(["yes", "no", "unsure"]),
+              note: z.string().max(500).optional(),
+            })
+            .nullable(),
+        )
+        .max(80)
+        .optional(),
+      /** What the student told the tutor out loud (facts, instructions). */
+      remarks: z.array(z.string().max(500)).max(40).optional(),
+      /** The scene as it was described when the procedure began. */
+      scene: z.string().max(2500).optional(),
+      /** What was asked, answered and seen along the way. */
+      log: z.array(z.string().max(1700)).max(40).optional(),
     })
     .optional(),
   parts: z
@@ -63,7 +80,6 @@ export async function POST(request: Request) {
     const guide = await new MetaGuideWriter().write({
       imageDataUrl: parsed.data.image,
       context: parsed.data.context,
-      assessment: parsed.data.assessment,
       progress: parsed.data.progress,
       parts: parsed.data.parts,
       apiKey: sentKey ?? undefined,

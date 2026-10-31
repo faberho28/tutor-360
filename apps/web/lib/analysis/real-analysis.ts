@@ -13,7 +13,6 @@ import {
   setAnalyzedFrame,
 } from "../diagnosis/analyzed-frame";
 import { autoDiagnose } from "../diagnosis/request-diagnosis";
-import { composeBeforeAfter } from "../guide/compose-before-after";
 import { requestGuide } from "../guide/guide-client";
 import { guideParts } from "../guide/limits";
 import { markFrame } from "../guide/mark-frame";
@@ -83,8 +82,6 @@ export class RealAnalysis implements ScanAnalysis {
    * scene is the same the next analyses skip Spark; losing the scene drops it.
    */
   private plan: PlannedPart[] | null = null;
-  /** Spark's first judgment of the state of the scene: the guide follows it. */
-  private assessment: string | null = null;
   /** Spark's second look: final names and condition, part by part. */
   private readonly reviews = new PartReviews();
   /** Cancels the guided procedure request of the current context. */
@@ -340,7 +337,6 @@ export class RealAnalysis implements ScanAnalysis {
         .then((marked) =>
           requestGuide(marked, {
             parts: detections,
-            assessment: this.assessment ?? undefined,
             context: labCase?.context || undefined,
             apiKey: readApiKey() ?? undefined,
             signal,
@@ -354,11 +350,13 @@ export class RealAnalysis implements ScanAnalysis {
               status: "ready",
               check: { status: "idle" },
               outcome: null,
-              finding: this.assessment ?? guide.goal,
+              scene: guide.observation,
+              log: [],
               goal: guide.goal,
               steps: guide.steps,
               current: 0,
               reports: [],
+              remarks: [],
               conclusion: "",
               thinking: false,
             });
@@ -380,20 +378,23 @@ export class RealAnalysis implements ScanAnalysis {
   checkGuide() {
     const { guide, setGuideCheck } = this.store.getState();
     if (guide.status !== "ready" || guide.check.status !== "idle") return;
-    const before = this.guideFrame;
     const video = readyVideo(this.getVideo());
-    if (!before || !video) {
+    if (!video) {
       setGuideCheck({ status: "error" });
       return;
     }
     setGuideCheck({ status: "loading" });
     const { signal } = this.verifyRun;
+    // The scene at the start is not shown again: it is kept as the description
+    // Spark wrote then, and only the picture of now is sent.
     void captureFrame(video)
-      .then((after) => composeBeforeAfter(before, after))
-      .then((image) =>
-        requestVerify(image, {
-          finding: guide.finding,
+      .then((now) =>
+        requestVerify(now.dataUrl, {
           goal: guide.goal,
+          scene: guide.scene,
+          reports: guide.reports,
+          remarks: guide.remarks,
+          log: guide.log,
           apiKey: readApiKey() ?? undefined,
           signal,
         }),
@@ -435,7 +436,6 @@ export class RealAnalysis implements ScanAnalysis {
     this.auto = false;
     this.scheduler.stop();
     this.plan = null;
-    this.assessment = null;
     this.reviews.reset();
     this.session?.clear();
     this.guideRun.abort();
@@ -464,10 +464,6 @@ export class RealAnalysis implements ScanAnalysis {
     // The diagnosis crops are cut from the same instant at the camera's own
     // resolution, where a small part still has detail.
     setAnalyzedFrame(this.store, detail);
-    // A scene Spark just judged: the guide is written from that judgment.
-    if (!planReused && response.assessment) {
-      this.assessment = response.assessment;
-    }
     this.loadGuide(frame);
     // A plan Spark just made is a new scene: what was reviewed no longer applies.
     if (!planReused) this.reviews.reset();
@@ -548,7 +544,7 @@ export class RealAnalysis implements ScanAnalysis {
    * if it fails the steps stay as they were.
    */
   answerGuideStep(report: GuideReport) {
-    const { guide, labCase } = this.store.getState();
+    const { guide } = this.store.getState();
     if (
       guide.status !== "ready" ||
       guide.thinking ||
@@ -557,13 +553,26 @@ export class RealAnalysis implements ScanAnalysis {
       return;
     }
     this.store.getState().reportGuideStep(report);
+    this.reviseFromStudent();
+  }
+
+  /**
+   * The student told the tutor something that changes the plan (a part they
+   * replaced, a step to skip, something new they found). It is kept and the steps
+   * from the current one on are rewritten with it, even if the procedure was over.
+   */
+  tellGuide(remark: string) {
+    const { guide } = this.store.getState();
+    if (guide.status !== "ready" || guide.thinking || !remark.trim()) return;
+    this.store.getState().addGuideRemark(remark.trim());
+    this.reviseFromStudent();
+  }
+
+  /** Rewrites what is still to do from the reports and remarks the student has given. */
+  private reviseFromStudent() {
+    const { labCase } = this.store.getState();
     const after = this.store.getState().guide;
     if (after.status !== "ready") return;
-    const scene = this.lastScene;
-    const frame = scene?.frame ?? this.guideFrame;
-    const parts = guideParts(scene?.parts ?? this.store.getState().detections);
-    // Without a picture to show there is nothing to ask: the steps go on.
-    if (!frame || parts.length === 0) return;
     const seq = ++this.revisionSeq;
     const { signal } = this.guideRun;
     const progress = {
@@ -571,19 +580,23 @@ export class RealAnalysis implements ScanAnalysis {
       steps: after.steps.map((step) => step.text),
       current: after.current,
       reports: after.reports,
+      remarks: after.remarks,
+      scene: after.scene,
+      log: after.log,
     };
     this.store.getState().setGuideThinking(true);
-    void markFrame(frame, parts)
-      .then((marked) =>
-        requestGuide(marked, {
-          parts,
+    void this.freshPicture()
+      .then((picture) => {
+        // Without a picture to show there is nothing to ask: the steps go on.
+        if (!picture) throw new Error("There is no picture to show");
+        return requestGuide(picture.image, {
+          parts: picture.parts,
           context: labCase?.context || undefined,
-          assessment: this.assessment ?? undefined,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,
-        }),
-      )
+        });
+      })
       .then(
         (next) => {
           if (signal.aborted || seq !== this.revisionSeq) return;
@@ -594,6 +607,7 @@ export class RealAnalysis implements ScanAnalysis {
               next.steps,
               progress.current,
               next.conclusion,
+              next.observation,
             );
         },
         () => {},
@@ -606,10 +620,35 @@ export class RealAnalysis implements ScanAnalysis {
   }
 
   /**
-   * One thing the student said out loud. Spark, looking at the live frame and the
-   * procedure, says whether it answers the current step (then it is applied as if
-   * the buttons had been pressed), asks the tutor something (the reply comes back
-   * to be spoken) or is not for the tutor.
+   * A NEW frame from the camera, with the parts outlined where the student sees
+   * them now (the tracking moves them) and numbered, and the parts it numbers.
+   * The tutor never gets an old picture: what it saw before is kept as text.
+   */
+  private async freshPicture(): Promise<{
+    image: string;
+    parts: Detection[];
+  } | null> {
+    const { detections, view } = this.store.getState();
+    const parts = guideParts(detections).map((d) => {
+      const motion = viewFor(view, d.id);
+      return motion ? { ...d, polygon: movePolygon(d.polygon, motion) } : d;
+    });
+    if (parts.length === 0) return null;
+    const video = readyVideo(this.getVideo());
+    const frame = video
+      ? await captureFrame(video)
+      : (this.lastScene?.frame ?? this.guideFrame);
+    if (!frame) return null;
+    return { image: await markFrame(frame, parts), parts };
+  }
+
+  /**
+   * One thing the student said out loud. Spark, looking at the live frame and at
+   * what it remembers of the procedure, says whether it answers the current step
+   * (then it is applied as if the buttons had been pressed), asks the tutor
+   * something (the reply comes back to be spoken and both are remembered), gives
+   * new information or an instruction (the steps are rewritten) or is not for the
+   * tutor.
    */
   async voiceTurn(
     transcript: string,
@@ -620,6 +659,7 @@ export class RealAnalysis implements ScanAnalysis {
       result: null,
       note: "",
       reply: "",
+      replan: false,
     };
     const { guide, labCase } = this.store.getState();
     if (guide.status !== "ready") return none;
@@ -636,12 +676,14 @@ export class RealAnalysis implements ScanAnalysis {
         caseContext: labCase?.context || undefined,
         context: {
           goal: guide.goal,
-          assessment: this.assessment ?? undefined,
           steps: guide.steps.map((step) => step.text),
           current: guide.current,
           reports: guide.reports,
           awaiting,
           conclusion: guide.conclusion || undefined,
+          scene: guide.scene,
+          remarks: guide.remarks,
+          log: guide.log,
         },
       },
       { signal, apiKey: readApiKey() ?? undefined },
@@ -660,6 +702,15 @@ export class RealAnalysis implements ScanAnalysis {
             : { result: outcome.result },
         );
       }
+    }
+    if (outcome.intent === "question" && outcome.reply) {
+      // The next call remembers this exchange: Spark keeps nothing by itself.
+      this.store.getState().logGuide(`El estudiante preguntó: «${transcript}»`);
+      this.store.getState().logGuide(`El tutor respondió: «${outcome.reply}»`);
+    }
+    // New information or an instruction (even phrased as a question): the steps change.
+    if (outcome.replan && outcome.intent !== "answer" && outcome.note) {
+      this.tellGuide(outcome.note);
     }
     return outcome;
   }
@@ -690,13 +741,15 @@ export class RealAnalysis implements ScanAnalysis {
       steps: guide.steps.map((step) => step.text),
       current: guide.current,
       reports: guide.reports,
+      remarks: guide.remarks,
+      scene: guide.scene,
+      log: guide.log,
     };
     void markFrame(frame, detections)
       .then((marked) =>
         requestGuide(marked, {
           parts: detections,
           context: labCase?.context || undefined,
-          assessment: this.assessment ?? undefined,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,
@@ -714,6 +767,7 @@ export class RealAnalysis implements ScanAnalysis {
               next.steps,
               progress.current,
               next.conclusion,
+              next.observation,
             );
         },
         // A failed revision leaves the steps as they are.

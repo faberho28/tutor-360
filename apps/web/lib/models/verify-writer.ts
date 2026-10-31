@@ -7,12 +7,21 @@ export const VERDICTS = ["resolved", "unchanged", "cannot_tell"] as const;
 export type Verdict = (typeof VERDICTS)[number];
 
 export type VerifyInput = {
-  /** `data:image/jpeg;base64,...`: the picture from before (left) and now (right). */
+  /** `data:image/jpeg;base64,...`: what the camera sees now. */
   imageDataUrl: string;
-  /** What looked wrong at the start (Spanish), from the guide. */
-  finding: string;
   /** What the student wanted to achieve (Spanish), from the guide. */
   goal: string;
+  /** The scene as it was described when the procedure began (the picture itself is gone). */
+  scene?: string;
+  /** What the student reported after each step done. */
+  reports?: readonly ({
+    result: "yes" | "no" | "unsure";
+    note?: string;
+  } | null)[];
+  /** What the student told the tutor out loud. */
+  remarks?: readonly string[];
+  /** What was asked, answered and seen along the way, oldest first. */
+  log?: readonly string[];
   apiKey?: string;
   signal?: AbortSignal;
 };
@@ -44,19 +53,39 @@ const RESPONSE_FORMAT = {
 } as const;
 
 export function buildVerifyPrompt(
-  input: Pick<VerifyInput, "finding" | "goal">,
+  input: Pick<VerifyInput, "goal" | "scene" | "reports" | "remarks" | "log">,
 ): string {
+  const reports = (input.reports ?? []).flatMap((report, i) =>
+    report
+      ? [
+          `${i + 1}. ${report.result === "yes" ? "it happened as the step said" : report.result === "no" ? "it did NOT happen as the step said" : "the student could not tell"}${report.note ? `, they said: ${report.note}` : ""}`,
+        ]
+      : [],
+  );
   return [
-    "You are a patient tutor for a student apprentice technician. The student just followed a guided procedure with their hands while a camera watched.",
-    `At the start the tutor wrote what looked wrong: "${input.finding}"`,
+    "You are a technical coach for a systems technician with basic but solid foundations: they know their tools and the fundamentals (power, signals, connectors, soldering basics, how to measure) and do not need the elementary explained. What they need is the specific procedure, the order, the values or signs to look for, the risks and the reason behind each decision. They just followed a guided procedure with their hands while a camera watched.",
     `The goal of the procedure was: "${input.goal}"`,
-    "The image has two pictures side by side: on the LEFT what the camera saw before the procedure, on the RIGHT what it sees now.",
-    "Decide, by comparing them:",
-    '- "resolved": the problem described at the start is visibly gone or fixed in the right picture.',
+    input.scene
+      ? `The scene as it looked at the start (described then; that picture is not shown again): "${input.scene}"`
+      : null,
+    reports.length
+      ? `What the student reported after each step:\n${reports.join("\n")}`
+      : null,
+    input.remarks?.length
+      ? `What the student told the tutor out loud:\n${input.remarks.map((remark) => `- ${remark}`).join("\n")}`
+      : null,
+    input.log?.length
+      ? `What else happened along the way, oldest first:\n${input.log.map((line) => `- ${line}`).join("\n")}`
+      : null,
+    "The image is what the camera sees NOW.",
+    "Decide, by comparing it with the description of the start and with what the student did:",
+    '- "resolved": the problem described at the start is visibly gone or fixed in the image.',
     '- "unchanged": the problem is still there, or nothing relevant changed.',
-    '- "cannot_tell": what the procedure checks cannot be seen by a camera (it was a functional test, nothing was visibly wrong at the start, the picture does not show the part, or the scene is different). Prefer this over guessing.',
+    '- "cannot_tell": what the procedure checks cannot be seen by a camera (it was a functional test, nothing was visibly wrong at the start, the image does not show the part, or the scene is different). Prefer this over guessing. Do not call it resolved while the student reported that something did not happen and nothing settled it.',
     '- "comment": ONE or TWO sentences in Spanish (Colombia), with correct spelling and accents, speaking directly to the student in the imperative or second person, without opening with "Tú": what you see that changed (or did not) and what it means for the goal. Say it by general kind, never by a specific part name. A hand, a shadow or a change of light is not a change.',
-  ].join("\n");
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 }
 
 export function parseVerification(text: string): Verification {
