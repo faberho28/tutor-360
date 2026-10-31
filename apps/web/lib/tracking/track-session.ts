@@ -19,6 +19,19 @@ import type { View } from "./view";
  * often instead of freezing the page.
  */
 const MIN_TICK_MS = 33;
+/**
+ * A scene that has not moved for `CALM_AFTER` ticks is looked at this often
+ * instead (about 10 times per second): following a still scene at full speed
+ * only keeps the machine busy. The first movement is noticed within this time
+ * and the full rate comes back at once.
+ */
+const CALM_TICK_MS = 100;
+const CALM_AFTER = 15;
+/** A busy scene waits twice what a tick took (a third of the thread); a still one, five times (a sixth). */
+const BUSY_WAIT_FACTOR = 2;
+const CALM_WAIT_FACTOR = 5;
+/** Video noise moves a transform by far less than this between two ticks. */
+const CALM_EPSILON = 2e-3;
 /** Where there is no video-frame callback, the video is polled this often. */
 const POLL_MS = 66;
 /** The regional comparison is heavier: at most this often. */
@@ -110,6 +123,10 @@ export class TrackingSession {
   private frameHandle: { video: HTMLVideoElement; id: number } | null = null;
   private timer: number | undefined;
   private lastTickAt = 0;
+  /** Ticks in a row in which nothing moved (see `CALM_TICK_MS`). */
+  private calmTicks = 0;
+  /** The motions of the previous tick, to tell a still scene from a moving one. */
+  private lastModels: Homography[] | null = null;
   private lastTook = 0;
   private lastRegionAt = 0;
   private committedAt = 0;
@@ -157,7 +174,11 @@ export class TrackingSession {
     if (this.disposed) return;
     const now = performance.now();
     // Never take more than about half of the thread.
-    const wait = Math.max(MIN_TICK_MS, this.lastTook * 2);
+    const calm = this.calmTicks >= CALM_AFTER;
+    const wait = Math.max(
+      calm ? CALM_TICK_MS : MIN_TICK_MS,
+      this.lastTook * (calm ? CALM_WAIT_FACTOR : BUSY_WAIT_FACTOR),
+    );
     if (now - this.lastTickAt >= wait) {
       this.lastTickAt = now;
       this.tick();
@@ -402,6 +423,8 @@ export class TrackingSession {
         }
       }
     }
+    // Nothing is followed any more: there is nothing to hurry for.
+    if (this.active?.lost) this.calmTicks = CALM_AFTER;
     if (before !== this.status() || beforeChanged !== this.regionChanged) {
       this.events.onStatus();
     }
@@ -496,6 +519,16 @@ export class TrackingSession {
       this.shownAssign !== null &&
       this.shownAssign.length === follow.assign.length &&
       follow.assign.every((m, i) => m === this.shownAssign![i]);
+    const still =
+      this.lastModels !== null &&
+      this.lastModels.length === follow.models.length &&
+      follow.models.every((h, i) =>
+        h.every(
+          (v, j) => Math.abs(v - this.lastModels![i]![j]!) <= CALM_EPSILON,
+        ),
+      );
+    this.calmTicks = still ? this.calmTicks + 1 : 0;
+    this.lastModels = follow.models.map((h) => [...h] as Homography);
     if (!force && sameMotions && sameAssign) return;
 
     if (force || !sameAssign) {
