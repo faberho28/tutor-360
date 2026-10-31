@@ -45,7 +45,7 @@ const REPORT_TEXT = {
 export type GuideInput = {
   /** `data:image/jpeg;base64,...` of the analyzed frame. */
   imageDataUrl: string;
-  /** The Laboratorio case context (English prompt text). */
+  /** What the technician says they are working on: the case description or what they wrote (Spanish). */
   context?: string;
   /** The n-th part is the one marked n in the image (see `markFrame`). */
   parts: readonly GuidePart[];
@@ -130,7 +130,9 @@ export function buildGuidePrompt(
 ): string {
   return [
     "You are a technical coach for a systems technician with basic but solid foundations: they know their tools and the fundamentals (power, signals, connectors, soldering basics, how to measure) and do not need the elementary explained. What they need is the specific procedure, the order, the values or signs to look for, the risks and the reason behind each decision. They point a camera at something and work on it with their hands. You guide them one step at a time while a camera shows what is in front of them. They work at their own bench with the usual tools (multimeter, soldering iron, hot-air station, tweezers, flux, isopropyl alcohol, anti-static mat, magnification). Repairs, including reworking or replacing damaged components, are part of the job: explain them step by step with the safe order and the precautions, and never just send them away or tell them to stop.",
-    input.context ? `Task context: ${input.context}` : null,
+    input.context
+      ? `What the technician says they are working on: "${input.context}"`
+      : null,
     "The image shows the parts the vision system found, each one outlined in magenta with its number on a magenta tag. This is the condition of each numbered part. Their names are NOT given on purpose: another model named them and often got them wrong, so identify every part by LOOKING at it in the image:",
     ...input.parts.map(partLine),
     input.progress

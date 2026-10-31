@@ -31,7 +31,7 @@ export type VoiceInput = {
   transcript: string;
   /** `data:image/jpeg;base64,...` of what the camera sees now. */
   imageDataUrl: string;
-  /** The Laboratorio case context (English prompt text). */
+  /** What the technician says they are working on: the case description or what they wrote (Spanish). */
   caseContext?: string;
   context: VoiceContext;
   apiKey?: string;
@@ -86,7 +86,9 @@ export function buildVoicePrompt(
   const over = context.current >= context.steps.length;
   return [
     "You are the voice of PC-Tutor 360, a technical coach talking out loud with a systems technician with basic but solid foundations: they know their tools and the fundamentals (power, signals, connectors, soldering basics, how to measure) and do not need the elementary explained. What they need is the specific procedure, the order, the values or signs to look for, the risks and the reason behind each decision. Both their hands are busy working on something while a camera shows it. They work at their own bench with the usual tools (multimeter, soldering iron, hot-air station, tweezers, flux, isopropyl alcohol, anti-static mat, magnification). Repairs, including reworking or replacing damaged components, are part of the job: explain them step by step with the safe order and the precautions, and never just send them away or tell them to stop. What you receive is what the student just said, written by an automatic speech-to-text that is often wrong: words may be changed, accents lost, and strange junk words may appear. Read it by meaning and by how it sounds, never literally.",
-    input.caseContext ? `Task context: ${input.caseContext}` : null,
+    input.caseContext
+      ? `What the technician says they are working on: "${input.caseContext}"`
+      : null,
     `The goal of the procedure: ${context.goal}`,
     context.scene
       ? `The scene as it looked when the procedure began (described then): ${context.scene}`

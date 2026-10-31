@@ -337,7 +337,7 @@ export class RealAnalysis implements ScanAnalysis {
         .then((marked) =>
           requestGuide(marked, {
             parts: detections,
-            context: labCase?.context || undefined,
+            context: labCase?.description || undefined,
             apiKey: readApiKey() ?? undefined,
             signal,
           }),
@@ -591,7 +591,7 @@ export class RealAnalysis implements ScanAnalysis {
         if (!picture) throw new Error("There is no picture to show");
         return requestGuide(picture.image, {
           parts: picture.parts,
-          context: labCase?.context || undefined,
+          context: labCase?.description || undefined,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,
@@ -673,7 +673,7 @@ export class RealAnalysis implements ScanAnalysis {
       {
         transcript,
         image: frame.dataUrl,
-        caseContext: labCase?.context || undefined,
+        caseContext: labCase?.description || undefined,
         context: {
           goal: guide.goal,
           steps: guide.steps.map((step) => step.text),
@@ -749,7 +749,7 @@ export class RealAnalysis implements ScanAnalysis {
       .then((marked) =>
         requestGuide(marked, {
           parts: detections,
-          context: labCase?.context || undefined,
+          context: labCase?.description || undefined,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,

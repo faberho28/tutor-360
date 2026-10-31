@@ -80,6 +80,11 @@ export function StepsLab() {
   const [frame, setFrame] = useState<CapturedFrame | null>(null);
   const [caseId, setCaseId] = useState(LAB_CASES[0]!.id);
   const [context, setContext] = useState(LAB_CASES[0]!.context);
+  // The tutor never gets the analysis prompt: only what the user says they are doing.
+  const tutorContext =
+    caseId === "personalizado"
+      ? context
+      : (LAB_CASES.find((c) => c.id === caseId)?.description ?? "");
   const [busy, setBusy] = useState<Stage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -204,7 +209,7 @@ export function StepsLab() {
         const parts = guideParts(sam?.detections ?? []).map(toPart);
         const { prompt } = await post<{ prompt: string }>("/api/lab/guide", {
           image: sam?.marked ?? frame.dataUrl,
-          context,
+          context: tutorContext,
           parts,
           dryRun: true,
         });
@@ -252,7 +257,7 @@ export function StepsLab() {
       const parts = guideParts(sam.detections).map(toPart);
       const result = await post<GuideResult>("/api/lab/guide", {
         image: sam.marked,
-        context,
+        context: tutorContext,
         parts,
         prompt: guidePrompt.trim() || undefined,
         effort,
@@ -279,7 +284,7 @@ export function StepsLab() {
       ];
       const next = await post<GuideResult>("/api/lab/guide", {
         image: sam.marked,
-        context,
+        context: tutorContext,
         parts: guideParts(sam.detections).map(toPart),
         progress: {
           goal: guide.goal,
