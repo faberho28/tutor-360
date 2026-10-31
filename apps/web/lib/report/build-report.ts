@@ -14,9 +14,7 @@ export type ReportInput = {
   diagnoses: Readonly<Record<string, DiagnosisEntry>>;
   /** Detections the user marked "add to the report". */
   markedIds: readonly string[];
-  /** The AI's general procedure of the scene, when it was written. */
-  generalSteps: readonly string[] | null;
-  /** Step indexes marked done / skipped, per detection id ("general": the list above). */
+  /** Step indexes marked done / skipped, per detection id. */
   completed: Readonly<Record<string, readonly number[]>>;
   skipped: Readonly<Record<string, readonly number[]>>;
 };
@@ -149,26 +147,6 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
     write("No se detectaron anomalías ni piezas por revisar en esta sesión.", {
       gap: 4,
     });
-  }
-
-  // The AI's general procedure, with what the technician did.
-  if (input.generalSteps && input.generalSteps.length > 0) {
-    ensure(20);
-    y += 2;
-    write("Procedimiento general", { size: 14, bold: true, gap: 1 });
-    const done = input.completed.general;
-    const skipped = input.skipped.general;
-    write(stepsSummary(input.generalSteps.length, done, skipped), {
-      size: 9,
-      gap: 1.5,
-    });
-    input.generalSteps.forEach((step, i) => {
-      write(`${stepMark(i, done, skipped)} ${i + 1}. ${step}`, {
-        indent: 4,
-        gap: 0.8,
-      });
-    });
-    y += 3;
   }
 
   // One block per capture.

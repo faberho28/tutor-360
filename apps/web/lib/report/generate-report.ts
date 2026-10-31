@@ -36,7 +36,6 @@ export async function generateReport(
     reportIds,
     name,
     labCase,
-    generalSteps,
     completedSteps,
     skippedSteps,
   } = store.getState();
@@ -54,7 +53,6 @@ export async function generateReport(
     images,
     diagnoses,
     markedIds: reportIds,
-    generalSteps: generalSteps.status === "ready" ? generalSteps.steps : null,
     completed: completedSteps,
     skipped: skippedSteps,
   });

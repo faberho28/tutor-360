@@ -52,11 +52,62 @@ export type DiagnosisEntry =
   | { status: "ready"; data: Diagnosis };
 
 /** The general step-by-step of the scene, written by the AI once per scan. */
-export type GeneralStepsEntry =
+/** One step of the guided procedure the tutor proposes. */
+export type GuideStep = {
+  /** What to do and why, for the student (Spanish). */
+  text: string;
+  /** The detection this step is about, or null when it is not about one part. */
+  target: string | null;
+};
+
+/** The guided procedure of the scan: its steps and the one the student is on. */
+/** The guided procedure: what the student will achieve and the steps. */
+export type Guide = {
+  goal: string;
+  steps: GuideStep[];
+  conclusion: string;
+};
+
+/** What the student says happened after a step: as the step said, not, or they could not tell. */
+export type GuideReport = {
+  result: "yes" | "no" | "unsure";
+  /** Their own words, when they wrote something. */
+  note?: string;
+};
+
+/** What the camera says about a finished procedure. */
+export type GuideVerdict = "resolved" | "unchanged" | "cannot_tell";
+
+export type GuideCheck =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; steps: string[] };
+  | { status: "ready"; verdict: GuideVerdict; comment: string };
+
+/** What the student says happened. */
+export type GuideOutcome = "yes" | "no" | "unsure";
+
+export type GuideEntry =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error" }
+  | {
+      status: "ready";
+      finding: string;
+      goal: string;
+      steps: GuideStep[];
+      current: number;
+      /** What the student reported after each step done (same order as the steps). */
+      reports: GuideReport[];
+      /** Said when no step is left: what was found and done. */
+      conclusion: string;
+      /** The tutor is working out what comes after the last report. */
+      thinking: boolean;
+      /** The camera's comparison once the steps are over. */
+      check: GuideCheck;
+      /** Whether the student says the problem is solved. */
+      outcome: GuideOutcome | null;
+    };
 
 /** A saved moment of the scan. */
 export type Capture = {

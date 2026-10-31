@@ -217,8 +217,9 @@ export async function analyzeScene(
   const startedAt = Date.now();
   const { planner, segmenter, threshold, signal, apiKey } = options;
 
-  const planned = options.plan?.length
-    ? [...options.plan]
+  // A reused plan has no new judgment: the first one stays with the caller.
+  const scene = options.plan?.length
+    ? { assessment: "", parts: [...options.plan] }
     : await planner.planParts({
         imageDataUrl: frame.imageDataUrl,
         context: options.context,
@@ -228,7 +229,7 @@ export async function analyzeScene(
         signal,
       });
   // Nobody inspects a hole: whatever Spark (or an older plan) asked for.
-  const parts = planned.filter(
+  const parts = scene.parts.filter(
     (part) => ![part.label, ...part.phrases].some(isHoleLike),
   );
 
@@ -237,6 +238,7 @@ export async function analyzeScene(
     return {
       components: [],
       plan: [],
+      assessment: scene.assessment,
       timestamp: Date.now(),
       latencyMs: Date.now() - startedAt,
     };
@@ -263,6 +265,7 @@ export async function analyzeScene(
   }
   return {
     components,
+    assessment: scene.assessment,
     // The plan the next analyses of this scene reuse: each part keeps only the
     // wording SAM understood best (one call per wording becomes one per part). A manual
     // capture or a new scene plans again, with every wording.

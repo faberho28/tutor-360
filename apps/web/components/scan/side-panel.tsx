@@ -4,6 +4,7 @@ import { cn } from "cn";
 import { useState } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { ComponentsCard } from "@/components/scan/components-card";
+import { GuidePanel } from "@/components/scan/guide-panel";
 import { StepsCard } from "@/components/scan/steps-card";
 import { SummaryPill } from "@/components/scan/summary-pill";
 import { FirstAnalysisSkeleton } from "@/components/scan/first-analysis-skeleton";
@@ -21,6 +22,12 @@ function DesktopPanel() {
   const initialAnalysis = useSession(
     (s) => s.analysis.phase === "analyzing" && s.detections.length === 0,
   );
+  // The guide replaces the list of parts while it runs; the list stays one
+  // click away.
+  const guideOn = useSession(
+    (s) => s.guide.status === "loading" || s.guide.status === "ready",
+  );
+  const [showParts, setShowParts] = useState(false);
 
   return (
     <aside
@@ -29,8 +36,19 @@ function DesktopPanel() {
     >
       {initialAnalysis ? (
         <FirstAnalysisSkeleton />
+      ) : guideOn && !showParts ? (
+        <GuidePanel onShowParts={() => setShowParts(true)} />
       ) : (
         <>
+          {guideOn ? (
+            <button
+              type="button"
+              onClick={() => setShowParts(false)}
+              className="self-start text-xs font-medium text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Volver a la guía
+            </button>
+          ) : null}
           <SummaryPill />
           <ComponentsCard />
           <StepsCard />

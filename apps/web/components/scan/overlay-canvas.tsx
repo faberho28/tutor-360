@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { guideTargets } from "@/lib/guide/focus";
 import { drawOverlay, hitTest, type OverlayLayout } from "@/lib/overlay/draw";
 import { drawTrackingDebug } from "@/lib/overlay/draw-debug";
 import { drawChangeGrid } from "@/lib/overlay/draw-grid";
@@ -18,6 +19,9 @@ const DOUBLE_CLICK_MS = 500;
  * size of the stage and redraws on resize, selection or data changes. The
  * animation loop only runs while some mask pulses.
  */
+/** Minimum time between two animated redraws (about 15 per second). */
+const ANIMATION_FRAME_MS = 66;
+
 export function OverlayCanvas({
   source,
   changeGrid = null,
@@ -33,6 +37,9 @@ export function OverlayCanvas({
   const select = useSession((s) => s.select);
   const clearSelection = useSession((s) => s.clearSelection);
   const stale = useSession((s) => s.analysis.stale);
+  // The part of the guide's current step is highlighted.
+  const guide = useSession((s) => s.guide);
+  const guideIds = useMemo(() => guideTargets(guide), [guide]);
   const store = useSessionStore();
   const reducedMotion = useReducedMotion();
 
@@ -91,9 +98,10 @@ export function OverlayCanvas({
     const animate =
       !reducedMotion &&
       !stale &&
-      detections.some(
-        (d) => OVERLAY[d.status].pulse && !hiddenIds.includes(d.id),
-      );
+      (guideIds.length > 0 ||
+        detections.some(
+          (d) => OVERLAY[d.status].pulse && !hiddenIds.includes(d.id),
+        ));
     let frame = 0;
 
     const draw = (now: number) => {
@@ -111,6 +119,7 @@ export function OverlayCanvas({
         stale,
         view: viewRef.current,
         hiddenIds,
+        guideIds,
       });
       if (changeGrid) {
         // On top of the masks (drawOverlay clears the canvas first); the cells
@@ -130,8 +139,14 @@ export function OverlayCanvas({
         });
       }
     };
+    // A blink or a pulse is a slow fade: redrawing every mask 60 times a second
+    // (up to 80 of them) only heats the machine.
+    let last = -Infinity;
     const loop = (now: number) => {
-      draw(now);
+      if (now - last >= ANIMATION_FRAME_MS) {
+        last = now;
+        draw(now);
+      }
       if (animate) frame = requestAnimationFrame(loop);
     };
     loop(performance.now());
@@ -147,6 +162,7 @@ export function OverlayCanvas({
   }, [
     detections,
     hiddenIds,
+    guideIds,
     changeGrid,
     selectedId,
     hoveredId,

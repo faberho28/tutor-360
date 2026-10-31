@@ -18,6 +18,8 @@ export type AnalyzeResponse = {
    * the same scene to skip Spark; empty when Spark found nothing to look for.
    */
   plan: PlannedPart[];
+  /** Spark's judgment of the state of the scene; empty when the plan was reused. */
+  assessment: string;
   /** Epoch milliseconds. */
   timestamp: number;
   /** Server time spent analyzing, not the full round trip. */

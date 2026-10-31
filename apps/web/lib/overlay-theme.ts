@@ -23,6 +23,26 @@ export const LABEL_BG = "rgba(0,0,0,0.7)";
 export const LABEL_FONT = "500 12px Inter, system-ui, sans-serif";
 
 export const PULSE = { periodMs: 1200, min: 0.2, max: 0.5 } as const;
+
+/**
+ * The part the guided procedure is on. A color no status uses (blue, amber and
+ * red are taken) so it is never mistaken for one, and a soft blink of 1 Hz: well
+ * under the three flashes per second that can bother people.
+ */
+export const GUIDE = {
+  color: "#FF2BD6",
+  periodMs: 1000,
+  fillMin: 0.2,
+  fillMax: 0.65,
+} as const;
+
+/** Fill opacity of the guide's part at time `nowMs` (steady when motion is reduced). */
+export function guideAlpha(nowMs: number, reducedMotion: boolean): number {
+  if (reducedMotion) return GUIDE.fillMax;
+  const phase = (nowMs % GUIDE.periodMs) / GUIDE.periodMs;
+  const wave = (1 + Math.cos(2 * Math.PI * phase)) / 2;
+  return GUIDE.fillMin + (GUIDE.fillMax - GUIDE.fillMin) * wave;
+}
 export const STROKE_REDUCED_MOTION = 4;
 
 /** Fill opacity of a pulsing mask at time `nowMs`. */

@@ -71,6 +71,7 @@ export function buildReviewPrompt(
     "Rules:",
     '- "name": what the outlined part is, a short singular noun in Spanish (Colombia), generic enough to fit every outlined instance. If they are different things, name the most common one. Use the name a technician would use.',
     "- Look at what is really outlined. The provisional name is only a hint and may be wrong.",
+    '- What is outlined may be a flaw itself instead of a part: something that should not be there or is not normal for this object. Then "name" says what the flaw is, and it is never "ok".',
     input.judgesCondition
       ? '- "status": "ok" when it looks fine, "warning" when it needs a closer look, "anomaly" when it shows a clear fault. Judge only what you can see (dirt, residue, corrosion, burns, swelling, cracks, bent or missing pieces). Something clean and normal-looking is "ok". Never invent a problem. "reason": one sentence in Spanish saying what you see when the status is not "ok", otherwise an empty string.'
       : '- Do not judge condition: "status" must be "ok" and "reason" an empty string.',

@@ -15,10 +15,13 @@ export const THRESHOLDS = {
   motion: 0.03,
   /**
    * The image must stay below `motion` this long to count as settled. With
-   * the detector looking every 100 ms, the first settled look comes 300 ms
-   * after the last movement and the status is reported `confirm` looks later.
+   * the detector looking every 100 ms, the first settled look comes 1.3 s
+   * after the last movement, the status is reported `confirm` looks later
+   * (1.8 s) and the scheduler waits its hold: an analysis starts about 2 s
+   * after the user stops moving. Shorter than `adoptMs`, so a change is
+   * analyzed before it becomes the new normal.
    */
-  settleMs: 250,
+  settleMs: 1250,
   /** Aligned diff vs the reference above this: a different scene. */
   sceneLost: 0.15,
   /** Per-cell diff above this: that region changed. */

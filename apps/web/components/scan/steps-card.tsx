@@ -9,19 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useServices } from "@/lib/services/context";
 import { useSession, useSessionStore } from "@/lib/session/session-provider";
-import {
-  GENERAL_STEPS_KEY,
-  currentStepIndex,
-  stepProgress,
-  stepStatus,
-} from "@/lib/steps";
+import { currentStepIndex, stepProgress, stepStatus } from "@/lib/steps";
 
 const NO_STEPS: number[] = [];
 
 /**
- * Step by step for the selected part (from its diagnosis), or a general list
- * when nothing is selected or the part is fine. It also asks for the
- * diagnosis of the selection, so it works even if the list is collapsed.
+ * Step by step for the selected part, from its diagnosis. It also asks for
+ * the diagnosis of the selection, so it works even if the list is collapsed.
  */
 export function StepsCard() {
   const store = useSessionStore();
@@ -41,34 +35,24 @@ export function StepsCard() {
     }
   }, [store, requestDiagnosis, selected, needsDiagnosis, entry]);
 
-  const key = needsDiagnosis ? selected.id : GENERAL_STEPS_KEY;
+  const key = selected?.id ?? "";
   const done = useSession((s) => s.completedSteps[key] ?? NO_STEPS);
   const skipped = useSession((s) => s.skippedSteps[key] ?? NO_STEPS);
   const toggleStep = useSession((s) => s.toggleStep);
   const skipStep = useSession((s) => s.skipStep);
 
-  const general = useSession((s) => s.generalSteps);
-  const steps: readonly string[] | null = !needsDiagnosis
-    ? general.status === "ready"
-      ? general.steps
-      : null
-    : entry?.status === "ready"
-      ? entry.data.steps
-      : null;
+  const steps: readonly string[] | null =
+    entry?.status === "ready" ? entry.data.steps : null;
   // What to say while there are no steps to show.
-  const failed = !needsDiagnosis
-    ? general.status === "error"
-    : entry?.status === "error" || entry?.status === "unavailable";
+  const failed = entry?.status === "error" || entry?.status === "unavailable";
 
   const total = steps?.length ?? 0;
   const current = steps ? currentStepIndex(total, done, skipped) : null;
   const progress = stepProgress(total, done, skipped);
 
-  // Real environment: no steps until a real analysis produces detections.
-  if (!hasDetections) return null;
-  // A part that is fine has no steps of its own, and the general ones are about
-  // the whole scene: listing them under a selected part would confuse.
-  if (selected && !needsDiagnosis) return null;
+  // Only a selected part that needs fixing has steps here: the guided
+  // procedure covers the whole scene.
+  if (!hasDetections || !selected || !needsDiagnosis) return null;
 
   const counter = !steps
     ? ""
@@ -114,9 +98,7 @@ export function StepsCard() {
         </>
       ) : failed ? (
         <p className="text-xs text-muted-foreground">
-          {needsDiagnosis
-            ? "Los pasos aparecen cuando el diagnóstico se carga."
-            : "No pudimos preparar los pasos. Se intentará de nuevo con el próximo análisis."}
+          Los pasos aparecen cuando el diagnóstico se carga.
         </p>
       ) : (
         <div className="flex flex-col gap-2" role="status">

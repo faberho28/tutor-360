@@ -6,7 +6,11 @@ import type {
   Capture,
   Detection,
   DiagnosisEntry,
-  GeneralStepsEntry,
+  GuideCheck,
+  GuideEntry,
+  GuideReport,
+  GuideOutcome,
+  GuideStep,
   StageState,
 } from "../types";
 
@@ -43,8 +47,11 @@ export type SessionState = {
   captures: Capture[];
   /** Diagnosis per detection id. */
   diagnoses: Record<string, DiagnosisEntry>;
-  /** The step-by-step shown when no part needs fixing (the "general" key). */
-  generalSteps: GeneralStepsEntry;
+  /**
+   * The guided procedure: the tutor proposes the steps once the parts are named,
+   * and the student moves through them.
+   */
+  guide: GuideEntry;
   /**
    * What the diagnosis decided about a part after a closer look (it could not
    * confirm the fault), per detection id. It wins over the review's verdict.
@@ -82,8 +89,24 @@ export type SessionActions = {
   addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
   removeCapture: (id: string) => void;
   setDiagnosis: (id: string, entry: DiagnosisEntry) => void;
-  /** A new list of general steps starts with none of them marked. */
-  setGeneralSteps: (entry: GeneralStepsEntry) => void;
+  setGuide: (guide: GuideEntry) => void;
+  /** Notes what the student says happened in the current step and moves on to the next. */
+  reportGuideStep: (report: GuideReport) => void;
+  setGuideThinking: (thinking: boolean) => void;
+  /**
+   * Replaces the steps still to do from step `from` on. With none left, the
+   * `conclusion` says how the procedure ended.
+   */
+  reviseGuide: (
+    goal: string,
+    steps: GuideStep[],
+    from: number,
+    conclusion: string,
+  ) => void;
+  /** The camera's comparison at the end of the steps. */
+  setGuideCheck: (check: GuideCheck) => void;
+  /** The student says whether the problem was solved. */
+  answerGuide: (outcome: GuideOutcome) => void;
   /** Changes a part's status now and in every later analysis of the session. */
   overrideStatus: (id: string, override: StatusOverride) => void;
   /** Marks a step done, or undoes it (also clears "skipped"). */
@@ -130,7 +153,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     showChangeGrid: false,
     captures: [],
     diagnoses: {},
-    generalSteps: { status: "idle" },
+    guide: { status: "idle" },
     statusOverrides: {},
     completedSteps: {},
     skippedSteps: {},
@@ -201,15 +224,77 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
     setDiagnosis: (id, entry) =>
       set((state) => ({ diagnoses: { ...state.diagnoses, [id]: entry } })),
 
-    setGeneralSteps: (entry) =>
+    setGuide: (guide) => set({ guide }),
+
+    reportGuideStep: (report) =>
       set((state) => {
-        if (entry.status !== "ready") return { generalSteps: entry };
+        const { guide } = state;
+        if (guide.status !== "ready" || guide.current >= guide.steps.length) {
+          return {};
+        }
         return {
-          generalSteps: entry,
-          completedSteps: { ...state.completedSteps, general: [] },
-          skippedSteps: { ...state.skippedSteps, general: [] },
+          guide: {
+            ...guide,
+            current: guide.current + 1,
+            reports: [...guide.reports, report],
+          },
         };
       }),
+
+    setGuideThinking: (thinking) =>
+      set((state) =>
+        state.guide.status === "ready"
+          ? { guide: { ...state.guide, thinking } }
+          : {},
+      ),
+
+    reviseGuide: (goal, revised, from, conclusion) =>
+      set((state) => {
+        const { guide } = state;
+        if (guide.status !== "ready") return {};
+        // No steps left and nothing to say is not an answer.
+        if (revised.length === 0 && !conclusion) return {};
+        const remaining = guide.steps.slice(from);
+        // A step that came back word for word keeps the part it already pointed at.
+        const steps = revised.map((step) => {
+          const old = remaining.find((r) => r.text === step.text);
+          return old ? { ...step, target: old.target } : step;
+        });
+        const same =
+          goal === guide.goal &&
+          conclusion === guide.conclusion &&
+          remaining.length === steps.length &&
+          remaining.every(
+            (step, i) =>
+              step === steps[i] ||
+              (step.text === steps[i]!.text &&
+                step.target === steps[i]!.target),
+          );
+        // Nothing changed: leave the panel alone (and the blinking part).
+        if (same) return {};
+        return {
+          guide: {
+            ...guide,
+            goal,
+            conclusion,
+            steps: [...guide.steps.slice(0, from), ...steps],
+          },
+        };
+      }),
+
+    setGuideCheck: (check) =>
+      set((state) =>
+        state.guide.status === "ready"
+          ? { guide: { ...state.guide, check } }
+          : {},
+      ),
+
+    answerGuide: (outcome) =>
+      set((state) =>
+        state.guide.status === "ready"
+          ? { guide: { ...state.guide, outcome } }
+          : {},
+      ),
 
     toggleChangeGrid: () =>
       set((state) => ({ showChangeGrid: !state.showChangeGrid })),

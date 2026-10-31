@@ -1,8 +1,10 @@
 import {
+  GUIDE,
   LABEL_BG,
   OVERLAY,
   SELECTED_DIM_FILL,
   STROKE_REDUCED_MOTION,
+  guideAlpha,
   pulseAlpha,
 } from "../overlay-theme";
 import { applyHomography } from "../tracking/homography";
@@ -54,6 +56,12 @@ export type OverlayScene = {
    * name) is drawn.
    */
   hiddenIds?: readonly string[];
+  /**
+   * The part the guide is on: drawn in its own color and blinking, on top, even
+   * if the user hid it, while the other masks are dimmed. With none (or none that
+   * matches a mask) every mask is drawn as usual.
+   */
+  guideIds?: readonly string[];
 };
 
 /** Opacity of the masks while they are out of date. */
@@ -97,6 +105,9 @@ export function drawOverlay(
   const { width, height, source, selectedId, hoveredId, now, reducedMotion } =
     scene;
   const stale = scene.stale === true;
+  const guideSet = new Set(scene.guideIds ?? []);
+  // The others are only dimmed when the guide's part is really on screen.
+  const guiding = scene.detections.some((d) => guideSet.has(d.id));
   ctx.clearRect(0, 0, width, height);
   ctx.globalAlpha = stale ? STALE_ALPHA : 1;
 
@@ -123,8 +134,11 @@ export function drawOverlay(
   const byId = new Map(shapes.map((s) => [s.id, s]));
 
   // Selected last so it sits on top.
+  // The selected on top, and the guide's part above everything.
+  const weight = (id: string) =>
+    Number(id === selectedId) + 2 * Number(guideSet.has(id));
   const ordered = [...scene.detections].sort(
-    (a, b) => Number(a.id === selectedId) - Number(b.id === selectedId),
+    (a, b) => weight(a.id) - weight(b.id),
   );
 
   const hidden = new Set(scene.hiddenIds ?? []);
@@ -134,6 +148,23 @@ export function drawOverlay(
     const style = OVERLAY[d.status];
     const isSelected = d.id === selectedId;
     const isHovered = d.id === hoveredId && !isSelected;
+    const isGuide = guideSet.has(d.id);
+
+    if (isGuide) {
+      // The part of the current step: its own color, blinking, with a white ring.
+      tracePath(ctx, shape.points);
+      ctx.fillStyle = hexToRgba(GUIDE.color, guideAlpha(now, reducedMotion));
+      ctx.fill();
+      ctx.lineJoin = "round";
+      ctx.setLineDash([]);
+      ctx.strokeStyle = GUIDE.color;
+      ctx.lineWidth = 8;
+      ctx.stroke();
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      continue;
+    }
 
     if (hidden.has(d.id)) {
       // Hidden: nothing is painted unless the pointer is on it or it is the
@@ -147,7 +178,7 @@ export function drawOverlay(
       ctx.stroke();
       continue;
     }
-    const dimmed = selectedId !== null && !isSelected;
+    const dimmed = (selectedId !== null && !isSelected) || guiding;
     const pulsing = Boolean(style.pulse) && !stale;
 
     let fillAlpha = dimmed

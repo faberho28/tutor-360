@@ -13,7 +13,11 @@ import {
   setAnalyzedFrame,
 } from "../diagnosis/analyzed-frame";
 import { autoDiagnose } from "../diagnosis/request-diagnosis";
-import { requestGeneralSteps } from "../diagnosis/steps-client";
+import { composeBeforeAfter } from "../guide/compose-before-after";
+import { requestGuide } from "../guide/guide-client";
+import { guideParts } from "../guide/limits";
+import { markFrame } from "../guide/mark-frame";
+import { requestVerify } from "../guide/verify-client";
 import { TRACKING_ENABLED } from "../tracking/enabled";
 import { moveBox, movePolygon } from "../tracking/homography";
 import { getOpenCv, loadOpenCv } from "../tracking/opencv-loader";
@@ -28,7 +32,8 @@ import { PartReviews } from "./part-reviews";
 import type { PlannedPart } from "./scene";
 import { AnalysisScheduler, type SchedulerPhase } from "./scheduler";
 import { trackDetections } from "./track";
-import type { Detection } from "../types";
+import { waitForReviews } from "./wait-reviews";
+import type { Detection, GuideReport } from "../types";
 import { viewFor } from "../tracking/view";
 import type { AnalyzeResponse } from "./types";
 
@@ -62,6 +67,9 @@ function minGapFromEnv(): number | undefined {
  * the automatic mode and the scene changes, or when they press "Capturar". It
  * writes the results into the session store.
  */
+/** At least this long between two revisions of the steps (each one is a Spark call). */
+const GUIDE_REVISION_GAP_MS = 10_000;
+
 export class RealAnalysis implements ScanAnalysis {
   readonly autoAvailable = true;
   private readonly store: SessionStore;
@@ -74,10 +82,23 @@ export class RealAnalysis implements ScanAnalysis {
    * scene is the same the next analyses skip Spark; losing the scene drops it.
    */
   private plan: PlannedPart[] | null = null;
+  /** Spark's first judgment of the state of the scene: the guide follows it. */
+  private assessment: string | null = null;
   /** Spark's second look: final names and condition, part by part. */
   private readonly reviews = new PartReviews();
-  /** Cancels the general steps request of the current context. */
-  private stepsRun = new AbortController();
+  /** Cancels the guided procedure request of the current context. */
+  private guideRun = new AbortController();
+  /** Cancels the end-of-procedure check of the current context. */
+  private verifyRun = new AbortController();
+  /** The last scene the models saw: its frame and its masks, to show the tutor. */
+  private lastScene: { frame: CapturedFrame; parts: Detection[] } | null = null;
+  /** Only the newest revision of the steps is applied. */
+  private revisionSeq = 0;
+  /** A revision of the steps is out (only one at a time). */
+  private revising = false;
+  private lastRevisionAt = 0;
+  /** The frame the guide was written from: the "before" of the final check. */
+  private guideFrame: CapturedFrame | null = null;
   /**
    * Follows the scene between analyses so the masks move with it instead of
    * costing a new analysis. Created when it is needed and OpenCV is ready; null
@@ -296,31 +317,99 @@ export class RealAnalysis implements ScanAnalysis {
   }
 
   /**
-   * The general step-by-step: written by the AI from the first analyzed frame of
-   * the scan (once per session; a failure is tried again with the next frame).
+   * The guided procedure: asked once per scan, from the first analyzed frame and
+   * only once Spark has named the parts (the steps point at them by id). A
+   * failure is tried again with the next analysis.
    */
-  private loadGeneralSteps(frame: CapturedFrame) {
-    const { generalSteps, labCase, setGeneralSteps } = this.store.getState();
-    if (generalSteps.status === "loading" || generalSteps.status === "ready") {
+  private loadGuide(frame: CapturedFrame) {
+    const { guide, labCase, setGuide } = this.store.getState();
+    if (guide.status === "loading" || guide.status === "ready") return;
+    setGuide({ status: "loading" });
+    const { signal } = this.guideRun;
+    this.guideFrame = frame;
+    void waitForReviews(this.store).then(() => {
+      if (signal.aborted) return;
+      const detections = guideParts(this.store.getState().detections);
+      if (detections.length === 0) {
+        setGuide({ status: "error" });
+        return;
+      }
+      // Each part is outlined and numbered on the picture the tutor sees.
+      return markFrame(frame, detections)
+        .then((marked) =>
+          requestGuide(marked, {
+            parts: detections,
+            assessment: this.assessment ?? undefined,
+            context: labCase?.context || undefined,
+            apiKey: readApiKey() ?? undefined,
+            signal,
+          }),
+        )
+        .then(
+          (guide) => {
+            // A reset in between: this guide belongs to the old context.
+            if (signal.aborted) return;
+            this.store.getState().setGuide({
+              status: "ready",
+              check: { status: "idle" },
+              outcome: null,
+              finding: this.assessment ?? guide.goal,
+              goal: guide.goal,
+              steps: guide.steps,
+              current: 0,
+              reports: [],
+              conclusion: "",
+              thinking: false,
+            });
+          },
+          () => {
+            if (signal.aborted) return;
+            this.store.getState().setGuide({ status: "error" });
+          },
+        );
+    });
+  }
+
+  /**
+   * The check at the end of the steps: the live picture next to the one the
+   * guide started from, and Spark says whether the problem looks solved. Once
+   * per guide; the camera may not see what a functional test checks, and then
+   * the verdict says so.
+   */
+  checkGuide() {
+    const { guide, setGuideCheck } = this.store.getState();
+    if (guide.status !== "ready" || guide.check.status !== "idle") return;
+    const before = this.guideFrame;
+    const video = readyVideo(this.getVideo());
+    if (!before || !video) {
+      setGuideCheck({ status: "error" });
       return;
     }
-    setGeneralSteps({ status: "loading" });
-    const { signal } = this.stepsRun;
-    requestGeneralSteps(frame.dataUrl, {
-      context: labCase?.context || undefined,
-      apiKey: readApiKey() ?? undefined,
-      signal,
-    }).then(
-      (steps) => {
-        // A reset in between: these steps belong to the old context.
-        if (signal.aborted) return;
-        this.store.getState().setGeneralSteps({ status: "ready", steps });
-      },
-      () => {
-        if (signal.aborted) return;
-        this.store.getState().setGeneralSteps({ status: "error" });
-      },
-    );
+    setGuideCheck({ status: "loading" });
+    const { signal } = this.verifyRun;
+    void captureFrame(video)
+      .then((after) => composeBeforeAfter(before, after))
+      .then((image) =>
+        requestVerify(image, {
+          finding: guide.finding,
+          goal: guide.goal,
+          apiKey: readApiKey() ?? undefined,
+          signal,
+        }),
+      )
+      .then(
+        ({ verdict, comment }) => {
+          // A reset in between: this check belongs to the old context.
+          if (signal.aborted) return;
+          this.store
+            .getState()
+            .setGuideCheck({ status: "ready", verdict, comment });
+        },
+        () => {
+          if (signal.aborted) return;
+          this.store.getState().setGuideCheck({ status: "error" });
+        },
+      );
   }
 
   /**
@@ -345,10 +434,18 @@ export class RealAnalysis implements ScanAnalysis {
     this.auto = false;
     this.scheduler.stop();
     this.plan = null;
+    this.assessment = null;
     this.reviews.reset();
     this.session?.clear();
-    this.stepsRun.abort();
-    this.stepsRun = new AbortController();
+    this.guideRun.abort();
+    this.guideRun = new AbortController();
+    this.verifyRun.abort();
+    this.verifyRun = new AbortController();
+    this.guideFrame = null;
+    this.revising = false;
+    this.lastRevisionAt = 0;
+    this.lastScene = null;
+    this.revisionSeq++;
     clearAnalyzedFrame(this.store);
     this.store.getState().reset();
   }
@@ -366,7 +463,11 @@ export class RealAnalysis implements ScanAnalysis {
     // The diagnosis crops are cut from the same instant at the camera's own
     // resolution, where a small part still has detail.
     setAnalyzedFrame(this.store, detail);
-    this.loadGeneralSteps(frame);
+    // A scene Spark just judged: the guide is written from that judgment.
+    if (!planReused && response.assessment) {
+      this.assessment = response.assessment;
+    }
+    this.loadGuide(frame);
     // A plan Spark just made is a new scene: what was reviewed no longer applies.
     if (!planReused) this.reviews.reset();
     // An empty plan means Spark found nothing: ask it again next time.
@@ -402,6 +503,7 @@ export class RealAnalysis implements ScanAnalysis {
       ...detection,
       id: matched[i]!.id,
     }));
+    this.lastScene = { frame, parts: analyzed };
     const { labCase } = state;
     this.reviews.begin(
       analyzed,
@@ -435,6 +537,131 @@ export class RealAnalysis implements ScanAnalysis {
       reason: null,
       phase: this.auto ? "analyzing" : "idle",
     });
+    this.reviseGuide(frame);
+  }
+
+  /**
+   * The student says what happened in the current step. The report is kept and
+   * the tutor, looking at the last scene with it, rewrites what is still to do
+   * (or says how the procedure ended). Until the answer arrives the panel waits;
+   * if it fails the steps stay as they were.
+   */
+  answerGuideStep(report: GuideReport) {
+    const { guide, labCase } = this.store.getState();
+    if (
+      guide.status !== "ready" ||
+      guide.thinking ||
+      guide.current >= guide.steps.length
+    ) {
+      return;
+    }
+    this.store.getState().reportGuideStep(report);
+    const after = this.store.getState().guide;
+    if (after.status !== "ready") return;
+    const scene = this.lastScene;
+    const frame = scene?.frame ?? this.guideFrame;
+    const parts = guideParts(scene?.parts ?? this.store.getState().detections);
+    // Without a picture to show there is nothing to ask: the steps go on.
+    if (!frame || parts.length === 0) return;
+    const seq = ++this.revisionSeq;
+    const { signal } = this.guideRun;
+    const progress = {
+      goal: after.goal,
+      steps: after.steps.map((step) => step.text),
+      current: after.current,
+      reports: after.reports,
+    };
+    this.store.getState().setGuideThinking(true);
+    void markFrame(frame, parts)
+      .then((marked) =>
+        requestGuide(marked, {
+          parts,
+          context: labCase?.context || undefined,
+          assessment: this.assessment ?? undefined,
+          progress,
+          apiKey: readApiKey() ?? undefined,
+          signal,
+        }),
+      )
+      .then(
+        (next) => {
+          if (signal.aborted || seq !== this.revisionSeq) return;
+          this.store
+            .getState()
+            .reviseGuide(
+              next.goal,
+              next.steps,
+              progress.current,
+              next.conclusion,
+            );
+        },
+        () => {},
+      )
+      .finally(() => {
+        if (!signal.aborted && seq === this.revisionSeq) {
+          this.store.getState().setGuideThinking(false);
+        }
+      });
+  }
+
+  /**
+   * Behind the student's back: an analysis only runs when the scene changed, so
+   * after one the tutor looks at the new picture and rewrites the steps still to
+   * do (dropping what is already achieved, adding what a new situation needs).
+   * When nothing relevant changed it answers the same steps and nothing moves.
+   */
+  private reviseGuide(frame: CapturedFrame) {
+    const { guide, labCase } = this.store.getState();
+    if (guide.status !== "ready" || guide.current >= guide.steps.length) return;
+    // The student's own report is being worked out: it is the newer information.
+    if (guide.thinking) return;
+    const now = performance.now();
+    if (this.revising || now - this.lastRevisionAt < GUIDE_REVISION_GAP_MS) {
+      return;
+    }
+    const detections = guideParts(this.store.getState().detections);
+    if (detections.length === 0) return;
+    this.revising = true;
+    this.lastRevisionAt = now;
+    const { signal } = this.guideRun;
+    const seq = this.revisionSeq;
+    const progress = {
+      goal: guide.goal,
+      steps: guide.steps.map((step) => step.text),
+      current: guide.current,
+      reports: guide.reports,
+    };
+    void markFrame(frame, detections)
+      .then((marked) =>
+        requestGuide(marked, {
+          parts: detections,
+          context: labCase?.context || undefined,
+          assessment: this.assessment ?? undefined,
+          progress,
+          apiKey: readApiKey() ?? undefined,
+          signal,
+        }),
+      )
+      .then(
+        (next) => {
+          // A reset in between: this revision belongs to the old context.
+          // A newer revision (the student answered a step) wins.
+          if (signal.aborted || seq !== this.revisionSeq) return;
+          this.store
+            .getState()
+            .reviseGuide(
+              next.goal,
+              next.steps,
+              progress.current,
+              next.conclusion,
+            );
+        },
+        // A failed revision leaves the steps as they are.
+        () => {},
+      )
+      .finally(() => {
+        this.revising = false;
+      });
   }
 
   private fail(error: unknown, info: { willRetry: boolean; manual: boolean }) {

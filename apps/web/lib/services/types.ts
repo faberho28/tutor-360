@@ -1,6 +1,7 @@
 import type { AnalysisSource } from "../analysis-source";
 import type { SessionStore } from "../session/store";
 import type { Detection } from "../types";
+import type { GuideReport } from "../types";
 import type { ChangeStatus } from "../vision/change-detector";
 
 /** An analysis source plus what the screen needs to drive it. */
@@ -13,6 +14,10 @@ export type ScanAnalysis = AnalysisSource & {
   retry(): void;
   /** Forgets the whole scan (detections, plan, diagnoses, captures) and starts over. */
   reset(): void;
+  /** The student says what happened in the current step; the tutor works out what comes next. */
+  answerGuideStep(report: GuideReport): void;
+  /** Compares the scene now with the one the guide started from (end of the steps). */
+  checkGuide(): void;
   /** The image to save in a capture, or null when it is not ready. */
   snapshot(): Promise<HTMLImageElement | HTMLVideoElement | null>;
 };

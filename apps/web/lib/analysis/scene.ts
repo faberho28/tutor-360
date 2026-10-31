@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Most parts (what Spark asks SAM to find) one analysis may plan. */
-export const MAX_SAM_PHRASES = 8;
+export const MAX_SAM_PHRASES = 5;
 
 /**
  * Wordings Spark gives for each part (each one is a SAM call): the best of
@@ -23,7 +23,12 @@ export const partSchema = z.object({
 });
 
 export const partPlanSchema = z.object({
+  /** Spark's first judgment of the state of what it sees (Spanish). */
+  assessment: z.string().trim().max(400),
   parts: z.array(partSchema),
 });
 
 export type PlannedPart = z.infer<typeof partSchema>;
+
+/** What Spark made of the scene: the state it sees and what to ask SAM for. */
+export type ScenePlan = z.infer<typeof partPlanSchema>;

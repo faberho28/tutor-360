@@ -1,10 +1,3 @@
-/**
- * Progress key of the general list, shown when nothing needs fixing yet or no
- * component is selected. Its steps are written by the AI (`generalSteps` in the
- * store), never fixed in the code.
- */
-export const GENERAL_STEPS_KEY = "general";
-
 export type StepStatus = "done" | "skipped" | "pending";
 
 export function stepStatus(
