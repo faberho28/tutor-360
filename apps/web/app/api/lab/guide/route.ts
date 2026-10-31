@@ -10,7 +10,6 @@ const requestSchema = z.object({
   /** The picture with every part outlined and numbered. */
   image: analyzeRequestSchema.shape.image,
   context: analyzeRequestSchema.shape.context,
-  assessment: z.string().max(400).optional(),
   parts: z
     .array(
       z.object({
@@ -59,17 +58,9 @@ export async function POST(request: Request) {
   );
   if (!parsed.success)
     return Response.json({ error: "invalid" }, { status: 400 });
-  const {
-    image,
-    context,
-    assessment,
-    parts,
-    prompt,
-    dryRun,
-    effort,
-    progress,
-  } = parsed.data;
-  const built = buildGuidePrompt({ context, assessment, parts, progress });
+  const { image, context, parts, prompt, dryRun, effort, progress } =
+    parsed.data;
+  const built = buildGuidePrompt({ context, parts, progress });
   if (dryRun) return Response.json({ prompt: built });
 
   const sentKey = request.headers.get(API_KEY_HEADER);
@@ -82,7 +73,6 @@ export async function POST(request: Request) {
     const guide = await new MetaGuideWriter().write({
       imageDataUrl: image,
       context,
-      assessment,
       parts,
       progress,
       promptOverride: prompt,
@@ -95,6 +85,7 @@ export async function POST(request: Request) {
       goal: guide.goal,
       steps: guide.steps,
       conclusion: guide.conclusion,
+      observation: guide.observation,
       ms: Date.now() - startedAt,
     });
   } catch (error) {

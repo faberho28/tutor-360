@@ -22,7 +22,6 @@ type Stage = "plan" | "sam" | "guide";
 
 type PlanResult = {
   prompt: string;
-  assessment: string;
   parts: PlannedPart[];
   ms: number;
 };
@@ -206,7 +205,6 @@ export function StepsLab() {
         const { prompt } = await post<{ prompt: string }>("/api/lab/guide", {
           image: sam?.marked ?? frame.dataUrl,
           context,
-          assessment: plan?.assessment,
           parts,
           dryRun: true,
         });
@@ -255,7 +253,6 @@ export function StepsLab() {
       const result = await post<GuideResult>("/api/lab/guide", {
         image: sam.marked,
         context,
-        assessment: plan?.assessment,
         parts,
         prompt: guidePrompt.trim() || undefined,
         effort,
@@ -283,7 +280,6 @@ export function StepsLab() {
       const next = await post<GuideResult>("/api/lab/guide", {
         image: sam.marked,
         context,
-        assessment: plan?.assessment,
         parts: guideParts(sam.detections).map(toPart),
         progress: {
           goal: guide.goal,
@@ -415,15 +411,13 @@ export function StepsLab() {
 
       <Card className="gap-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">
-            1. Estado del objeto (Spark)
-          </h2>
+          <h2 className="text-sm font-semibold">1. Plan para SAM (Spark)</h2>
           <Button
             type="button"
             disabled={!frame || busy !== null}
             onClick={() => void askState()}
           >
-            {busy === "plan" ? "Preguntando…" : "Obtener el estado"}
+            {busy === "plan" ? "Preguntando…" : "Obtener el plan"}
           </Button>
         </div>
         <PromptBox
@@ -435,8 +429,8 @@ export function StepsLab() {
         {plan ? (
           <div className="flex flex-col gap-2 text-sm">
             <p>
-              <span className="font-medium">Estado: </span>
-              {plan.assessment || "(vacío)"}{" "}
+              <span className="font-medium">Tipos de pieza: </span>
+              {plan.parts.length}{" "}
               <span className="text-muted-foreground">({plan.ms} ms)</span>
             </p>
             <p className="font-medium">Lo que le pediría a SAM (editable):</p>

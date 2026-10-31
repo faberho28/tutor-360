@@ -53,8 +53,7 @@ export async function POST(request: Request) {
     });
     return Response.json({
       prompt: prompt ?? built,
-      assessment: plan.assessment,
-      parts: plan.parts,
+      parts: plan,
       ms: Date.now() - startedAt,
     });
   } catch (error) {
