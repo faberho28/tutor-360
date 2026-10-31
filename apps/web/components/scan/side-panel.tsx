@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { ComponentsCard } from "@/components/scan/components-card";
 import { GuidePanel } from "@/components/scan/guide-panel";
+import { VoiceControl } from "@/components/scan/voice-control";
 import { StepsCard } from "@/components/scan/steps-card";
 import { SummaryPill } from "@/components/scan/summary-pill";
 import { FirstAnalysisSkeleton } from "@/components/scan/first-analysis-skeleton";
@@ -37,7 +38,10 @@ function DesktopPanel() {
       {initialAnalysis ? (
         <FirstAnalysisSkeleton />
       ) : guideOn && !showParts ? (
-        <GuidePanel onShowParts={() => setShowParts(true)} />
+        <>
+          <VoiceControl />
+          <GuidePanel onShowParts={() => setShowParts(true)} />
+        </>
       ) : (
         <>
           {guideOn ? (

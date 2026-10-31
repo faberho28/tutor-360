@@ -2,6 +2,7 @@ import type { AnalysisSource } from "../analysis-source";
 import type { SessionStore } from "../session/store";
 import type { Detection } from "../types";
 import type { GuideReport } from "../types";
+import type { VoiceOutcome } from "../voice/voice-client";
 import type { ChangeStatus } from "../vision/change-detector";
 
 /** An analysis source plus what the screen needs to drive it. */
@@ -16,6 +17,12 @@ export type ScanAnalysis = AnalysisSource & {
   reset(): void;
   /** The student says what happened in the current step; the tutor works out what comes next. */
   answerGuideStep(report: GuideReport): void;
+  /**
+   * Understands one thing the student said out loud (as the speech-to-text heard
+   * it): an answer to the current step is applied, a question comes back with the
+   * tutor's reply, anything else is ignored.
+   */
+  voiceTurn(transcript: string, signal?: AbortSignal): Promise<VoiceOutcome>;
   /** Compares the scene now with the one the guide started from (end of the steps). */
   checkGuide(): void;
   /** The image to save in a capture, or null when it is not ready. */

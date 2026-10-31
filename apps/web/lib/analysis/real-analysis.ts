@@ -18,6 +18,7 @@ import { requestGuide } from "../guide/guide-client";
 import { guideParts } from "../guide/limits";
 import { markFrame } from "../guide/mark-frame";
 import { requestVerify } from "../guide/verify-client";
+import { requestVoiceTurn, type VoiceOutcome } from "../voice/voice-client";
 import { TRACKING_ENABLED } from "../tracking/enabled";
 import { moveBox, movePolygon } from "../tracking/homography";
 import { getOpenCv, loadOpenCv } from "../tracking/opencv-loader";
@@ -602,6 +603,65 @@ export class RealAnalysis implements ScanAnalysis {
           this.store.getState().setGuideThinking(false);
         }
       });
+  }
+
+  /**
+   * One thing the student said out loud. Spark, looking at the live frame and the
+   * procedure, says whether it answers the current step (then it is applied as if
+   * the buttons had been pressed), asks the tutor something (the reply comes back
+   * to be spoken) or is not for the tutor.
+   */
+  async voiceTurn(
+    transcript: string,
+    signal?: AbortSignal,
+  ): Promise<VoiceOutcome> {
+    const none: VoiceOutcome = {
+      intent: "ignore",
+      result: null,
+      note: "",
+      reply: "",
+    };
+    const { guide, labCase } = this.store.getState();
+    if (guide.status !== "ready") return none;
+    const awaiting = !guide.thinking && guide.current < guide.steps.length;
+    const video = readyVideo(this.getVideo());
+    const frame = video
+      ? await captureFrame(video)
+      : (this.lastScene?.frame ?? this.guideFrame);
+    if (!frame) return none;
+    const outcome = await requestVoiceTurn(
+      {
+        transcript,
+        image: frame.dataUrl,
+        caseContext: labCase?.context || undefined,
+        context: {
+          goal: guide.goal,
+          assessment: this.assessment ?? undefined,
+          steps: guide.steps.map((step) => step.text),
+          current: guide.current,
+          reports: guide.reports,
+          awaiting,
+          conclusion: guide.conclusion || undefined,
+        },
+      },
+      { signal, apiKey: readApiKey() ?? undefined },
+    );
+    if (outcome.intent === "answer" && outcome.result && awaiting) {
+      // The step may have moved on while Spark was thinking (a button was pressed).
+      const now = this.store.getState().guide;
+      if (
+        now.status === "ready" &&
+        !now.thinking &&
+        now.current === guide.current
+      ) {
+        this.answerGuideStep(
+          outcome.note
+            ? { result: outcome.result, note: outcome.note }
+            : { result: outcome.result },
+        );
+      }
+    }
+    return outcome;
   }
 
   /**

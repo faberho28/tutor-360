@@ -9,6 +9,8 @@ const envSchema = z.object({
   SEGMENTATION_MODEL: z.string().min(1).default("sam-3.1"),
   /** Reads the scene: names and locates what is in the frame (Muse Spark). */
   SCENE_MODEL: z.string().min(1).default("muse-spark-1.3"),
+  /** Turns what the student says into text (Muse Voice Transcribe). */
+  TRANSCRIPTION_MODEL: z.string().min(1).default("muse-voice-transcribe-1.0"),
   DIAGNOSIS_MODEL: z.string().min(1).default("muse-spark-1.3"),
   /** Standard-mode model the diagnosis falls back to (never a contributor one). */
   DIAGNOSIS_FALLBACK_MODEL: z.string().min(1).default("muse-spark-1.2"),
