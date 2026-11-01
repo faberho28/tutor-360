@@ -5,11 +5,14 @@ import { MAX_GUIDE_PARTS } from "@/lib/guide/limits";
 import { toModelError } from "@/lib/models/errors";
 import { buildGuidePrompt, MetaGuideWriter } from "@/lib/models/guide-writer";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
+import { TUTOR_LEVELS } from "@/lib/tutor/levels";
 
 const requestSchema = z.object({
   /** The picture with every part outlined and numbered. */
   image: analyzeRequestSchema.shape.image,
   context: analyzeRequestSchema.shape.context,
+  /** How much the student already knows. */
+  level: z.enum(TUTOR_LEVELS).optional(),
   parts: z
     .array(
       z.object({
@@ -36,6 +39,9 @@ const requestSchema = z.object({
         )
         .max(80)
         .optional(),
+      remarks: z.array(z.string().max(500)).max(40).optional(),
+      scene: z.string().max(2500).optional(),
+      log: z.array(z.string().max(1700)).max(40).optional(),
     })
     .optional(),
   /** Replaces the built prompt. */
@@ -58,9 +64,9 @@ export async function POST(request: Request) {
   );
   if (!parsed.success)
     return Response.json({ error: "invalid" }, { status: 400 });
-  const { image, context, parts, prompt, dryRun, effort, progress } =
+  const { image, context, level, parts, prompt, dryRun, effort, progress } =
     parsed.data;
-  const built = buildGuidePrompt({ context, parts, progress });
+  const built = buildGuidePrompt({ context, level, parts, progress });
   if (dryRun) return Response.json({ prompt: built });
 
   const sentKey = request.headers.get(API_KEY_HEADER);
@@ -73,6 +79,7 @@ export async function POST(request: Request) {
     const guide = await new MetaGuideWriter().write({
       imageDataUrl: image,
       context,
+      level,
       parts,
       progress,
       promptOverride: prompt,

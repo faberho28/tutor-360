@@ -1,5 +1,4 @@
 import {
-  Blocks,
   Keyboard,
   Laptop,
   PencilLine,
@@ -13,7 +12,6 @@ const ICONS: Record<LabCaseId, LucideIcon> = {
   computador: Laptop,
   celular: Smartphone,
   teclado: Keyboard,
-  legos: Blocks,
   personalizado: PencilLine,
 };
 

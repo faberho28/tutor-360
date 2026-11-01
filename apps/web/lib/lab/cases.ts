@@ -7,11 +7,12 @@
  * so it is written in English.
  */
 
+import type { TutorLevel } from "../tutor/levels";
+
 export const LAB_CASE_IDS = [
   "computador",
   "celular",
   "teclado",
-  "legos",
   "personalizado",
 ] as const;
 
@@ -25,11 +26,6 @@ export type LabCase = {
   examples: readonly string[];
   /** Prompt context for the model. `personalizado` builds it from the user's text. */
   context: string;
-  /**
-   * Whether the AI should judge the condition (ok / warning / anomaly) of what
-   * it sees. False for tasks that are about identifying and counting.
-   */
-  judgesCondition: boolean;
 };
 
 export const LAB_CASES: readonly LabCase[] = [
@@ -42,7 +38,6 @@ export const LAB_CASES: readonly LabCase[] = [
     context:
       "The user will show the inside of a desktop or laptop computer: motherboard, RAM, storage drives, fans, power supply and cables. " +
       "Identify the components and look for signs of failure: swollen or leaking capacitors, dust build-up, loose or damaged cables, burn marks, corrosion.",
-    judgesCondition: true,
   },
   {
     id: "celular",
@@ -52,7 +47,6 @@ export const LAB_CASES: readonly LabCase[] = [
     context:
       "The user will show a disassembled smartphone or tablet: battery, logic board, cameras, flex cables and connectors, screws and shields. " +
       "Identify the parts and look for signs of failure: a swollen battery, liquid damage or corrosion, burnt components, torn or loose flex cables.",
-    judgesCondition: true,
   },
   {
     id: "teclado",
@@ -62,26 +56,13 @@ export const LAB_CASES: readonly LabCase[] = [
     context:
       "The user will show a keyboard, whole or opened: keycaps, switches, stabilizers, circuit board, cable and connector. " +
       "Identify the parts and look for signs of failure: liquid residue or corrosion, missing or stuck keys, damaged switches, a frayed cable or bent connector pins.",
-    judgesCondition: true,
-  },
-  {
-    id: "legos",
-    title: "Legos",
-    description:
-      "Piezas sueltas o armadas: identifícalas, cuéntalas y clasifícalas.",
-    examples: ["Piezas", "Colores", "Conteo"],
-    context:
-      "The user will show LEGO bricks and pieces, loose or assembled. " +
-      "Identify and count the different piece types and colors. This is an inventory task: do not judge condition, report every piece as ok.",
-    judgesCondition: false,
   },
   {
     id: "personalizado",
     title: "Personalizado",
     description: "Describe qué vas a mostrar y qué quieres buscar.",
-    examples: ["Cualquier equipo u objeto"],
+    examples: ["Cualquier equipo electrónico"],
     context: "",
-    judgesCondition: true,
   },
 ];
 
@@ -96,7 +77,6 @@ export type LabCaseSnapshot = {
   /** One line for the scanner header: the card's text, or the user's own. */
   description: string;
   context: string;
-  judgesCondition: boolean;
 };
 
 /** Trims and collapses whitespace; returns null when the text is unusable. */
@@ -124,7 +104,6 @@ export function resolveLabCase(
       title: found.title,
       description: text,
       context: `The user describes what they will show and what they are looking for: "${text}". Identify the visible objects that matter for that request and report their condition when it is relevant.`,
-      judgesCondition: true,
     };
   }
 
@@ -133,13 +112,16 @@ export function resolveLabCase(
     title: found.title,
     description: found.description,
     context: found.context,
-    judgesCondition: found.judgesCondition,
   };
 }
 
-/** The address that opens the scanner with a case. */
-export function scanHref(id: LabCaseId, customText?: string): string {
-  const params = new URLSearchParams({ caso: id });
+/** The address that opens the scanner with a case and the level of the reader. */
+export function scanHref(
+  id: LabCaseId,
+  level: TutorLevel,
+  customText?: string,
+): string {
+  const params = new URLSearchParams({ caso: id, nivel: level });
   const text = cleanCustomText(customText);
   if (id === "personalizado" && text) params.set("contexto", text);
   return `/scan?${params.toString()}`;

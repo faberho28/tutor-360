@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { RealScan } from "@/components/scan/real-scan";
 import { resolveLabCase } from "@/lib/lab/cases";
+import { parseTutorLevel } from "@/lib/tutor/levels";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -19,5 +20,7 @@ export default async function ScanPage({
   const params = await searchParams;
   const labCase = resolveLabCase(first(params.caso), first(params.contexto));
   if (!labCase) redirect("/laboratorio");
-  return <RealScan labCase={labCase} />;
+  return (
+    <RealScan labCase={labCase} level={parseTutorLevel(first(params.nivel))} />
+  );
 }

@@ -5,11 +5,14 @@ import { getEnv } from "@/lib/env";
 import { ModelError, toModelError } from "@/lib/models/errors";
 import { MetaVoiceWriter } from "@/lib/models/voice-writer";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
+import { TUTOR_LEVELS } from "@/lib/tutor/levels";
 
 const requestSchema = z.object({
   transcript: z.string().trim().min(1).max(600),
   image: analyzeRequestSchema.shape.image,
   caseContext: analyzeRequestSchema.shape.context,
+  /** How much the student already knows. */
+  level: z.enum(TUTOR_LEVELS).optional(),
   context: z.object({
     goal: z.string().max(400),
     steps: z.array(z.string().max(600)).max(80),
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
       transcript: parsed.data.transcript,
       imageDataUrl: parsed.data.image,
       caseContext: parsed.data.caseContext,
+      level: parsed.data.level,
       context: parsed.data.context,
       apiKey: sentKey ?? undefined,
       signal: request.signal,

@@ -1,4 +1,5 @@
 import { API_KEY_HEADER } from "../settings/api-key";
+import type { TutorLevel } from "../tutor/levels";
 import type { Detection, Guide, GuideStep } from "../types";
 
 /** The first guide writes a goal, every step and a description: 10 s on a small board, 30 s or more on a crowded one. The route allows 60 s. */
@@ -27,6 +28,7 @@ export async function requestGuide(
     parts: readonly GuidePartInput[];
     signal?: AbortSignal;
     context?: string;
+    level?: TutorLevel;
     /** The procedure being followed: the answer is the steps still to do. */
     progress?: {
       goal: string;
@@ -59,6 +61,7 @@ export async function requestGuide(
       body: JSON.stringify({
         image: imageDataUrl,
         context: options.context,
+        level: options.level,
         progress: options.progress,
         parts: options.parts.map(({ id, label, status }) => ({
           id,

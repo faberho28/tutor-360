@@ -17,6 +17,7 @@ import type {
 export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
 
 import type { LabCaseSnapshot } from "../lab/cases";
+import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
 import type { View } from "../tracking/view";
 
 export type StatusOverride = { status: ComponentStatus; reason: string };
@@ -26,6 +27,8 @@ export type SessionState = {
   name: string;
   /** What the user chose to scan in the Laboratorio. */
   labCase: LabCaseSnapshot | null;
+  /** How much the user already knows: the tutor is written for that reader. */
+  level: TutorLevel;
   stage: StageState;
   analysis: AnalysisState;
   detections: Detection[];
@@ -149,6 +152,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     sessionId: newSessionId(),
     name: DEFAULT_SESSION_NAME,
     labCase: null,
+    level: DEFAULT_TUTOR_LEVEL,
     stage: "ready",
     analysis: initialAnalysis(),
     detections: [],
@@ -394,6 +398,7 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
       set((state) =>
         freshState({
           labCase: state.labCase,
+          level: state.level,
           showChangeGrid: state.showChangeGrid,
           stage: state.stage,
           cameraDevices: state.cameraDevices,

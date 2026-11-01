@@ -294,7 +294,6 @@ export class RealAnalysis implements ScanAnalysis {
       const response = await requestAnalysis(frame, sessionId, {
         signal,
         context: labCase?.context || undefined,
-        judgesCondition: labCase?.judgesCondition,
         apiKey: readApiKey() ?? undefined,
         plan,
       });
@@ -320,7 +319,7 @@ export class RealAnalysis implements ScanAnalysis {
    * failure is tried again with the next analysis.
    */
   private loadGuide(frame: CapturedFrame) {
-    const { guide, labCase, setGuide } = this.store.getState();
+    const { guide, labCase, level, setGuide } = this.store.getState();
     if (guide.status === "loading" || guide.status === "ready") return;
     setGuide({ status: "loading" });
     const { signal } = this.guideRun;
@@ -338,6 +337,7 @@ export class RealAnalysis implements ScanAnalysis {
           requestGuide(marked, {
             parts: detections,
             context: labCase?.description || undefined,
+            level,
             apiKey: readApiKey() ?? undefined,
             signal,
           }),
@@ -376,7 +376,7 @@ export class RealAnalysis implements ScanAnalysis {
    * the verdict says so.
    */
   checkGuide() {
-    const { guide, setGuideCheck } = this.store.getState();
+    const { guide, level, setGuideCheck } = this.store.getState();
     if (guide.status !== "ready" || guide.check.status !== "idle") return;
     const video = readyVideo(this.getVideo());
     if (!video) {
@@ -395,6 +395,7 @@ export class RealAnalysis implements ScanAnalysis {
           reports: guide.reports,
           remarks: guide.remarks,
           log: guide.log,
+          level,
           apiKey: readApiKey() ?? undefined,
           signal,
         }),
@@ -507,7 +508,6 @@ export class RealAnalysis implements ScanAnalysis {
       frame,
       {
         context: labCase?.context || undefined,
-        judgesCondition: labCase?.judgesCondition,
         apiKey: readApiKey() ?? undefined,
       },
       // A review finished: redraw with whatever the list is by now, and the
@@ -570,7 +570,7 @@ export class RealAnalysis implements ScanAnalysis {
 
   /** Rewrites what is still to do from the reports and remarks the student has given. */
   private reviseFromStudent() {
-    const { labCase } = this.store.getState();
+    const { labCase, level } = this.store.getState();
     const after = this.store.getState().guide;
     if (after.status !== "ready") return;
     const seq = ++this.revisionSeq;
@@ -592,6 +592,7 @@ export class RealAnalysis implements ScanAnalysis {
         return requestGuide(picture.image, {
           parts: picture.parts,
           context: labCase?.description || undefined,
+          level,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,
@@ -661,7 +662,7 @@ export class RealAnalysis implements ScanAnalysis {
       reply: "",
       replan: false,
     };
-    const { guide, labCase } = this.store.getState();
+    const { guide, labCase, level } = this.store.getState();
     if (guide.status !== "ready") return none;
     const awaiting = !guide.thinking && guide.current < guide.steps.length;
     const video = readyVideo(this.getVideo());
@@ -674,6 +675,7 @@ export class RealAnalysis implements ScanAnalysis {
         transcript,
         image: frame.dataUrl,
         caseContext: labCase?.description || undefined,
+        level,
         context: {
           goal: guide.goal,
           steps: guide.steps.map((step) => step.text),
@@ -722,7 +724,7 @@ export class RealAnalysis implements ScanAnalysis {
    * When nothing relevant changed it answers the same steps and nothing moves.
    */
   private reviseGuide(frame: CapturedFrame) {
-    const { guide, labCase } = this.store.getState();
+    const { guide, labCase, level } = this.store.getState();
     if (guide.status !== "ready" || guide.current >= guide.steps.length) return;
     // The student's own report is being worked out: it is the newer information.
     if (guide.thinking) return;
@@ -750,6 +752,7 @@ export class RealAnalysis implements ScanAnalysis {
         requestGuide(marked, {
           parts: detections,
           context: labCase?.description || undefined,
+          level,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,

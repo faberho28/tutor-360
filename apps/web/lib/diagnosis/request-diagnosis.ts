@@ -18,7 +18,7 @@ export const AUTO_MAX = 8;
  * answer is kept per part, so selecting another part never overwrites it.
  */
 export function requestDiagnosis(store: SessionStore, detection: Detection) {
-  const { diagnoses, labCase, setDiagnosis } = store.getState();
+  const { diagnoses, labCase, level, setDiagnosis } = store.getState();
   if (diagnoses[detection.id]?.status === "loading") return;
   const frame = getAnalyzedFrame(store);
   if (!frame) {
@@ -37,7 +37,10 @@ export function requestDiagnosis(store: SessionStore, detection: Detection) {
           reason: detection.reason,
         },
         {
-          context: labCase?.context || undefined,
+          // The tutor reads what the user says they work on, never the
+          // analysis prompt (`labCase.context`).
+          context: labCase?.description || undefined,
+          level,
           apiKey: readApiKey() ?? undefined,
         },
       );

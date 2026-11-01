@@ -1,4 +1,5 @@
 import { API_KEY_HEADER } from "../settings/api-key";
+import type { TutorLevel } from "../tutor/levels";
 import type { Diagnosis } from "../types";
 
 /** Spark writes a few sentences and steps: slower than a review. */
@@ -26,7 +27,12 @@ export async function requestDiagnosisFor(
     status: string;
     reason: string | null;
   },
-  options: { signal?: AbortSignal; context?: string; apiKey?: string } = {},
+  options: {
+    signal?: AbortSignal;
+    context?: string;
+    level?: TutorLevel;
+    apiKey?: string;
+  } = {},
 ): Promise<Diagnosis> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -41,7 +47,11 @@ export async function requestDiagnosisFor(
         "content-type": "application/json",
         ...(options.apiKey ? { [API_KEY_HEADER]: options.apiKey } : {}),
       },
-      body: JSON.stringify({ ...input, context: options.context }),
+      body: JSON.stringify({
+        ...input,
+        context: options.context,
+        level: options.level,
+      }),
       signal: controller.signal,
     });
     const body: unknown = await response.json().catch(() => null);

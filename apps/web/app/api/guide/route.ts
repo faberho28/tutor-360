@@ -6,10 +6,13 @@ import { ModelError, toModelError } from "@/lib/models/errors";
 import { MetaGuideWriter } from "@/lib/models/guide-writer";
 import { getEnv } from "@/lib/env";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
+import { TUTOR_LEVELS } from "@/lib/tutor/levels";
 
 const requestSchema = z.object({
   image: analyzeRequestSchema.shape.image,
   context: analyzeRequestSchema.shape.context,
+  /** How much the student already knows. */
+  level: z.enum(TUTOR_LEVELS).optional(),
   /** The procedure being followed, when the steps are revised. */
   progress: z
     .object({
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
     const guide = await new MetaGuideWriter().write({
       imageDataUrl: parsed.data.image,
       context: parsed.data.context,
+      level: parsed.data.level,
       progress: parsed.data.progress,
       parts: parsed.data.parts,
       apiKey: sentKey ?? undefined,

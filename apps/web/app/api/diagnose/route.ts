@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     const diagnosis: Diagnosis = await diagnoser.diagnose({
       cropDataUrl: parsed.data.image,
       context: parsed.data.context,
+      level: parsed.data.level,
       label: parsed.data.label,
       status: parsed.data.status,
       reason: parsed.data.reason ?? null,

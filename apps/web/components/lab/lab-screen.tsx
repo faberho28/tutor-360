@@ -1,8 +1,5 @@
-import Link from "next/link";
-import { CustomCaseCard } from "@/components/lab/custom-case-card";
-import { CARD_CLASS, LabCardBody } from "@/components/lab/lab-card";
+import { LabCases } from "@/components/lab/lab-cases";
 import { TopBar } from "@/components/scan/top-bar";
-import { LAB_CASES, scanHref } from "@/lib/lab/cases";
 
 /** Where the user chooses what they are about to scan. */
 export function LabScreen() {
@@ -16,23 +13,12 @@ export function LabScreen() {
               Laboratorio
             </h2>
             <p className="max-w-xl text-pretty text-sm text-muted-foreground">
-              Elige qué vas a revisar. La IA usa este contexto para saber qué
-              buscar y cómo interpretar lo que ve la cámara.
+              Elige tu nivel y qué vas a revisar. La IA usa este contexto para
+              saber qué buscar, cómo interpretar lo que ve la cámara y cuánto
+              explicarte.
             </p>
           </div>
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {LAB_CASES.map((labCase) => (
-              <li key={labCase.id}>
-                {labCase.id === "personalizado" ? (
-                  <CustomCaseCard labCase={labCase} />
-                ) : (
-                  <Link href={scanHref(labCase.id)} className={CARD_CLASS}>
-                    <LabCardBody labCase={labCase} />
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
+          <LabCases />
         </div>
       </main>
     </div>

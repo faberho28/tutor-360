@@ -1,5 +1,7 @@
 import "server-only";
 import { z } from "zod";
+import { levelBlock, levelProfile } from "../tutor/level-profiles";
+import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
 import { ModelError, toModelError } from "./errors";
 import { callSpark } from "./spark-call";
 
@@ -22,6 +24,8 @@ export type VerifyInput = {
   remarks?: readonly string[];
   /** What was asked, answered and seen along the way, oldest first. */
   log?: readonly string[];
+  /** How much the student already knows; the default is the technician the tutor was first written for. */
+  level?: TutorLevel;
   apiKey?: string;
   signal?: AbortSignal;
 };
@@ -53,8 +57,12 @@ const RESPONSE_FORMAT = {
 } as const;
 
 export function buildVerifyPrompt(
-  input: Pick<VerifyInput, "goal" | "scene" | "reports" | "remarks" | "log">,
+  input: Pick<
+    VerifyInput,
+    "goal" | "scene" | "reports" | "remarks" | "log" | "level"
+  >,
 ): string {
+  const level = input.level ?? DEFAULT_TUTOR_LEVEL;
   const reports = (input.reports ?? []).flatMap((report, i) =>
     report
       ? [
@@ -63,7 +71,8 @@ export function buildVerifyPrompt(
       : [],
   );
   return [
-    "You are a technical coach for a systems technician with basic but solid foundations: they know their tools and the fundamentals (power, signals, connectors, soldering basics, how to measure) and do not need the elementary explained. What they need is the specific procedure, the order, the values or signs to look for, the risks and the reason behind each decision. They just followed a guided procedure with their hands while a camera watched.",
+    `You are a technical coach for ${levelProfile(level).reader} They just followed a guided procedure with their hands while a camera watched.`,
+    levelBlock(level),
     `The goal of the procedure was: "${input.goal}"`,
     input.scene
       ? `The scene as it looked at the start (described then; that picture is not shown again): "${input.scene}"`

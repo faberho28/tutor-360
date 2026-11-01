@@ -1,4 +1,5 @@
 import { API_KEY_HEADER } from "../settings/api-key";
+import type { TutorLevel } from "../tutor/levels";
 
 /** Meta transcribes a short clip in 1 to 2 s; this leaves room for a slow network. */
 const TIMEOUT_MS = 20_000;
@@ -101,6 +102,7 @@ export async function requestVoiceTurn(
     transcript: string;
     image: string;
     caseContext?: string;
+    level?: TutorLevel;
     context: VoiceRequestContext;
   },
   options: { signal?: AbortSignal; apiKey?: string } = {},

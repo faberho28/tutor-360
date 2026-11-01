@@ -21,16 +21,23 @@ import {
   scanHref,
   type LabCase,
 } from "@/lib/lab/cases";
+import type { TutorLevel } from "@/lib/tutor/levels";
 
 /** The free-form case: the user says what they will show and what to look for. */
-export function CustomCaseCard({ labCase }: { labCase: LabCase }) {
+export function CustomCaseCard({
+  labCase,
+  level,
+}: {
+  labCase: LabCase;
+  level: TutorLevel;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const valid = cleanCustomText(text) !== null;
 
   function start(event: FormEvent) {
     event.preventDefault();
-    if (valid) router.push(scanHref("personalizado", text));
+    if (valid) router.push(scanHref("personalizado", level, text));
   }
 
   return (

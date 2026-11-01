@@ -1,4 +1,5 @@
 import { API_KEY_HEADER } from "../settings/api-key";
+import type { TutorLevel } from "../tutor/levels";
 import type { GuideVerdict } from "../types";
 
 /** Spark compares two pictures in a few seconds; this leaves room for a slow one. */
@@ -37,6 +38,7 @@ export async function requestVerify(
     } | null)[];
     remarks?: readonly string[];
     log?: readonly string[];
+    level?: TutorLevel;
     signal?: AbortSignal;
     apiKey?: string;
   },
@@ -61,6 +63,7 @@ export async function requestVerify(
         reports: options.reports,
         remarks: options.remarks,
         log: options.log,
+        level: options.level,
       }),
       signal: controller.signal,
     });

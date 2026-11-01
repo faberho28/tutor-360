@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { ComponentStatus } from "../component-status";
 import { getEnv } from "../env";
 import type { Diagnosis } from "../types";
+import { levelBlock, levelProfile } from "../tutor/level-profiles";
+import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
 import { ModelError, toModelError } from "./errors";
 import { callSpark } from "./spark-call";
 
@@ -13,8 +15,10 @@ export type DiagnoseInput = {
   reason: string | null;
   /** `data:image/jpeg;base64,...` of the component crop. */
   cropDataUrl: string;
-  /** The Laboratorio case context (English prompt text). */
+  /** What the student says they are working on: the Laboratorio case description or what they wrote (Spanish). */
   context?: string;
+  /** How much the student already knows; the default is the technician the tutor was first written for. */
+  level?: TutorLevel;
   apiKey?: string;
   signal?: AbortSignal;
 };
@@ -51,16 +55,23 @@ const RESPONSE_FORMAT = {
 } as const;
 
 export function buildDiagnosisPrompt(
-  input: Pick<DiagnoseInput, "context" | "label" | "status" | "reason">,
+  input: Pick<
+    DiagnoseInput,
+    "context" | "label" | "status" | "reason" | "level"
+  >,
 ): string {
+  const level = input.level ?? DEFAULT_TUTOR_LEVEL;
   return [
-    "You are a patient tutor for a student apprentice technician who points a camera at something to inspect it. The student is learning: they need to understand what they are looking at and how to act, not just to receive orders.",
-    input.context ? `Task context: ${input.context}` : null,
+    `You are a technical coach for ${levelProfile(level).reader} They point a camera at something to inspect it.`,
+    levelBlock(level),
+    input.context
+      ? `What the student says they are working on: ${input.context}`
+      : null,
     `The image shows one part with its surroundings. The part is outlined in magenta: diagnose only that part, and use the rest as context. An earlier look named it "${input.label}" and rated it "${input.status}"${input.reason ? `, saying: "${input.reason}"` : ""}. Use that only as a hint: look at the image and say what you really see. The magenta line is a drawing added for you, never a fault of the part.`,
-    "Write the diagnosis in Spanish (Colombia) with correct spelling, accents included, in plain words an apprentice understands. Rules:",
-    '- "summary": three or four sentences that teach. First say what the part is and what it does, in plain words, so the student knows what they are looking at. Then say what looks normal or wrong in this image and why it matters. If you cannot tell from the image, say what you can see and what would settle it.',
+    "Write the diagnosis in Spanish (Colombia) with correct spelling, accents included, at the level of the reader described above. Rules:",
+    '- "summary": three or four sentences. Say what the part is and what it does only as far as the reader\'s level needs it, then what looks normal or wrong in this image and why it matters. If you cannot tell from the image, say what you can see and what would settle it.',
     '- "severity": "low" when it can wait, "medium" when it should be fixed soon, "high" when it should be handled before using the equipment. Never exaggerate.',
-    `- "steps": a guide for the student, between 3 and ${MAX_STEPS} steps in the order to do them. Each step is ONE action starting with a verb, followed by a colon and a short reason why, so the student learns (for example "Desconecta el cargador de la corriente: así evitas una descarga mientras lo revisas"). Say what to look for ("busca un abultamiento en la parte de arriba") and explain any technical term in plain words. Begin with safety when it applies (power off, unplug, discharge). Do not recommend replacing a part before the cheaper checks.`,
+    `- "steps": a guide for the student, between 3 and ${MAX_STEPS} steps in the order to do them. Each step is ONE action starting with a verb, followed by a colon and a short reason why (for example "Desconecta el cargador de la corriente: así evitas una descarga mientras lo revisas"). Say what to look for ("busca un abultamiento en la parte de arriba") and explain a technical term only as far as the reader's level needs it. Begin with safety when it applies (power off, unplug, discharge). Do not recommend replacing a part before the cheaper checks.`,
     '- "confirmed": true only when the close-up really supports the reported condition. False when it looks like dust, a shadow, a reflection, or the image is too small or blurry to tell.',
     "- Judge only what you can see. Never invent a part number, a measurement or a fault that is not visible.",
   ]

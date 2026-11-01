@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { COMPONENT_STATUSES } from "../component-status";
 import { analyzeRequestSchema } from "../analysis/request";
+import { TUTOR_LEVELS } from "../tutor/levels";
 
 /** Body of `POST /api/diagnose`: one part, cropped from the analyzed frame. */
 export const diagnoseRequestSchema = z.object({
   /** The crop of the part, JPEG. */
   image: analyzeRequestSchema.shape.image,
   context: analyzeRequestSchema.shape.context,
+  /** How much the student already knows. */
+  level: z.enum(TUTOR_LEVELS).optional(),
   /** What the review called it (Spanish). */
   label: z.string().trim().min(1).max(80),
   status: z.enum(COMPONENT_STATUSES),

@@ -1,5 +1,7 @@
 import "server-only";
 import { z } from "zod";
+import { levelGuidance, levelProfile } from "../tutor/level-profiles";
+import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
 import { ModelError, toModelError } from "./errors";
 import { partLine } from "./part-line";
 import { callSpark } from "./spark-call";
@@ -45,7 +47,7 @@ const REPORT_TEXT = {
 export type GuideInput = {
   /** `data:image/jpeg;base64,...` of the analyzed frame. */
   imageDataUrl: string;
-  /** What the technician says they are working on: the case description or what they wrote (Spanish). */
+  /** What the student says they are working on: the case description or what they wrote (Spanish). */
   context?: string;
   /** The n-th part is the one marked n in the image (see `markFrame`). */
   parts: readonly GuidePart[];
@@ -66,6 +68,8 @@ export type GuideInput = {
     /** What was asked, answered and seen along the way, oldest first. */
     log?: readonly string[];
   };
+  /** How much the student already knows; the default is the technician the tutor was first written for. */
+  level?: TutorLevel;
   /** Replaces the built prompt (the prompt lab only). */
   promptOverride?: string;
   /** How hard Spark thinks; the scan uses `minimal`. */
@@ -126,12 +130,14 @@ const RESPONSE_FORMAT = {
 } as const;
 
 export function buildGuidePrompt(
-  input: Pick<GuideInput, "context" | "parts" | "progress">,
+  input: Pick<GuideInput, "context" | "parts" | "progress" | "level">,
 ): string {
+  const level = input.level ?? DEFAULT_TUTOR_LEVEL;
+  const profile = levelProfile(level);
   return [
-    "You are a technical coach for a systems technician with basic but solid foundations: they know their tools and the fundamentals (power, signals, connectors, soldering basics, how to measure) and do not need the elementary explained. What they need is the specific procedure, the order, the values or signs to look for, the risks and the reason behind each decision. They point a camera at something and work on it with their hands. You guide them one step at a time while a camera shows what is in front of them. They work at their own bench with the usual tools (multimeter, soldering iron, hot-air station, tweezers, flux, isopropyl alcohol, anti-static mat, magnification). Repairs, including reworking or replacing damaged components, are part of the job: explain them step by step with the safe order and the precautions, and never just send them away or tell them to stop.",
+    `You are a technical coach for ${profile.reader} They point a camera at something and work on it with their hands. You guide them one step at a time while a camera shows what is in front of them. ${profile.equipment} Repairs, including reworking or replacing damaged components, are part of the job: explain them step by step with the safe order and the precautions, and never just send them away or tell them to stop.`,
     input.context
-      ? `What the technician says they are working on: "${input.context}"`
+      ? `What the student says they are working on: "${input.context}"`
       : null,
     "The image shows the parts the vision system found, each one outlined in magenta with its number on a magenta tag. This is the condition of each numbered part. Their names are NOT given on purpose: another model named them and often got them wrong, so identify every part by LOOKING at it in the image:",
     ...input.parts.map(partLine),
@@ -180,7 +186,7 @@ export function buildGuidePrompt(
     "- The steps are a diagnosis and repair path toward the goal. Each one is something the student DOES that they have not done yet and that either fixes something or produces information: press, move, wiggle, clean, reseat, replace, power on and watch, connect something else, compare with a part that works. The student already sees the outlined parts: NEVER write a step that only asks them to look at, find or point at a part.",
     "- You are a technician who SOLVES. When you find damage, the procedure is how to fix it: replace, resolder, clean, repair or work around it, with the tools and the safe order. Safety is part of HOW the work is done (power off, discharge, protect from static, let it cool, the right temperature), never a reason to stop. A step that only says to abstain, keep something as it is, or not touch it is not a step. Only when the repair truly needs equipment or skills the student cannot have, say exactly what is missing and give the best steps they CAN do now (test the rest, document the damage, find the right part), so the procedure always moves forward.",
     '- Never repeat a step. The same action on several parts is ONE step: say it once (for example "en cada una de las que parpadean"), pointing at the most representative part. The number of steps follows the work that really has to be done, never the number of parts: do not write one step per part unless each part needs a different action.',
-    "- The reader is a technician: skip the basics (what a tool or a connector is). Give the specific procedure, the values or signs to look for, and the reason behind each decision.",
+    ...levelGuidance(level),
     '- Write every step as the action, a colon, and then the reason, always addressing the student as "tú" (imperative: "Pulsa", "Mueve", never "Pulse"). When the step is a test, the part after the colon says what to expect and what it means, as "si pasa X, entonces Y" (for example "Pulsa la tecla que parpadea varias veces: si no vuelve a subir, el mecanismo está trabado"). Go from the simplest and safest action to the more invasive one.',
     '- Every "si X, entonces Y" must be sound: Y has to follow necessarily from X, so say only what X really proves. When X could come from several causes, do not conclude: the next step is the check that tells those causes apart.',
     '- Do not stop at finding the cause, or at "it cannot be fixed" or "replace it all". Give the whole path: find the cause, then carry out the fix on what can be fixed (say what stays as it is and what is the safe order), and last confirm that it worked. Only when something truly cannot be fixed by the student, say so and what to do instead.',
@@ -191,7 +197,7 @@ export function buildGuidePrompt(
     "- Adapt it to what the image and the task context show. Do not mention a PC, a cover or a motherboard unless that is what it is.",
     input.progress
       ? '- "observation": a description in Spanish of what the image shows right now, as you would note it for someone who cannot see it: the layout, the state of each notable part, what the procedure has touched or changed, and anything that stands out with where it is. 2 to 4 sentences, under 80 words. The next calls will NOT see this image again: this description is all that is kept of it, so include whatever a later check would need. Write it first.'
-      : '- "observation": the first description of this scene, as a technician would note it for someone who cannot see it: what the object is, how it is laid out and where each notable part is, the state of each one (clean, dirty, worn, broken, burnt, missing, loose...), and any mark or anomaly with exactly where it is. 4 to 8 sentences. Be careful: look closely at the condition of what you see and say it plainly, whether it is fine or not. It is the only record of this picture that will be kept, so include whatever a later check would need to compare against. Write it first.',
+      : '- "observation": the first description of this scene, as a technician would note it for someone who cannot see it: what the object is (say its kind as YOU recognize it from the image, such as keyboard, phone, monitor, laptop, desktop board or a loose component, even when the task context names something else), how it is laid out and where each notable part is, the state of each one (clean, dirty, worn, broken, burnt, missing, loose...), and any mark or anomaly with exactly where it is. 4 to 8 sentences. Be careful: look closely at the condition of what you see and say it plainly, whether it is fine or not. It is the only record of this picture that will be kept, so include whatever a later check would need to compare against. Write it first.',
     '- "conclusion" is an empty string while there are steps to do.',
     "- No numbering, no emojis.",
   ]

@@ -5,10 +5,13 @@ import { getEnv } from "@/lib/env";
 import { ModelError, toModelError } from "@/lib/models/errors";
 import { MetaVerifyWriter } from "@/lib/models/verify-writer";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
+import { TUTOR_LEVELS } from "@/lib/tutor/levels";
 
 const requestSchema = z.object({
   /** What the camera sees now (the scene at the start travels as text). */
   image: analyzeRequestSchema.shape.image,
+  /** How much the student already knows. */
+  level: z.enum(TUTOR_LEVELS).optional(),
   goal: z.string().min(1).max(300),
   scene: z.string().max(2500).optional(),
   reports: z
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
       reports: parsed.data.reports,
       remarks: parsed.data.remarks,
       log: parsed.data.log,
+      level: parsed.data.level,
       apiKey: sentKey ?? undefined,
       signal: request.signal,
     });
