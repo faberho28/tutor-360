@@ -4,7 +4,9 @@
 > Point its camera at a real circuit. SAM 3.1 segments every part. Muse Spark 1.3 names and judges each one, then writes a guided procedure for your level. A tracking engine keeps the masks on the parts while you work, and the guide is rewritten from your answers, from what you say out loud and from what appears in the scene. Ask by voice and the steps update live.
 
 **Hackathon:** Meta Global AI Developer Hackathon 2026 — Build for Your World + Push the Frontier
+
 **Track:** Indie Developer | **Models:** SAM 3.1 + Muse Spark 1.3 + Muse Voice Transcribe (via Meta Model API)
+
 **Live demo:** <https://tutor-ia.hypot.app/>
 
 > **Flow:** Scan · Select a part · Follow the guide on the image · Answer by tapping or by voice · Final check · PDF report
