@@ -6,9 +6,8 @@
 **Hackathon:** Meta Global AI Developer Hackathon 2026 — Build for Your World + Push the Frontier
 **Track:** Indie Developer | **Models:** SAM 3.1 + Muse Spark 1.3 + Muse Voice Transcribe (via Meta Model API)
 **Live demo:** <https://tutor-ia.hypot.app/>
-**Flow:** Scan → Select a part → Follow the guide on the image → Answer by tapping or by voice → Final check → PDF report
 
-Monorepo with pnpm. The app lives in `apps/web` and uses Next.js 16 (App Router), React 19, strict TypeScript and Tailwind CSS v4.
+> **Flow:** Scan · Select a part · Follow the guide on the image · Answer by tapping or by voice · Final check · PDF report
 
 ## Why it exists
 
@@ -196,5 +195,4 @@ samples/             Sample photos
 ## Conventions
 
 - Commits follow Conventional Commits.
-- Code, identifiers and comments in English; interface text in English.
 - Only `README.md` is versioned among the Markdown files; the rest of the documentation is local.
