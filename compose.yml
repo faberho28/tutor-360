@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tutor-360-web
+    # The camera needs localhost or HTTPS: open http://localhost:${WEB_PORT}.
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    # Server-only variables (MODEL_API_KEY, ...). Optional: without it the key is
+    # entered in Ajustes. Never baked into the image.
+    env_file:
+      - path: apps/web/.env
+        required: false
+    restart: unless-stopped

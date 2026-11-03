@@ -2,5 +2,6 @@ packages:
   - "apps/*"
 
 allowBuilds:
+  core-js: false
   sharp: false
   unrs-resolver: false

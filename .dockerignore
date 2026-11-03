@@ -1,0 +1,20 @@
+**/node_modules
+**/.next
+.git
+.gitignore
+
+# Secrets stay out of the build context, in every folder (apps/web/.env too)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local-only material and things the image does not need
+.atl
+docs
+samples
+services
+*.md
+Dockerfile
+compose.yml
+.dockerignore
+apps/web/public/opencv
