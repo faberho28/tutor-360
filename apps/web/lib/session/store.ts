@@ -47,6 +47,8 @@ export type SessionState = {
   hiddenIds: string[];
   /** Paints the change detector's grid over the camera (to tune it). */
   showChangeGrid: boolean;
+  /** The magnifier lens follows the pointer over the camera. */
+  showMagnifier: boolean;
   /** The side panel (parts and diagnoses) is hidden until the user asks for it. */
   panelOpen: boolean;
   captures: Capture[];
@@ -90,6 +92,7 @@ export type SessionActions = {
   toggleHidden: (id: string) => void;
   /** Shows or hides the change detector's grid over the camera. */
   toggleChangeGrid: () => void;
+  toggleMagnifier: () => void;
   setPanelOpen: (open: boolean) => void;
   /** Saves the given detections and their composed image; returns the capture. */
   addCapture: (detections: Detection[], imageDataUrl: string) => Capture;
@@ -163,6 +166,7 @@ function freshState(overrides: Partial<SessionState> = {}): SessionState {
     selectedId: null,
     hiddenIds: [],
     showChangeGrid: false,
+    showMagnifier: false,
     panelOpen: false,
     captures: [],
     diagnoses: {},
@@ -349,6 +353,9 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
     toggleChangeGrid: () =>
       set((state) => ({ showChangeGrid: !state.showChangeGrid })),
 
+    toggleMagnifier: () =>
+      set((state) => ({ showMagnifier: !state.showMagnifier })),
+
     setPanelOpen: (open) => set({ panelOpen: open }),
 
     toggleHidden: (id) =>
@@ -410,6 +417,7 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
           labCase: state.labCase,
           level: state.level,
           showChangeGrid: state.showChangeGrid,
+          showMagnifier: state.showMagnifier,
           panelOpen: state.panelOpen,
           stage: state.stage,
           cameraDevices: state.cameraDevices,

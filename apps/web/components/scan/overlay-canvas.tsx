@@ -37,6 +37,7 @@ export function OverlayCanvas({
   guideCardRef,
   guidePos = null,
   onGuidePos,
+  canvasRef: externalCanvasRef,
 }: {
   source: { width: number; height: number };
   /** The change detector's grid to paint (to tune it), or null. */
@@ -49,6 +50,8 @@ export function OverlayCanvas({
   /** Where the card is now (null until it was first placed), and where to say it should go. */
   guidePos?: GuidePos | null;
   onGuidePos?: (pos: GuidePos) => void;
+  /** Lets the parent read the canvas (the magnifier copies it). */
+  canvasRef?: RefObject<HTMLCanvasElement | null>;
 }) {
   const detections = useSession((s) => s.detections);
   // Hidden masks are not painted but still answer to the pointer.
@@ -292,7 +295,10 @@ export function OverlayCanvas({
 
   return (
     <canvas
-      ref={canvasRef}
+      ref={(element) => {
+        canvasRef.current = element;
+        if (externalCanvasRef) externalCanvasRef.current = element;
+      }}
       role="img"
       aria-label="Masks of the detected components"
       className="absolute inset-0 size-full touch-manipulation"

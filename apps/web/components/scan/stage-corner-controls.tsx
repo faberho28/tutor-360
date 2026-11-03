@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize, Minimize, PanelRight } from "lucide-react";
+import { Maximize, Minimize, PanelRight, ZoomIn } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ export function StageCornerControls({
   const setCameraDeviceId = useSession((s) => s.setCameraDeviceId);
   const panelOpen = useSession((s) => s.panelOpen);
   const setPanelOpen = useSession((s) => s.setPanelOpen);
+  const showMagnifier = useSession((s) => s.showMagnifier);
+  const toggleMagnifier = useSession((s) => s.toggleMagnifier);
   const value = activeId ?? "";
   const fullscreen = useFullscreen();
 
@@ -96,6 +98,28 @@ export function StageCornerControls({
             ))}
           </SelectContent>
         </Select>
+
+        {ready ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={
+              showMagnifier ? "Turn the magnifier off" : "Turn the magnifier on"
+            }
+            title="Magnifier (M)"
+            aria-pressed={showMagnifier}
+            onClick={toggleMagnifier}
+            className={cn(
+              "size-9 rounded-full hover:bg-black/60 hover:text-white max-lg:hidden",
+              GLASS,
+              showMagnifier &&
+                "bg-white text-black hover:bg-white/90 hover:text-black",
+            )}
+          >
+            <ZoomIn aria-hidden="true" className="size-4" />
+          </Button>
+        ) : null}
 
         {/* Desktop only: on a phone the panel is always the bottom drawer. */}
         <Button

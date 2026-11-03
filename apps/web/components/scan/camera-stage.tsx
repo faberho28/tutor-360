@@ -7,6 +7,7 @@ import { ControlBar } from "@/components/scan/control-bar";
 import { EnvironmentPreparation } from "@/components/scan/environment-preparation";
 import { GuideCard } from "@/components/scan/guide-card";
 import { LiveCameraSource } from "@/components/scan/live-camera-source";
+import { Magnifier } from "@/components/scan/magnifier";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
 import { StageCornerControls } from "@/components/scan/stage-corner-controls";
 import { StageEmptyState } from "@/components/scan/stage-empty-state";
@@ -32,6 +33,8 @@ export function CameraStage() {
   // so the card never covers it. Null until the first place is known.
   const [guidePos, setGuidePos] = useState<GuidePos | null>(null);
   const [dims, setDims] = useState({ width: 1280, height: 720 });
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const showMagnifier = useSession((s) => s.showMagnifier);
   const { analysis, videoRef } = useAnalysis();
   const fullscreen = useFullscreen();
   const stream = useCamera(true, deviceId);
@@ -64,12 +67,21 @@ export function CameraStage() {
               guideCardRef={guideCardRef}
               guidePos={guidePos}
               onGuidePos={setGuidePos}
+              canvasRef={overlayRef}
               changeGrid={
                 showGrid
                   ? { heat: change.reading.heat, status: change.reading.status }
                   : null
               }
             />
+            {showMagnifier ? (
+              <Magnifier
+                container={element}
+                videoRef={videoRef}
+                overlayRef={overlayRef}
+                source={dims}
+              />
+            ) : null}
             <TrackingPreparation />
             <EnvironmentPreparation />
           </>

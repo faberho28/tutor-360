@@ -16,11 +16,12 @@ const EDITABLE =
   "input, textarea, select, button, a, [role='checkbox'], [role='combobox'], [role='menuitem'], [role='option'], [contenteditable='true']";
 
 const SHORTCUTS = [
-  ["Espacio", "Capturar"],
+  ["Space", "Capture"],
   ["A", "Turn automatic analysis on or pause it"],
   ["↑ / ↓", "Move through components"],
   ["Enter", "Select component"],
   ["R", "Generate report"],
+  ["M", "Turn the magnifier on or off"],
 ] as const;
 
 export function ShortcutsHelp() {

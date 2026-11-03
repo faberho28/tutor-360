@@ -7,6 +7,7 @@ type Handlers = {
   toggleAuto: () => void;
   report: () => void;
   toggleGrid: () => void;
+  toggleMagnifier: () => void;
 };
 
 const INTERACTIVE =
@@ -14,7 +15,7 @@ const INTERACTIVE =
 
 /**
  * Space captures, A toggles auto-analysis, R opens the report, G shows the
- * change detector's grid.
+ * change detector's grid, M toggles the magnifier.
  */
 export function useScanShortcuts(handlers: Handlers) {
   const ref = useRef(handlers);
@@ -41,6 +42,8 @@ export function useScanShortcuts(handlers: Handlers) {
         ref.current.report();
       } else if (event.key.toLowerCase() === "g") {
         ref.current.toggleGrid();
+      } else if (event.key.toLowerCase() === "m") {
+        ref.current.toggleMagnifier();
       }
     }
 

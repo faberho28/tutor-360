@@ -150,7 +150,15 @@ export function ControlBar() {
   const showGrid = useSession((s) => s.showChangeGrid);
   const toggleGrid = useSession((s) => s.toggleChangeGrid);
 
-  useScanShortcuts({ capture, toggleAuto, report, toggleGrid });
+  const toggleMagnifier = useSession((s) => s.toggleMagnifier);
+
+  useScanShortcuts({
+    capture,
+    toggleAuto,
+    report,
+    toggleGrid,
+    toggleMagnifier,
+  });
 
   return (
     <>
