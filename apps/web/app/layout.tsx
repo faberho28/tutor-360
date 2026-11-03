@@ -9,7 +9,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "PC-Tutor 360",
+  title: "Tutor AI 360",
   description: "Una cámara, una página, y la PC se explica sola.",
 };
 

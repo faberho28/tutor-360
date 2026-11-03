@@ -25,7 +25,7 @@ export function TopBar({
     <header className={cn("flex items-center gap-2 px-3", className)}>
       <Link
         href="/"
-        aria-label="PC-Tutor 360, ir al inicio"
+        aria-label="Tutor AI 360, ir al inicio"
         className="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 pl-1 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -35,7 +35,7 @@ export function TopBar({
           aria-hidden="true"
           className="hidden text-xs font-semibold text-muted-foreground sm:block"
         >
-          PC-Tutor 360
+          Tutor AI 360
         </span>
       </Link>
       <div className="min-w-0 flex-1">{children}</div>

@@ -129,7 +129,7 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
   };
 
   // Cover block.
-  write("PC-Tutor 360 - Reporte de sesión", { size: 18, bold: true, gap: 3 });
+  write("Tutor AI 360 - Reporte de sesión", { size: 18, bold: true, gap: 3 });
   write(`Sesión: ${input.name}`, { size: 11 });
   if (input.caseTitle) write(`Caso: ${input.caseTitle}`, { size: 11 });
   write(

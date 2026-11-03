@@ -33,7 +33,7 @@ export function HomeScreen() {
               Diagnostica el interior de un PC con la cámara
             </h2>
             <p className="max-w-xl text-pretty text-sm text-muted-foreground">
-              PC-Tutor 360 identifica cada componente en vivo, marca lo que está
+              Tutor AI 360 identifica cada componente en vivo, marca lo que está
               mal y te guía paso a paso para repararlo.
             </p>
             <Button asChild size="lg" className="mt-2 rounded-full px-6">
