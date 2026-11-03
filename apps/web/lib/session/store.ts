@@ -214,9 +214,13 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
 
     select: (id) =>
       set((state) =>
-        state.detections.some((d) => d.id === id) ? { selectedId: id } : state,
+        // The detail with the diagnosis lives in the side panel: selecting a
+        // part shows it, and deselecting it hides it again.
+        state.detections.some((d) => d.id === id)
+          ? { selectedId: id, panelOpen: true }
+          : state,
       ),
-    clearSelection: () => set({ selectedId: null }),
+    clearSelection: () => set({ selectedId: null, panelOpen: false }),
 
     addCapture: (detections, imageDataUrl) => {
       // Counter instead of length + 1: ids must stay unique after deletions.
