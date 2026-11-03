@@ -164,7 +164,7 @@ export function ControlBar() {
         role="toolbar"
         aria-label="Controles de captura"
         className={cn(
-          "group pointer-events-auto grid w-fit grid-cols-[68px_40px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
+          "group pointer-events-auto grid w-fit grid-cols-[68px_40px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
           "[@media(hover:hover)]:grid-cols-[0px_40px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_40px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_40px_68px] [@media(hover:hover)]:focus-within:gap-1",
         )}
       >
