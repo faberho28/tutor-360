@@ -71,19 +71,3 @@ export function normalizeHomography(
   const last = out[8]!;
   return out.map((v) => v / last) as unknown as Homography;
 }
-
-/** Product `a * b`: applies `b` first and then `a`. */
-export function multiplyHomography(a: Homography, b: Homography): Homography {
-  const out: number[] = [];
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      out.push(
-        a[r * 3]! * b[c]! +
-          a[r * 3 + 1]! * b[3 + c]! +
-          a[r * 3 + 2]! * b[6 + c]!,
-      );
-    }
-  }
-  const last = out[8]!;
-  return out.map((v) => v / last) as unknown as Homography;
-}

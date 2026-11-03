@@ -20,7 +20,6 @@ export const OVERLAY: Record<ComponentStatus, OverlayEntry> = {
 /** Fill opacity of the other masks while one component is selected. */
 export const SELECTED_DIM_FILL = 0.15;
 export const LABEL_BG = "rgba(0,0,0,0.7)";
-export const LABEL_FONT = "500 12px Inter, system-ui, sans-serif";
 
 export const PULSE = { periodMs: 1200, min: 0.2, max: 0.5 } as const;
 

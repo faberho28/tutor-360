@@ -160,10 +160,3 @@ export function labelComponents(
   }
   return { labels, sizes };
 }
-
-/** How many pixels the mask covers. */
-export function maskArea(mask: Uint8Array): number {
-  let n = 0;
-  for (let i = 0; i < mask.length; i++) n += mask[i]!;
-  return n;
-}
