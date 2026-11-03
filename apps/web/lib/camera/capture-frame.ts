@@ -38,7 +38,7 @@ function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
       (blob) =>
         blob
           ? resolve(blob)
-          : reject(new Error("No se pudo codificar el frame")),
+          : reject(new Error("The frame could not be encoded")),
       "image/jpeg",
       FRAME_QUALITY,
     );
@@ -49,7 +49,7 @@ function toDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error("Lectura fallida"));
+    reader.onerror = () => reject(reader.error ?? new Error("Read failed"));
     reader.readAsDataURL(blob);
   });
 }
@@ -69,7 +69,7 @@ export async function captureFrame(
       ? { width: source.videoWidth, height: source.videoHeight }
       : { width: source.naturalWidth, height: source.naturalHeight };
   if (natural.width === 0 || natural.height === 0) {
-    throw new Error("El frame aún no está listo");
+    throw new Error("The frame is not ready yet");
   }
 
   const { width, height } = fitWithin(natural.width, natural.height, maxSide);
@@ -77,7 +77,7 @@ export async function captureFrame(
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D no disponible");
+  if (!ctx) throw new Error("Canvas 2D is not available");
   ctx.drawImage(source, 0, 0, width, height);
 
   return { dataUrl: await toDataUrl(await toBlob(canvas)), width, height };

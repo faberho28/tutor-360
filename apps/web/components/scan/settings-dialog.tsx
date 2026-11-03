@@ -18,8 +18,8 @@ export function SettingsDialog({ children }: { children: ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Ajustes</DialogTitle>
-          <DialogDescription>Elige el tema de la interfaz.</DialogDescription>
+          <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>Choose the interface theme.</DialogDescription>
         </DialogHeader>
         <ThemeToggle />
       </DialogContent>

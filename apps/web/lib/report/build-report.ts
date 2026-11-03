@@ -5,7 +5,7 @@ export type ReportImage = { dataUrl: string; width: number; height: number };
 export type ReportInput = {
   /** Name of the session, as the user typed it. */
   name: string;
-  /** Name of the Laboratorio case being scanned, when there is one. */
+  /** Name of the Lab case being scanned, when there is one. */
   caseTitle: string | null;
   at: Date;
   captures: readonly Capture[];
@@ -30,7 +30,7 @@ export function stepMark(
   return "[ ]";
 }
 
-/** "Pasos hechos: 2 de 4 (1 omitido)". */
+/** "Steps done: 2 of 4 (1 skipped)". */
 export function stepsSummary(
   total: number,
   done: readonly number[] = [],
@@ -39,7 +39,7 @@ export function stepsSummary(
   const made = new Set(done.filter((i) => i < total)).size;
   const left = new Set(skipped.filter((i) => i < total && !done.includes(i)))
     .size;
-  return `Pasos hechos: ${made} de ${total}${left > 0 ? ` (${left} omitido${left > 1 ? "s" : ""})` : ""}`;
+  return `Steps done: ${made} of ${total}${left > 0 ? ` (${left} skipped)` : ""}`;
 }
 
 const PAGE = { w: 210, h: 297, margin: 15 } as const;
@@ -48,10 +48,10 @@ const MAX_IMAGE_H = 105;
 
 const STATUS_TEXT = {
   ok: "Normal",
-  warning: "Por revisar",
-  anomaly: "Anomalía",
+  warning: "To check",
+  anomaly: "Anomaly",
 };
-const SEVERITY_TEXT = { low: "Baja", medium: "Media", high: "Alta" };
+const SEVERITY_TEXT = { low: "Low", medium: "Medium", high: "High" };
 
 /** The PDF's standard fonts cover Latin-1: swap what they cannot draw. */
 export function latin1(text: string): string {
@@ -72,7 +72,7 @@ export function fileSlug(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
-  return slug || "sesion";
+  return slug || "session";
 }
 
 export function reportFileName(name: string, at: Date): string {
@@ -81,7 +81,7 @@ export function reportFileName(name: string, at: Date): string {
     String(at.getMonth() + 1).padStart(2, "0"),
     String(at.getDate()).padStart(2, "0"),
   ].join("-");
-  return `reporte-${fileSlug(name)}-${day}.pdf`;
+  return `report-${fileSlug(name)}-${day}.pdf`;
 }
 
 function countBy(captures: readonly Capture[], status: Detection["status"]) {
@@ -129,22 +129,22 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
   };
 
   // Cover block.
-  write("Tutor AI 360 - Reporte de sesión", { size: 18, bold: true, gap: 3 });
-  write(`Sesión: ${input.name}`, { size: 11 });
-  if (input.caseTitle) write(`Caso: ${input.caseTitle}`, { size: 11 });
+  write("Tutor AI 360 - Session report", { size: 18, bold: true, gap: 3 });
+  write(`Session: ${input.name}`, { size: 11 });
+  if (input.caseTitle) write(`Case: ${input.caseTitle}`, { size: 11 });
   write(
-    `Fecha: ${input.at.toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}`,
+    `Date: ${input.at.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}`,
     { size: 11, gap: 4 },
   );
 
   const anomalies = countBy(input.captures, "anomaly");
   const warnings = countBy(input.captures, "warning");
   write(
-    `Capturas: ${input.captures.length}    Anomalías: ${anomalies}    Por revisar: ${warnings}`,
+    `Captures: ${input.captures.length}    Anomalies: ${anomalies}    To check: ${warnings}`,
     { size: 11, bold: true, gap: 2 },
   );
   if (anomalies + warnings === 0) {
-    write("No se detectaron anomalías ni piezas por revisar en esta sesión.", {
+    write("No anomalies or parts to check were detected in this session.", {
       gap: 4,
     });
   }
@@ -166,7 +166,7 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
     ensure(12 + h);
     y += 3;
     write(
-      `Captura ${index + 1} - ${new Date(capture.at).toLocaleTimeString("es-CO", { timeStyle: "short" })}`,
+      `Capture ${index + 1} - ${new Date(capture.at).toLocaleTimeString("en-US", { timeStyle: "short" })}`,
       { size: 13, bold: true, gap: 2 },
     );
 
@@ -177,12 +177,12 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
     }
 
     if (capture.detections.length === 0) {
-      write("No había piezas detectadas en esta captura.", { gap: 3 });
+      write("No parts were detected in this capture.", { gap: 3 });
       return;
     }
     for (const d of capture.detections) {
       const score = d.score === null ? "" : ` (${Math.round(d.score * 100)} %)`;
-      const marked = input.markedIds.includes(d.id) ? " [en el reporte]" : "";
+      const marked = input.markedIds.includes(d.id) ? " [in the report]" : "";
       write(`- ${d.label}: ${STATUS_TEXT[d.status]}${score}${marked}`, {
         bold: d.status !== "ok",
         gap: d.reason ? 0 : 0.8,
@@ -203,19 +203,19 @@ export async function buildReport(input: ReportInput): Promise<Blob> {
   if (diagnosed.length > 0) {
     ensure(20);
     y += 4;
-    write("Diagnósticos", { size: 14, bold: true, gap: 2 });
+    write("Diagnoses", { size: 14, bold: true, gap: 2 });
     for (const d of diagnosed) {
       const entry = input.diagnoses[d.id];
       if (entry?.status !== "ready") continue;
       ensure(24);
-      write(`${d.label} - gravedad ${SEVERITY_TEXT[entry.data.severity]}`, {
+      write(`${d.label} - severity ${SEVERITY_TEXT[entry.data.severity]}`, {
         size: 11,
         bold: true,
         gap: 1,
       });
       write(entry.data.summary, { gap: 1.5 });
       if (entry.data.confirmed === false) {
-        write("La IA no pudo confirmar este hallazgo con el recorte.", {
+        write("The AI could not confirm this finding from the crop.", {
           size: 9,
           gap: 1.5,
         });

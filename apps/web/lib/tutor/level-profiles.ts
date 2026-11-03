@@ -7,7 +7,7 @@ import type { TutorLevel } from "./levels";
  * the beginner follows rules, the expert acts on patterns, so what changes is how
  * much to explain, what to take for granted and how much to leave to their
  * judgment. The text is prompt text (English); what the tutor writes for the
- * student stays in Spanish (Colombia).
+ * student is in English.
  */
 export type LevelProfile = {
   /** Who the reader is: finishes "a technical coach for ..." (one or two sentences). */

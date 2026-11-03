@@ -106,7 +106,7 @@ export function GuideCard({
             aria-hidden="true"
             className="size-4 motion-safe:animate-spin"
           />
-          Preparando la guía…
+          Preparing the guide…
         </p>
       </div>
     );
@@ -130,9 +130,9 @@ export function GuideCard({
       </span>
       <p className="min-w-0 flex-1 truncate text-sm font-semibold">
         {thinking
-          ? "Pensando lo que sigue…"
+          ? "Thinking about what comes next…"
           : finished
-            ? "Terminaste los pasos"
+            ? "You finished the steps"
             : action}
       </p>
       {/* A step with its own outcomes is answered expanded; the plain answers fit in one line. */}
@@ -141,7 +141,7 @@ export function GuideCard({
           <Button
             type="button"
             size="icon-sm"
-            aria-label="Sí pasó"
+            aria-label="It happened"
             onClick={() => answer("yes")}
           >
             <Check aria-hidden="true" />
@@ -150,7 +150,7 @@ export function GuideCard({
             type="button"
             size="icon-sm"
             variant="outline"
-            aria-label="No pasó"
+            aria-label="It did not happen"
             onClick={() => answer("no")}
           >
             <X aria-hidden="true" />
@@ -159,7 +159,7 @@ export function GuideCard({
             type="button"
             size="icon-sm"
             variant="outline"
-            aria-label="No sé"
+            aria-label="Not sure"
             onClick={() => answer("unsure")}
           >
             <CircleHelp aria-hidden="true" />
@@ -171,7 +171,7 @@ export function GuideCard({
           type="button"
           size="icon-sm"
           variant="ghost"
-          aria-label="Saltar este paso"
+          aria-label="Skip this step"
           onClick={skip}
         >
           <SkipForward aria-hidden="true" />
@@ -181,7 +181,7 @@ export function GuideCard({
         type="button"
         size="icon-sm"
         variant="ghost"
-        aria-label="Mostrar la guía completa"
+        aria-label="Show the full guide"
         onClick={() => setCollapsed(false)}
       >
         <ChevronUp aria-hidden="true" />
@@ -193,7 +193,7 @@ export function GuideCard({
     <>
       <div className="flex items-center justify-between gap-3 text-xs font-medium text-muted-foreground">
         <span>
-          {finished ? "Guía completa" : `Paso ${guide.current + 1} de ${total}`}
+          {finished ? "Full guide" : `Step ${guide.current + 1} of ${total}`}
         </span>
         <span className="flex items-center gap-2">
           <button
@@ -201,13 +201,13 @@ export function GuideCard({
             onClick={() => setPanelOpen(true)}
             className="underline-offset-2 hover:underline"
           >
-            Ver las piezas
+            See the parts
           </button>
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
-            aria-label="Minimizar la guía"
+            aria-label="Minimize the guide"
             onClick={() => setCollapsed(true)}
           >
             <ChevronDown aria-hidden="true" />
@@ -215,7 +215,7 @@ export function GuideCard({
         </span>
       </div>
       <p className="line-clamp-1 text-sm leading-snug font-semibold">
-        <span className="font-medium text-muted-foreground">Objetivo: </span>
+        <span className="font-medium text-muted-foreground">Goal: </span>
         {guide.goal}
       </p>
 
@@ -228,7 +228,7 @@ export function GuideCard({
             aria-hidden="true"
             className="size-4 motion-safe:animate-spin"
           />
-          Pensando lo que sigue…
+          Thinking about what comes next…
         </p>
       ) : finished ? (
         <Finished />
@@ -243,8 +243,8 @@ export function GuideCard({
           <Input
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Qué viste o mediste (opcional)"
-            aria-label="Nota del paso"
+            placeholder="What you saw or measured (optional)"
+            aria-label="Step note"
             maxLength={400}
           />
           {/* The tutor says how the step can turn out; without it, the plain answers. */}
@@ -252,7 +252,7 @@ export function GuideCard({
             <div
               className="flex flex-wrap gap-2"
               role="group"
-              aria-label="¿Qué pasó?"
+              aria-label="What happened?"
             >
               {options.map((option) => (
                 <Button
@@ -272,7 +272,7 @@ export function GuideCard({
               <>
                 <Button type="button" onClick={() => answer("yes")}>
                   <Check aria-hidden="true" data-icon="inline-start" />
-                  Sí pasó
+                  It happened
                 </Button>
                 <Button
                   type="button"
@@ -280,7 +280,7 @@ export function GuideCard({
                   onClick={() => answer("no")}
                 >
                   <X aria-hidden="true" data-icon="inline-start" />
-                  No pasó
+                  It did not happen
                 </Button>
               </>
             ) : null}
@@ -290,11 +290,11 @@ export function GuideCard({
               onClick={() => answer("unsure")}
             >
               <CircleHelp aria-hidden="true" data-icon="inline-start" />
-              No sé
+              Not sure
             </Button>
             <Button type="button" variant="ghost" onClick={skip}>
               <SkipForward aria-hidden="true" data-icon="inline-start" />
-              Saltar
+              Skip
             </Button>
           </div>
         </>
@@ -319,15 +319,15 @@ export function GuideCard({
 }
 
 const VERDICT_TITLE: Record<GuideVerdict, string> = {
-  resolved: "La cámara ve el problema resuelto",
-  unchanged: "La cámara no ve cambios",
-  cannot_tell: "La cámara no puede confirmarlo",
+  resolved: "The camera sees the problem solved",
+  unchanged: "The camera sees no changes",
+  cannot_tell: "The camera cannot confirm it",
 };
 
 const OUTCOMES: { value: GuideOutcome; label: string }[] = [
-  { value: "yes", label: "Sí" },
+  { value: "yes", label: "Yes" },
   { value: "no", label: "No" },
-  { value: "unsure", label: "No sé" },
+  { value: "unsure", label: "Not sure" },
 ];
 
 /**
@@ -351,18 +351,18 @@ function Finished() {
     <div className="flex flex-col gap-3">
       <p className="flex items-center gap-2 text-sm font-medium">
         <Check aria-hidden="true" className="size-4 text-ok" />
-        Terminaste los pasos.
+        You finished the steps.
       </p>
 
       {conclusion ? (
         <p className="rounded-lg bg-muted p-3 text-sm leading-snug">
-          <span className="font-medium">Conclusión: </span>
+          <span className="font-medium">Conclusion: </span>
           {conclusion}
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-2" role="group" aria-label="Resultado">
-        <p className="text-sm font-semibold">¿Se solucionó?</p>
+      <div className="flex flex-col gap-2" role="group" aria-label="Result">
+        <p className="text-sm font-semibold">Did it get fixed?</p>
         <div className="flex flex-wrap gap-2">
           {OUTCOMES.map(({ value, label }) => (
             <Button
@@ -388,7 +388,7 @@ function Finished() {
             aria-hidden="true"
             className="size-3.5 motion-safe:animate-spin"
           />
-          Comparando con la imagen inicial…
+          Comparing with the starting image…
         </p>
       ) : check.status === "ready" ? (
         <div className="flex flex-col gap-1 text-sm leading-snug">
@@ -406,7 +406,8 @@ function Finished() {
         </div>
       ) : check.status === "error" ? (
         <p className="text-xs text-muted-foreground">
-          No pudimos comparar con la cámara. Tu respuesta es la que cuenta.
+          We could not compare with the camera. Your answer is the one that
+          counts.
         </p>
       ) : null}
     </div>

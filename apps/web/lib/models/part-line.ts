@@ -1,6 +1,6 @@
 /** A part as the tutor is told about it. */
 export type PartForPrompt = {
-  /** The review's guess at the name (Spanish): often wrong for a group of masks. */
+  /** The review's guess at the name: often wrong for a group of masks. */
   label: string;
   status: "ok" | "warning" | "anomaly";
   /** Why the review gave that status. */

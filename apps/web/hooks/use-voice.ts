@@ -106,7 +106,7 @@ export function useVoice() {
       }
     } catch {
       if (!signal.aborted)
-        setError("No pude entender lo último. Sigo escuchando.");
+        setError("I could not understand that. I am still listening.");
     } finally {
       busy.current = false;
       if (on.current && speaking.current === 0) setStatus("listening");
@@ -145,7 +145,9 @@ export function useVoice() {
       on.current = false;
       listener.current = null;
       setStatus("off");
-      setError("No pude abrir el micrófono. Revisa el permiso del navegador.");
+      setError(
+        "I could not open the microphone. Check the browser permission.",
+      );
     }
   }, []);
 
@@ -180,15 +182,15 @@ export function useVoice() {
       say(
         guide.conclusion
           ? `Terminamos. ${guide.conclusion}`
-          : "Terminamos los pasos.",
+          : "We finished the steps.",
       );
       return;
     }
     // Only the action: the tutor cannot be interrupted while it talks (the
     // microphone is paused), so a long reading would leave the student mute. The
-    // criterion ("si pasa X, entonces Y") is on screen or one question away.
+    // criterion ("if X happens, then Y") is on screen or one question away.
     const { action } = splitStep(guide.steps[guide.current]!.text);
-    say(`Paso ${guide.current + 1}. ${action}.`);
+    say(`Step ${guide.current + 1}. ${action}.`);
   }, [guide, status, say]);
 
   return {

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/session/session-provider";
 import type { Capture } from "@/lib/types";
 
-const timeFormat = new Intl.DateTimeFormat("es-CO", {
+const timeFormat = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
@@ -30,7 +30,7 @@ export function CapturesStrip() {
   if (captures.length === 0) {
     return (
       <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
-        Aún no hay capturas. Usa el botón de captura para guardar una.
+        No captures yet. Use the capture button to save one.
       </p>
     );
   }
@@ -48,7 +48,7 @@ export function CapturesStrip() {
             <div className="relative aspect-video bg-muted">
               <Image
                 src={capture.imageDataUrl}
-                alt={`Captura ${index + 1} con las máscaras de los componentes`}
+                alt={`Capture ${index + 1} with the component masks`}
                 fill
                 unoptimized
                 sizes="200px"
@@ -58,7 +58,7 @@ export function CapturesStrip() {
             <div className="flex items-center justify-between gap-2 p-2">
               {confirming ? (
                 <>
-                  <span className="text-xs font-medium">¿Borrar?</span>
+                  <span className="text-xs font-medium">Delete?</span>
                   <div className="flex gap-1">
                     <Button
                       type="button"
@@ -72,7 +72,7 @@ export function CapturesStrip() {
                         );
                       }}
                     >
-                      Cancelar
+                      Cancel
                     </Button>
                     <Button
                       type="button"
@@ -83,7 +83,7 @@ export function CapturesStrip() {
                         removeCapture(capture.id);
                       }}
                     >
-                      Borrar
+                      Delete
                     </Button>
                   </div>
                 </>
@@ -101,7 +101,7 @@ export function CapturesStrip() {
                     type="button"
                     size="icon-sm"
                     variant="ghost"
-                    aria-label={`Borrar captura ${index + 1}`}
+                    aria-label={`Delete capture ${index + 1}`}
                     ref={(node) => {
                       if (node) deleteButtons.current.set(capture.id, node);
                       else deleteButtons.current.delete(capture.id);

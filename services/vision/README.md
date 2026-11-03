@@ -1,3 +1,3 @@
 # services/vision
 
-Se agrega en HU-26.
+To be added in HU-26.

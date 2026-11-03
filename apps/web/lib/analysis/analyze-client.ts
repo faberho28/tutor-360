@@ -65,13 +65,13 @@ function serverError(status: number, body: unknown): AnalyzeClientError {
   if (!kind) {
     return new AnalyzeClientError(
       "unknown",
-      `La respuesta del análisis no es válida (${status})`,
+      `The analysis response is not valid (${status})`,
       status,
     );
   }
   return new AnalyzeClientError(
     kind,
-    typeof error?.message === "string" ? error.message : "Error de análisis",
+    typeof error?.message === "string" ? error.message : "Analysis error",
     status,
   );
 }
@@ -87,11 +87,11 @@ export async function requestAnalysis(
     signal?: AbortSignal;
     timeoutMs?: number;
     endpoint?: string;
-    /** The Laboratorio case context, sent along for the server to use. */
+    /** The Lab case context, sent along for the server to use. */
     context?: string;
     /** Whether the case judges condition; false reports everything as ok. */
     judgesCondition?: boolean;
-    /** The user's own model API key (Ajustes); sent in a header, not the body. */
+    /** The user's own model API key (Settings); sent in a header, not the body. */
     apiKey?: string;
     /** The parts planned for this scene: the server then skips Spark. */
     plan?: PlannedPart[];
@@ -118,10 +118,10 @@ export async function requestAnalysis(
 
   const interrupted = () => {
     if (timedOut) {
-      return new AnalyzeClientError("timeout", "El análisis tardó demasiado");
+      return new AnalyzeClientError("timeout", "The analysis took too long");
     }
     if (signal?.aborted) {
-      return new AnalyzeClientError("aborted", "Análisis cancelado");
+      return new AnalyzeClientError("aborted", "Analysis cancelled");
     }
     return null;
   };
@@ -151,7 +151,7 @@ export async function requestAnalysis(
     if (!isAnalyzeResponse(body)) {
       throw new AnalyzeClientError(
         "invalid_response",
-        "La respuesta del análisis no es válida",
+        "The analysis response is not valid",
       );
     }
     return body;
@@ -159,7 +159,7 @@ export async function requestAnalysis(
     if (error instanceof AnalyzeClientError) throw error;
     throw (
       interrupted() ??
-      new AnalyzeClientError("network", "Sin conexión con la IA")
+      new AnalyzeClientError("network", "No connection to the AI")
     );
   } finally {
     clearTimeout(timer);

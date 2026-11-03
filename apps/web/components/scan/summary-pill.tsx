@@ -11,7 +11,7 @@ import { useSession } from "@/lib/session/session-provider";
 
 const MAX_DOTS = 4;
 
-/** "8 componentes · 2 anomalías · 1 por revisar" with a dot per status found. */
+/** "8 components · 2 anomalies · 1 to check" with a dot per status found. */
 export function SummaryPill() {
   const detections = useSession(useShallow((s) => s.detections));
 

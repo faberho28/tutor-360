@@ -9,10 +9,10 @@ import { cn } from "cn";
 import type { LabCase, LabCaseId } from "@/lib/lab/cases";
 
 const ICONS: Record<LabCaseId, LucideIcon> = {
-  computador: Laptop,
-  celular: Smartphone,
-  teclado: Keyboard,
-  personalizado: PencilLine,
+  computer: Laptop,
+  phone: Smartphone,
+  keyboard: Keyboard,
+  custom: PencilLine,
 };
 
 export const CARD_CLASS = cn(

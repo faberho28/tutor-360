@@ -6,12 +6,12 @@ import { coverTransform, toCanvasPoint } from "./geometry";
 const FAINT = 0.02;
 
 const STATUS_TEXT: Record<ChangeStatus, string> = {
-  calibrating: "calibrando",
-  moving: "en movimiento",
-  stable: "estable",
-  "camera-moved": "cámara movida",
-  "scene-lost": "escena perdida",
-  changed: "cambió",
+  calibrating: "calibrating",
+  moving: "moving",
+  stable: "stable",
+  "camera-moved": "camera moved",
+  "scene-lost": "scene lost",
+  changed: "changed",
 };
 
 /**
@@ -63,8 +63,8 @@ export function drawChangeGrid(
 
   const text =
     heat.length === 0
-      ? `Grilla de cambios · ${STATUS_TEXT[scene.status]} · sin referencia todavía`
-      : `Grilla de cambios · ${STATUS_TEXT[scene.status]} · rojo: cambio (> ${THRESHOLDS.cell}), ${over} celdas · ámbar: diferencia leve`;
+      ? `Change grid · ${STATUS_TEXT[scene.status]} · no reference yet`
+      : `Change grid · ${STATUS_TEXT[scene.status]} · red: change (> ${THRESHOLDS.cell}), ${over} cells · amber: slight difference`;
   ctx.font = "500 12px sans-serif";
   ctx.textBaseline = "middle";
   const textWidth = ctx.measureText(text).width;

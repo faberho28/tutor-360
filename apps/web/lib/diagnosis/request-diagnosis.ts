@@ -47,7 +47,7 @@ export function requestDiagnosis(store: SessionStore, detection: Detection) {
         store.getState().overrideStatus(detection.id, {
           status: "warning",
           reason:
-            "La IA no pudo confirmar la anomalía en el acercamiento: revísala a simple vista.",
+            "The AI could not confirm the anomaly in the close-up: check it by eye.",
         });
       }
     } catch {

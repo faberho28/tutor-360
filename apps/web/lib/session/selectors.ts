@@ -27,18 +27,18 @@ export function sortDetections(detections: readonly Detection[]): Detection[] {
   });
 }
 
-/** Text for the summary pill, e.g. "8 componentes · 2 anomalías · 1 por revisar". */
+/** Text for the summary pill, e.g. "8 components · 2 anomalies · 1 to check". */
 export function summarize(detections: readonly Detection[]): string {
   const total = detections.length;
-  if (total === 0) return "Sin componentes";
+  if (total === 0) return "No components";
 
   const anomalies = detections.filter((d) => d.status === "anomaly").length;
   const warnings = detections.filter((d) => d.status === "warning").length;
 
-  const parts = [`${total} ${total === 1 ? "componente" : "componentes"}`];
+  const parts = [`${total} ${total === 1 ? "component" : "components"}`];
   if (anomalies > 0) {
-    parts.push(`${anomalies} ${anomalies === 1 ? "anomalía" : "anomalías"}`);
+    parts.push(`${anomalies} ${anomalies === 1 ? "anomaly" : "anomalies"}`);
   }
-  if (warnings > 0) parts.push(`${warnings} por revisar`);
+  if (warnings > 0) parts.push(`${warnings} to check`);
   return parts.join(" · ");
 }

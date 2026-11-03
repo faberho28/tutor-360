@@ -27,9 +27,9 @@ export function EnvironmentPreparation() {
           className="size-4 shrink-0 motion-safe:animate-spin"
         />
         <div className="leading-tight">
-          <p className="text-sm font-medium">Preparando ambiente…</p>
+          <p className="text-sm font-medium">Preparing environment…</p>
           <p className="text-xs text-white/75">
-            La primera lectura tarda unos segundos.
+            The first reading takes a few seconds.
           </p>
         </div>
       </div>

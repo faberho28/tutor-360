@@ -14,7 +14,7 @@ import type {
   StageState,
 } from "../types";
 
-export const DEFAULT_SESSION_NAME = "Escaneo · Sesión nueva";
+export const DEFAULT_SESSION_NAME = "Scan · New session";
 
 import type { LabCaseSnapshot } from "../lab/cases";
 import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
@@ -25,7 +25,7 @@ export type StatusOverride = { status: ComponentStatus; reason: string };
 export type SessionState = {
   sessionId: string;
   name: string;
-  /** What the user chose to scan in the Laboratorio. */
+  /** What the user chose to scan in the Lab. */
   labCase: LabCaseSnapshot | null;
   /** How much the user already knows: the tutor is written for that reader. */
   level: TutorLevel;
@@ -297,7 +297,7 @@ export function createSessionStore(initial: Partial<SessionState> = {}) {
         const log = observation
           ? [
               ...guide.log,
-              `Lo que se veía en ese momento: ${observation}`,
+              `What was visible at that moment: ${observation}`,
             ].slice(-40)
           : guide.log;
         // No steps left and nothing to say is not an answer.

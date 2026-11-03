@@ -25,7 +25,7 @@ export function TopBar({
     <header className={cn("flex items-center gap-2 px-3", className)}>
       <Link
         href="/"
-        aria-label="Tutor AI 360, ir al inicio"
+        aria-label="Tutor AI 360, go to the home page"
         className="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 pl-1 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -42,12 +42,7 @@ export function TopBar({
       <div className="flex shrink-0 items-center gap-2">
         {trailing}
         <ApiKeyDialog>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Llave de la IA"
-          >
+          <Button type="button" variant="ghost" size="icon" aria-label="AI key">
             <KeyRound
               aria-hidden="true"
               className="size-4"
@@ -60,7 +55,7 @@ export function TopBar({
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Ajustes"
+            aria-label="Settings"
           >
             <Settings
               aria-hidden="true"

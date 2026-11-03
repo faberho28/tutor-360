@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session/session-provider";
 
 /**
  * What the top bar shows on the scanner: the session name, what is being
- * scanned (a link back to the Laboratorio) and its description.
+ * scanned (a link back to the Lab) and its description.
  */
 export function ScanHeader() {
   const labCase = useSession((s) => s.labCase);

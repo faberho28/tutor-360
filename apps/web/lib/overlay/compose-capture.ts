@@ -13,7 +13,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+    image.onerror = () => reject(new Error(`Could not load ${src}`));
     image.src = src;
   });
 }
@@ -23,7 +23,7 @@ function createCanvas(width: number, height: number) {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D no disponible");
+  if (!ctx) throw new Error("Canvas 2D is not available");
   return { canvas, ctx };
 }
 

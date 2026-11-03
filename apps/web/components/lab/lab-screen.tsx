@@ -10,12 +10,12 @@ export function LabScreen() {
         <div className="my-auto flex w-full max-w-4xl flex-col gap-8 py-8">
           <div className="flex flex-col gap-2">
             <h2 className="text-balance text-3xl font-semibold tracking-tight">
-              Laboratorio
+              Lab
             </h2>
             <p className="max-w-xl text-pretty text-sm text-muted-foreground">
-              Elige tu nivel y qué vas a revisar. La IA usa este contexto para
-              saber qué buscar, cómo interpretar lo que ve la cámara y cuánto
-              explicarte.
+              Choose your level and what you are going to inspect. The AI uses
+              this context to know what to look for, how to interpret what the
+              camera sees and how much to explain.
             </p>
           </div>
           <LabCases />

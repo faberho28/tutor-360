@@ -19,8 +19,8 @@ Tutor AI 360 looks at the board with them: it names and judges each part, writes
 ## Try it
 
 1. Open <https://tutor-ia.hypot.app/> in a browser with a camera (Chrome recommended).
-2. **Use your own Meta Model API key** (recommended for testing): click the **key icon** in the top bar ("Llave de la IA"), paste your key and save. The key lives only in the current tab (`sessionStorage`), is sent to the server in the `x-model-api-key` header for each request and is never logged or stored; closing the tab erases it. Without a key of your own the app uses the server's, if one is configured.
-3. In the **Laboratorio** choose what to scan (Computador, Celular, Teclado or a custom case) and the reader's level.
+2. **Use your own Meta Model API key** (recommended for testing): click the **key icon** in the top bar ("AI key"), paste your key and save. The key lives only in the current tab (`sessionStorage`), is sent to the server in the `x-model-api-key` header for each request and is never logged or stored; closing the tab erases it. Without a key of your own the app uses the server's, if one is configured.
+3. In the **Lab** choose what to scan (Computer, Phone, Keyboard or a custom case) and the reader's level.
 4. In **Scan** allow the camera and press the automatic analysis button. Select a part to see its diagnosis and follow the guide that appears on the image.
 
 ## Quick start (run it yourself)
@@ -30,7 +30,7 @@ Tutor AI 360 looks at the board with them: it names and judges each part, writes
    - With Docker: `docker compose up --build`.
    - Without Docker (Node 24 and pnpm 12): `pnpm install` and `pnpm dev`.
 3. **Open** `http://localhost:3000` (the camera only works on `localhost` or over HTTPS).
-4. **Use it:** in the Laboratorio choose what to scan and your level, allow the camera in Scan and press the automatic analysis button; select a part to see its diagnosis and follow the guide on the image.
+4. **Use it:** in the Lab choose what to scan and your level, allow the camera in Scan and press the automatic analysis button; select a part to see its diagnosis and follow the guide on the image.
 
 If port 3000 is taken, use `WEB_PORT=3210 docker compose up --build` or `pnpm --filter web exec next dev -p 3210`.
 
@@ -38,7 +38,7 @@ If port 3000 is taken, use `WEB_PORT=3210 docker compose up --build` or `pnpm --
 
 - **Open component detection.** There is no fixed list of parts: the AI plans what to look for from the chosen case and marks each part on the video with its mask, name and status (`ok`, `warning` or `anomaly`).
 - **Per-part diagnosis.** When you select a part, the app explains what it is, what it sees and what to do, with the reason for each step. The diagnosis is requested when the part is selected.
-- **Step-by-step guide.** A test-and-repair procedure written for the reader's level (junior, middle or senior apprentice, or technician), chosen in the Laboratorio. Each step is shown on the image, next to the blinking part, and is answered with what actually happened; the guide is rewritten from those answers and from what is new in the scene. It can also be followed by voice.
+- **Step-by-step guide.** A test-and-repair procedure written for the reader's level (junior, middle or senior apprentice, or technician), chosen in the Lab. Each step is shown on the image, next to the blinking part, and is answered with what actually happened; the guide is rewritten from those answers and from what is new in the scene. It can also be followed by voice.
 - **Automatic mode.** Detects changes in the scene (camera moved, part added or removed) and analyzes again only when needed. In between, a tracking engine keeps the masks on the objects on screen.
 - **Captures.** Saves up to 20 captures with the visible masks and the reviewed statuses.
 - **PDF report.** Builds an A4 report in the browser with the captures and the diagnoses.
@@ -48,7 +48,7 @@ If port 3000 is taken, use `WEB_PORT=3210 docker compose up --build` or `pnpm --
 
 1. **Planning.** Muse Spark looks at the image and, together with the case context, proposes which kinds of parts to look for, with three phrasings of each (SAM is very sensitive to how an object is named).
 2. **Segmentation.** SAM 3.1 segments each phrasing separately, one per call and in parallel, and the best phrasing of each part is kept. Before they compete, specks, giant masks, masks that contain others and duplicates are discarded.
-3. **Review.** Muse Spark looks at each kind of part, gives it its final name in Spanish and rates it (`ok`, `warning`, `anomaly`) with the reason.
+3. **Review.** Muse Spark looks at each kind of part, gives it its final name and rates it (`ok`, `warning`, `anomaly`) with the reason.
 4. **Diagnosis.** For a specific part a crop with context is sent; if the crop does not support the reported fault, the part drops from `anomaly` to `warning`.
 5. **Tracking.** Between analyses, a tracking engine marks points on each object from the masks SAM calculated and follows them with the scene, so the masks stay in place; when an object cannot be followed, SAM and Muse Spark are asked again.
 
@@ -103,7 +103,7 @@ The key the user pastes with the key icon travels in the `x-model-api-key` heade
 
 ## Usage
 
-1. On the home screen go to the **Laboratorio** and choose what to scan: Computador, Celular, Teclado or a custom case (with your own context), and the reader's level.
+1. On the home screen go to the **Lab** and choose what to scan: Computer, Phone, Keyboard or a custom case (with your own context), and the reader's level.
 2. In **Scan** allow the camera. The capture button (or the space bar) analyzes the current frame; in automatic mode the app analyzes by itself when it detects changes.
 3. Hover a mask to see its name and status. Selecting a part (on the image or in the list) opens the side panel with its diagnosis, and it closes when the part is deselected.
 4. Build the PDF report from the control bar.
@@ -126,20 +126,20 @@ The key the user pastes with the key icon travels in the `x-model-api-key` heade
 
 ## Routes
 
-| Route                  | Description                                                  |
-| ---------------------- | ------------------------------------------------------------ |
-| `/`                    | Welcome screen                                               |
-| `/laboratorio`         | Choose the case to scan                                      |
-| `/scan?caso=<id>`      | Scan screen (without `caso` it redirects to the Laboratorio) |
-| `/design`              | Style guide; development only (404 in production)            |
-| `GET /api/health`      | Service status                                               |
-| `POST /api/analyze`    | Plans the parts and segments them per phrasing               |
-| `POST /api/review`     | Names and rates a kind of part                               |
-| `POST /api/diagnose`   | Diagnosis of a part from a crop                              |
-| `POST /api/guide`      | Step-by-step procedure and its revision                      |
-| `POST /api/verify`     | Compares the final scene with its initial description        |
-| `POST /api/voice`      | Interprets what the person following the guide says          |
-| `POST /api/transcribe` | Turns a voice fragment into text                             |
+| Route                  | Description                                           |
+| ---------------------- | ----------------------------------------------------- |
+| `/`                    | Welcome screen                                        |
+| `/lab`                 | Choose the case to scan                               |
+| `/scan?case=<id>`      | Scan screen (without `case` it redirects to the Lab)  |
+| `/design`              | Style guide; development only (404 in production)     |
+| `GET /api/health`      | Service status                                        |
+| `POST /api/analyze`    | Plans the parts and segments them per phrasing        |
+| `POST /api/review`     | Names and rates a kind of part                        |
+| `POST /api/diagnose`   | Diagnosis of a part from a crop                       |
+| `POST /api/guide`      | Step-by-step procedure and its revision               |
+| `POST /api/verify`     | Compares the final scene with its initial description |
+| `POST /api/voice`      | Interprets what the person following the guide says   |
+| `POST /api/transcribe` | Turns a voice fragment into text                      |
 
 ## Scripts
 
@@ -160,7 +160,7 @@ Run `pnpm check` before every commit.
 apps/web/
   app/               Routes, layout, global styles and API routes
   components/scan/   Scan screen: stage, overlay, control bar, panel, list and detail
-  components/lab/    Laboratorio: case cards and the custom case dialog
+  components/lab/    Lab: case cards and the custom case dialog
   components/ui/     shadcn/ui components
   hooks/             Media queries, fullscreen, shortcuts and timers
   lib/session/       Session state (Zustand) and its provider
@@ -172,7 +172,7 @@ apps/web/
   lib/analysis/      Planning, segmentation, mask cleaning and analysis scheduling
   lib/diagnosis/     Crops and the diagnosis client
   lib/report/        PDF report (jspdf, loaded on demand)
-  lib/lab/           Laboratorio cases
+  lib/lab/           Lab cases
   lib/services/      Services the UI uses (diagnosis, report, analysis)
 samples/             Sample photos
 ```
@@ -196,5 +196,5 @@ samples/             Sample photos
 ## Conventions
 
 - Commits follow Conventional Commits.
-- Code, identifiers and comments in English; interface text in Spanish (es-CO).
+- Code, identifiers and comments in English; interface text in English.
 - Only `README.md` is versioned among the Markdown files; the rest of the documentation is local.

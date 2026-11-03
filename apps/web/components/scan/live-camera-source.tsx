@@ -25,7 +25,7 @@ export function LiveCameraSource({
         autoPlay
         muted
         playsInline
-        aria-label="Video de la cámara"
+        aria-label="Camera video"
         onLoadedMetadata={(event) =>
           onDimensions({
             width: event.currentTarget.videoWidth,
@@ -41,7 +41,7 @@ export function LiveCameraSource({
             className="size-6 motion-safe:animate-spin"
           />
           <p role="status" className="text-xs font-medium">
-            Conectando con la cámara…
+            Connecting to the camera…
           </p>
         </div>
       )}

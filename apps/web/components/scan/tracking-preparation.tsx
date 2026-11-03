@@ -29,24 +29,22 @@ export function TrackingPreparation() {
     >
       <div className="w-full max-w-xs space-y-3 text-center">
         <p className="text-sm font-medium">
-          {failed
-            ? "Seguimos sin seguimiento local"
-            : "Preparando el seguimiento"}
+          {failed ? "Continuing without local tracking" : "Preparing tracking"}
         </p>
         {failed ? (
           <p className="text-xs text-white/80">
-            No se pudo preparar. El análisis seguirá, pero volverá a consultar a
-            la IA cada vez que muevas la cámara.
+            It could not be prepared. The analysis will go on, but it will ask
+            the AI again every time you move the camera.
           </p>
         ) : (
           <>
             <Progress
               value={percent}
-              aria-label="Progreso de la descarga"
+              aria-label="Download progress"
               className="bg-white/25"
             />
             <p className="text-xs text-white/80">
-              Se descarga una sola vez (unos 13 MB). {percent} %
+              It downloads only once (about 13 MB). {percent} %
             </p>
           </>
         )}

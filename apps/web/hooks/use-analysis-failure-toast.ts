@@ -35,7 +35,7 @@ export function useAnalysisFailureToast(analysis: ScanAnalysis) {
       action:
         phase === "quota"
           ? undefined
-          : { label: "Reintentar", onClick: () => analysis.retry() },
+          : { label: "Try again", onClick: () => analysis.retry() },
     });
   }, [phase, reason, analysis]);
 

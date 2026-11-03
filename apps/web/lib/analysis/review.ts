@@ -21,7 +21,7 @@ export type ReviewRequest = z.infer<typeof reviewRequestSchema>;
 
 /** Body of a 200 response from `POST /api/review`. */
 export type ReviewResponse = {
-  /** Final name in Spanish, singular. */
+  /** Final name singular. */
   name: string;
   status: ComponentStatus;
   /** Why, in one sentence; null when the status is ok. */

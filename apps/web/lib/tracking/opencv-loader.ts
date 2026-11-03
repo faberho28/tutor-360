@@ -55,7 +55,7 @@ async function expectedBytes(): Promise<number> {
 async function download(total: number): Promise<Blob> {
   const response = await fetch(SCRIPT_URL);
   if (!response.ok || !response.body) {
-    throw new Error(`OpenCV no está disponible (${response.status})`);
+    throw new Error(`OpenCV is not available (${response.status})`);
   }
   const reader = response.body.getReader();
   const chunks: Uint8Array<ArrayBuffer>[] = [];
@@ -85,7 +85,7 @@ async function start(source: Blob): Promise<OpenCv> {
       const script = document.createElement("script");
       script.src = url;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("No se pudo iniciar OpenCV"));
+      script.onerror = () => reject(new Error("Could not start OpenCV"));
       document.head.appendChild(script);
     });
   } finally {
@@ -95,12 +95,9 @@ async function start(source: Blob): Promise<OpenCv> {
   // Depending on the build, `cv` is a promise, a ready module or a module that
   // announces its runtime with a callback.
   const loaded = (window as unknown as { cv?: unknown }).cv;
-  if (!loaded) throw new Error("OpenCV no quedó disponible");
+  if (!loaded) throw new Error("OpenCV did not become available");
   if (loaded instanceof Promise) {
-    return within(
-      loaded as Promise<OpenCv>,
-      "OpenCV tardó demasiado en iniciar",
-    );
+    return within(loaded as Promise<OpenCv>, "OpenCV took too long to start");
   }
   const runtime = loaded as OpenCv & { onRuntimeInitialized?: () => void };
   if (runtime.Mat) return runtime;
@@ -108,7 +105,7 @@ async function start(source: Blob): Promise<OpenCv> {
     new Promise<void>((resolve) => {
       runtime.onRuntimeInitialized = () => resolve();
     }),
-    "OpenCV tardó demasiado en iniciar",
+    "OpenCV took too long to start",
   );
   return runtime;
 }
@@ -152,8 +149,7 @@ export function loadOpenCv(): Promise<OpenCv> {
     loading = null;
     publish({
       status: "error",
-      message:
-        error instanceof Error ? error.message : "No se pudo cargar OpenCV",
+      message: error instanceof Error ? error.message : "Could not load OpenCV",
     });
     throw error;
   });

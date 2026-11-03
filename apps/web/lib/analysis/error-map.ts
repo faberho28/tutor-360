@@ -14,9 +14,9 @@ export function phaseFor(error: unknown): FailedPhase {
   return "error";
 }
 
-/** Text for the user: client and server messages are already in Spanish. */
+/** Text for the user: client and server messages are already in English. */
 export function messageFor(error: unknown): string {
   return error instanceof AnalyzeClientError
     ? error.message
-    : "Algo salió mal al analizar";
+    : "Something went wrong while analyzing";
 }

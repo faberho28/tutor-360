@@ -11,7 +11,7 @@ export type PhraseCandidate = Detection & {
   phraseCount: number;
   /** Position inside its phrase (reading order), from 0. */
   ordinal: number;
-  /** The Spanish name of the phrase (or the phrase itself). */
+  /** The English name of the phrase (or the phrase itself). */
   baseLabel: string;
 };
 
@@ -32,7 +32,7 @@ export type Merge = {
   renamed: boolean;
 };
 
-/** "tecla shift 2" when its phrase found several, plain "barra espaciadora" when one. */
+/** "shift key 2" when its phrase found several, plain "space bar" when one. */
 export function nameOf(
   c: Pick<PhraseCandidate, "baseLabel" | "phraseCount" | "ordinal">,
 ): string {

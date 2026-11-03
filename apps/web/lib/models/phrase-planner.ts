@@ -12,7 +12,7 @@ import { callSpark } from "./spark-call";
 export type PlanPartsInput = {
   /** `data:image/jpeg;base64,...` of the frame. */
   imageDataUrl: string;
-  /** The Laboratorio case context (English prompt text). */
+  /** The Lab case context (English prompt text). */
   context?: string;
   /** Reasoning effort to ask for; absent means Meta's default (high, slow). */
   reasoningEffort?: "minimal" | "low" | "medium" | "high";
@@ -83,7 +83,7 @@ export function buildPartsPrompt(input: {
     "- Never ask for holes (screw holes, mounting holes, vias, ring holes), solder pads, traces, printed markings, the empty background, or the surface or board that the other parts sit on: only separate parts that someone could inspect, replace or take out.",
     "- Only things you can actually see. Never invent.",
     `- At most ${MAX_SAM_PHRASES} parts, the most useful first.`,
-    '- "label": a short name for the user in Spanish (Colombia). "phrases": the English wordings for the segmentation model.',
+    '- "label": a short name for the user in English. "phrases": the English wordings for the segmentation model.',
   ]
     .filter((line) => line !== null)
     .join("\n");

@@ -9,13 +9,13 @@ import { ModelError, toModelError } from "./errors";
 import { callSpark } from "./spark-call";
 
 export type DiagnoseInput = {
-  /** Name of the object (Spanish) and what the scene reading said about it. */
+  /** Name of the object and what the scene reading said about it. */
   label: string;
   status: ComponentStatus;
   reason: string | null;
   /** `data:image/jpeg;base64,...` of the component crop. */
   cropDataUrl: string;
-  /** What the student says they are working on: the Laboratorio case description or what they wrote (Spanish). */
+  /** What the student says they are working on: the Lab case description or what they wrote. */
   context?: string;
   /** How much the student already knows; the default is the technician the tutor was first written for. */
   level?: TutorLevel;
@@ -68,10 +68,10 @@ export function buildDiagnosisPrompt(
       ? `What the student says they are working on: ${input.context}`
       : null,
     `The image shows one part with its surroundings. The part is outlined in magenta: diagnose only that part, and use the rest as context. An earlier look named it "${input.label}" and rated it "${input.status}"${input.reason ? `, saying: "${input.reason}"` : ""}. Use that only as a hint: look at the image and say what you really see. The magenta line is a drawing added for you, never a fault of the part.`,
-    "Write the diagnosis in Spanish (Colombia) with correct spelling, accents included, at the level of the reader described above. Rules:",
+    "Write the diagnosis in English at the level of the reader described above. Rules:",
     '- "summary": three or four sentences. Say what the part is and what it does only as far as the reader\'s level needs it, then what looks normal or wrong in this image and why it matters. If you cannot tell from the image, say what you can see and what would settle it.',
     '- "severity": "low" when it can wait, "medium" when it should be fixed soon, "high" when it should be handled before using the equipment. Never exaggerate.',
-    `- "steps": a guide for the student, between 3 and ${MAX_STEPS} steps in the order to do them. Each step is ONE action starting with a verb, followed by a colon and a short reason why (for example "Desconecta el cargador de la corriente: así evitas una descarga mientras lo revisas"). Say what to look for ("busca un abultamiento en la parte de arriba") and explain a technical term only as far as the reader's level needs it. Begin with safety when it applies (power off, unplug, discharge). Do not recommend replacing a part before the cheaper checks.`,
+    `- "steps": a guide for the student, between 3 and ${MAX_STEPS} steps in the order to do them. Each step is ONE action starting with a verb, followed by a colon and a short reason why (for example "Unplug the charger from the mains: this way you avoid a shock while you check it"). Say what to look for ("look for a bulge on the top") and explain a technical term only as far as the reader's level needs it. Begin with safety when it applies (power off, unplug, discharge). Do not recommend replacing a part before the cheaper checks.`,
     '- "confirmed": true only when the close-up really supports the reported condition. False when it looks like dust, a shadow, a reflection, or the image is too small or blurry to tell.',
     "- Judge only what you can see. Never invent a part number, a measurement or a fault that is not visible.",
   ]

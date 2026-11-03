@@ -8,7 +8,7 @@ export async function listVideoDevices(): Promise<CameraDevice[]> {
     .filter((d) => d.kind === "videoinput" && d.deviceId !== "")
     .map((d, i) => ({
       id: d.deviceId,
-      label: d.label || `Cámara ${i + 1}`,
+      label: d.label || `Camera ${i + 1}`,
     }));
 }
 

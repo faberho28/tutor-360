@@ -7,7 +7,7 @@ import { callSpark } from "./spark-call";
 export type ReviewPartInput = {
   /** `data:image/jpeg;base64,...` of the frame with the part outlined. */
   imageDataUrl: string;
-  /** The Laboratorio case context (English prompt text). */
+  /** The Lab case context (English prompt text). */
   context?: string;
   /** What the segmentation provisionally called the part. */
   label: string;
@@ -20,10 +20,10 @@ export type ReviewPartInput = {
 };
 
 export type PartReview = {
-  /** Final name in Spanish, singular. */
+  /** Final name singular. */
   name: string;
   status: (typeof COMPONENT_STATUSES)[number];
-  /** One sentence in Spanish; empty when the status is ok. */
+  /** One sentence; empty when the status is ok. */
   reason: string;
 };
 
@@ -69,10 +69,10 @@ export function buildReviewPrompt(
     input.context ? `Task context: ${input.context}` : null,
     `An image segmentation model outlined ${count === 1 ? "one instance" : `${count} instances`} of one kind of part in the image, in magenta. It provisionally called ${count === 1 ? "it" : "them"} "${input.label}". Only what is outlined is under review; ignore everything else in the image.`,
     "Rules:",
-    '- "name": what the outlined part is, a short singular noun in Spanish (Colombia), generic enough to fit every outlined instance. If they are different things, name the most common one. Use the name a technician would use.',
+    '- "name": what the outlined part is, a short singular noun in English, generic enough to fit every outlined instance. If they are different things, name the most common one. Use the name a technician would use.',
     "- Look at what is really outlined. The provisional name is only a hint and may be wrong.",
     input.judgesCondition
-      ? '- "status": "ok" when it looks fine, "warning" when it needs a closer look, "anomaly" when it shows a clear fault. Judge only what you can see (dirt, residue, corrosion, burns, swelling, cracks, bent or missing pieces). Something clean and normal-looking is "ok". Never invent a problem. "reason": one sentence in Spanish saying what you see when the status is not "ok", otherwise an empty string.'
+      ? '- "status": "ok" when it looks fine, "warning" when it needs a closer look, "anomaly" when it shows a clear fault. Judge only what you can see (dirt, residue, corrosion, burns, swelling, cracks, bent or missing pieces). Something clean and normal-looking is "ok". Never invent a problem. "reason": one sentence saying what you see when the status is not "ok", otherwise an empty string.'
       : '- Do not judge condition: "status" must be "ok" and "reason" an empty string.',
   ]
     .filter((line) => line !== null)

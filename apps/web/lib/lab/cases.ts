@@ -3,17 +3,17 @@
  * context (HU-35 uses it to decide what to look for); this module only holds
  * the data and resolves a case from the address.
  *
- * Titles and examples are UI text (es-CO). `context` is a prompt for the model,
+ * Titles and examples are UI text (en). `context` is a prompt for the model,
  * so it is written in English.
  */
 
 import type { TutorLevel } from "../tutor/levels";
 
 export const LAB_CASE_IDS = [
-  "computador",
-  "celular",
-  "teclado",
-  "personalizado",
+  "computer",
+  "phone",
+  "keyboard",
+  "custom",
 ] as const;
 
 export type LabCaseId = (typeof LAB_CASE_IDS)[number];
@@ -24,44 +24,46 @@ export type LabCase = {
   description: string;
   /** Short chips on the card. */
   examples: readonly string[];
-  /** Prompt context for the model. `personalizado` builds it from the user's text. */
+  /** Prompt context for the model. `custom` builds it from the user's text. */
   context: string;
 };
 
 export const LAB_CASES: readonly LabCase[] = [
   {
-    id: "computador",
-    title: "Computador",
+    id: "computer",
+    title: "Computer",
     description:
-      "Placa, memoria, discos, ventiladores y cables de un PC o un portátil abierto.",
-    examples: ["Capacitores", "RAM y SSD", "Polvo y cables"],
+      "Motherboard, memory, drives, fans and cables of an open PC or laptop.",
+    examples: ["Capacitors", "RAM and SSD", "Dust and cables"],
     context:
       "The user will show the inside of a desktop or laptop computer: motherboard, RAM, storage drives, fans, power supply and cables. " +
       "Identify the components and look for signs of failure: swollen or leaking capacitors, dust build-up, loose or damaged cables, burn marks, corrosion.",
   },
   {
-    id: "celular",
-    title: "Celular",
-    description: "Teléfono o tableta desmontados: batería, placa y conectores.",
-    examples: ["Batería", "Placa", "Conectores flex"],
+    id: "phone",
+    title: "Phone",
+    description:
+      "A disassembled phone or tablet: battery, board and connectors.",
+    examples: ["Battery", "Board", "Flex connectors"],
     context:
       "The user will show a disassembled smartphone or tablet: battery, logic board, cameras, flex cables and connectors, screws and shields. " +
       "Identify the parts and look for signs of failure: a swollen battery, liquid damage or corrosion, burnt components, torn or loose flex cables.",
   },
   {
-    id: "teclado",
-    title: "Teclado",
-    description: "Teclas, switches, placa y cable de un teclado.",
-    examples: ["Teclas", "Switches", "Líquido derramado"],
+    id: "keyboard",
+    title: "Keyboard",
+    description: "Keys, switches, board and cable of a keyboard.",
+    examples: ["Keys", "Switches", "Spilled liquid"],
     context:
       "The user will show a keyboard, whole or opened: keycaps, switches, stabilizers, circuit board, cable and connector. " +
       "Identify the parts and look for signs of failure: liquid residue or corrosion, missing or stuck keys, damaged switches, a frayed cable or bent connector pins.",
   },
   {
-    id: "personalizado",
-    title: "Personalizado",
-    description: "Describe qué vas a mostrar y qué quieres buscar.",
-    examples: ["Cualquier equipo electrónico"],
+    id: "custom",
+    title: "Custom",
+    description:
+      "Describe what you are going to show and what you want to look for.",
+    examples: ["Any electronic device"],
     context: "",
   },
 ];
@@ -86,7 +88,7 @@ export function cleanCustomText(text: string | undefined): string | null {
 }
 
 /**
- * The case named by the address (`?caso=` and, for the custom one, `?contexto=`),
+ * The case named by the address (`?case=` and, for the custom one, `?context=`),
  * or null when it is missing or invalid.
  */
 export function resolveLabCase(
@@ -96,7 +98,7 @@ export function resolveLabCase(
   const found = LAB_CASES.find((labCase) => labCase.id === id);
   if (!found) return null;
 
-  if (found.id === "personalizado") {
+  if (found.id === "custom") {
     const text = cleanCustomText(customText);
     if (!text) return null;
     return {
@@ -121,8 +123,8 @@ export function scanHref(
   level: TutorLevel,
   customText?: string,
 ): string {
-  const params = new URLSearchParams({ caso: id, nivel: level });
+  const params = new URLSearchParams({ case: id, level });
   const text = cleanCustomText(customText);
-  if (id === "personalizado" && text) params.set("contexto", text);
+  if (id === "custom" && text) params.set("context", text);
   return `/scan?${params.toString()}`;
 }

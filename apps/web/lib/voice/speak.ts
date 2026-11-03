@@ -1,4 +1,4 @@
-const PREFERRED = ["es-CO", "es-MX", "es-US", "es-419", "es-ES"];
+const PREFERRED = ["en-US", "en-GB", "en-CA", "en-AU"];
 
 function pickVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
@@ -7,7 +7,7 @@ function pickVoice(): SpeechSynthesisVoice | null {
     if (found) return found;
   }
   return (
-    voices.find((voice) => voice.lang.toLowerCase().startsWith("es")) ?? null
+    voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ?? null
   );
 }
 
@@ -15,7 +15,7 @@ export function canSpeak(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
-/** Says `text` out loud in Spanish and resolves when it ends (or is cancelled). */
+/** Says `text` out loud in English and resolves when it ends (or is cancelled). */
 export function speak(text: string): Promise<void> {
   return new Promise((resolve) => {
     if (!canSpeak() || !text.trim()) {
@@ -28,7 +28,7 @@ export function speak(text: string): Promise<void> {
       utterance.voice = voice;
       utterance.lang = voice.lang;
     } else {
-      utterance.lang = "es-CO";
+      utterance.lang = "en-US";
     }
     utterance.rate = 1.02;
     // Some browsers and voices never fire the end event: without a way out the

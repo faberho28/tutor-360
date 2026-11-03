@@ -86,7 +86,7 @@ export function ComponentsCard() {
           size="icon-sm"
           aria-expanded={!collapsed}
           aria-controls="components-list"
-          aria-label={collapsed ? "Mostrar la lista" : "Ocultar la lista"}
+          aria-label={collapsed ? "Show the list" : "Hide the list"}
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? (

@@ -23,7 +23,7 @@ export type AnalyzeByPhrasesOptions = {
   segmenter: Segmenter;
   /** Each one names ONE kind of object (SAM takes one per request), e.g. "keyboard key". */
   phrases: readonly string[];
-  /** Spanish name per phrase for the labels; a phrase without one is its own label. */
+  /** English name per phrase for the labels; a phrase without one is its own label. */
   labels?: Readonly<Record<string, string>>;
   /**
    * Wordings of the same part: only the one SAM understood best keeps its
@@ -189,7 +189,7 @@ async function segmentPhrases(
 export type AnalyzeSceneOptions = {
   planner: PhrasePlanner;
   segmenter: Segmenter;
-  /** The Laboratorio case context for the planner. */
+  /** The Lab case context for the planner. */
   context?: string;
   /**
    * The parts a previous analysis of this same scene already planned. When

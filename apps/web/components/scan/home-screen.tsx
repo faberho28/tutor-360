@@ -6,18 +6,18 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   {
     Icon: Camera,
-    title: "Apunta la cámara",
-    text: "Muestra el interior del equipo con buena luz.",
+    title: "Point the camera",
+    text: "Show the inside of the device in good light.",
   },
   {
     Icon: ScanSearch,
-    title: "Identifica los componentes",
-    text: "La IA reconoce y marca cada pieza y señala anomalías.",
+    title: "Identify the components",
+    text: "The AI recognizes and marks each part and flags anomalies.",
   },
   {
     Icon: Stethoscope,
-    title: "Recibe el diagnóstico",
-    text: "Revisa qué falla y sigue los pasos para resolverlo.",
+    title: "Get the diagnosis",
+    text: "See what is failing and follow the steps to fix it.",
   },
 ] as const;
 
@@ -30,15 +30,15 @@ export function HomeScreen() {
         <div className="my-auto flex w-full max-w-3xl flex-col items-center gap-10 py-8 text-center">
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-              Diagnostica el interior de un PC con la cámara
+              Diagnose the inside of a PC with the camera
             </h2>
             <p className="max-w-xl text-pretty text-sm text-muted-foreground">
-              Tutor AI 360 identifica cada componente en vivo, marca lo que está
-              mal y te guía paso a paso para repararlo.
+              Tutor AI 360 identifies every component live, marks what is wrong
+              and guides you step by step to repair it.
             </p>
             <Button asChild size="lg" className="mt-2 rounded-full px-6">
-              <Link href="/laboratorio">
-                Escanear un equipo
+              <Link href="/lab">
+                Scan a device
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
             </Button>

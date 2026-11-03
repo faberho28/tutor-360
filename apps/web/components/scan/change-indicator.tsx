@@ -25,14 +25,14 @@ export function ChangeIndicator({
         className={cn("size-2 rounded-full", stable ? "bg-ok" : "bg-warning")}
       />
       <span role="status" aria-live="polite" className="px-1">
-        {stable ? "Imagen estable" : "Recalibrando imagen"}
+        {stable ? "Steady image" : "Recalibrating image"}
       </span>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        aria-label="Fijar nueva referencia"
-        title="Fijar nueva referencia"
+        aria-label="Set a new reference"
+        title="Set a new reference"
         onClick={onReset}
         className="size-6 rounded-full text-white hover:bg-black/60 hover:text-white"
       >

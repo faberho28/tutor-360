@@ -6,9 +6,9 @@ import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 
 const OPTIONS = [
-  { value: "system", label: "Sistema", Icon: Monitor },
-  { value: "light", label: "Claro", Icon: Sun },
-  { value: "dark", label: "Oscuro", Icon: Moon },
+  { value: "system", label: "System", Icon: Monitor },
+  { value: "light", label: "Light", Icon: Sun },
+  { value: "dark", label: "Dark", Icon: Moon },
 ] as const;
 
 const subscribe = () => () => {};
@@ -23,7 +23,7 @@ export function ThemeToggle() {
   );
 
   return (
-    <div role="group" aria-label="Tema" className="inline-flex gap-1">
+    <div role="group" aria-label="Theme" className="inline-flex gap-1">
       {OPTIONS.map(({ value, label, Icon }) => (
         <Button
           key={value}

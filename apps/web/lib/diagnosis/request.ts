@@ -10,7 +10,7 @@ export const diagnoseRequestSchema = z.object({
   context: analyzeRequestSchema.shape.context,
   /** How much the student already knows. */
   level: z.enum(TUTOR_LEVELS).optional(),
-  /** What the review called it (Spanish). */
+  /** What the review called it. */
   label: z.string().trim().min(1).max(80),
   status: z.enum(COMPONENT_STATUSES),
   /** Why the review gave that status; absent when it gave none. */

@@ -88,14 +88,14 @@ export function ControlBar() {
   async function capture() {
     if (store.getState().captures.length >= MAX_CAPTURES) {
       toast.error(
-        `Llegaste al máximo de ${MAX_CAPTURES} capturas. Genera el reporte o elimina alguna.`,
+        `You reached the maximum of ${MAX_CAPTURES} captures. Generate the report or delete one.`,
       );
       return;
     }
     try {
       const image = await analysis.snapshot();
       if (!image) {
-        toast.error("La cámara aún no está lista");
+        toast.error("The camera is not ready yet");
         return;
       }
       // The names and statuses come from Spark's second look, a moment later.
@@ -112,7 +112,7 @@ export function ControlBar() {
         ),
       );
       // Read again: `state` is the snapshot from before the capture was added.
-      toast.success(`Captura ${store.getState().captures.length} guardada`, {
+      toast.success(`Capture ${store.getState().captures.length} saved`, {
         id: saved.id,
       });
     } catch (error) {
@@ -120,7 +120,7 @@ export function ControlBar() {
       toast.error(
         error instanceof AnalyzeClientError
           ? error.message
-          : "No pudimos guardar la captura",
+          : "We could not save the capture",
       );
     }
   }
@@ -144,7 +144,7 @@ export function ControlBar() {
 
   function resetContext() {
     analysis.reset();
-    toast.success("Contexto reiniciado");
+    toast.success("Context reset");
   }
 
   const showGrid = useSession((s) => s.showChangeGrid);
@@ -162,7 +162,7 @@ export function ControlBar() {
       />
       <div
         role="toolbar"
-        aria-label="Controles de captura"
+        aria-label="Capture controls"
         className={cn(
           "group pointer-events-auto grid w-fit grid-cols-[68px_40px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
           "[@media(hover:hover)]:grid-cols-[0px_40px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_40px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_40px_68px] [@media(hover:hover)]:focus-within:gap-1",
@@ -211,7 +211,7 @@ export function ControlBar() {
               ? auto
                 ? copy.controls.autoOff
                 : copy.controls.autoOn
-              : "Análisis automático (próximamente)"
+              : "Automatic analysis (coming soon)"
           }
           shortcut={autoAvailable ? "A" : undefined}
         >

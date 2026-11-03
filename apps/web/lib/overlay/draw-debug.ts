@@ -44,9 +44,9 @@ export function drawTrackingDebug(
   const lines = debug
     ? [
         `Seguimiento: ${debug.status}${debug.analyzing ? " · analizando" : ""}`,
-        `${debug.objects} movimientos · ${debug.points.length} puntos · cambio ${debug.changed ? "sí" : "no"} · ${debug.tickMs.toFixed(0)} ms`,
+        `${debug.objects} motions · ${debug.points.length} points · change ${debug.changed ? "yes" : "no"} · ${debug.tickMs.toFixed(0)} ms`,
       ]
-    : ["Seguimiento: sin datos todavía"];
+    : ["Tracking: no data yet"];
   ctx.font = "600 12px ui-monospace, monospace";
   ctx.textBaseline = "top";
   const boxWidth = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 16;

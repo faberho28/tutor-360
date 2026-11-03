@@ -11,7 +11,7 @@ export type Verdict = (typeof VERDICTS)[number];
 export type VerifyInput = {
   /** `data:image/jpeg;base64,...`: what the camera sees now. */
   imageDataUrl: string;
-  /** What the student wanted to achieve (Spanish), from the guide. */
+  /** What the student wanted to achieve, from the guide. */
   goal: string;
   /** The scene as it was described when the procedure began (the picture itself is gone). */
   scene?: string;
@@ -32,7 +32,7 @@ export type VerifyInput = {
 
 export type Verification = {
   verdict: Verdict;
-  /** What changed between the two pictures, for the student (Spanish). */
+  /** What changed between the two pictures, for the student. */
   comment: string;
 };
 
@@ -91,7 +91,7 @@ export function buildVerifyPrompt(
     '- "resolved": the problem described at the start is visibly gone or fixed in the image.',
     '- "unchanged": the problem is still there, or nothing relevant changed.',
     '- "cannot_tell": what the procedure checks cannot be seen by a camera (it was a functional test, nothing was visibly wrong at the start, the image does not show the part, or the scene is different). Prefer this over guessing. Do not call it resolved while the student reported that something did not happen and nothing settled it.',
-    '- "comment": ONE or TWO sentences in Spanish (Colombia), with correct spelling and accents, speaking directly to the student in the imperative or second person, without opening with "Tú": what you see that changed (or did not) and what it means for the goal. Say it by general kind, never by a specific part name. A hand, a shadow or a change of light is not a change.',
+    '- "comment": ONE or TWO sentences in English, speaking directly to the student in the imperative or second person, without opening with "You": what you see that changed (or did not) and what it means for the goal. Say it by general kind, never by a specific part name. A hand, a shadow or a change of light is not a change.',
   ]
     .filter((line) => line !== null)
     .join("\n");

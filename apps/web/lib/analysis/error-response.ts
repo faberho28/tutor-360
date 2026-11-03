@@ -15,16 +15,16 @@ const STATUS: Record<AnalyzeErrorKind, number> = {
 
 // Fixed texts on purpose: SDK messages can echo parts of the API key.
 const MESSAGE: Record<AnalyzeErrorKind, string> = {
-  invalid_input: "La imagen enviada no es válida",
-  not_configured: "La IA no está configurada en el servidor",
-  auth: "El servidor no pudo autenticarse con la IA",
-  quota: "Cuota de la IA agotada",
-  timeout: "La IA tardó demasiado en responder",
-  network: "Sin conexión con la IA",
-  refused: "La IA no pudo procesar la imagen",
-  invalid_response: "La IA devolvió una respuesta que no pudimos usar",
-  aborted: "Análisis cancelado",
-  unknown: "Algo salió mal al analizar",
+  invalid_input: "The image sent is not valid",
+  not_configured: "The AI is not configured on the server",
+  auth: "The server could not authenticate with the AI",
+  quota: "AI quota exhausted",
+  timeout: "The AI took too long to respond",
+  network: "No connection to the AI",
+  refused: "The AI could not process the image",
+  invalid_response: "The AI returned a response we could not use",
+  aborted: "Analysis cancelled",
+  unknown: "Something went wrong while analyzing",
 };
 
 /** The JSON error response the analysis endpoints answer with. */

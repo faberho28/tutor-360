@@ -15,7 +15,7 @@ export const analyzeRequestSchema = z.object({
   width: z.number().int().min(1).max(4096),
   height: z.number().int().min(1).max(4096),
   sessionId: z.string().min(1).max(64),
-  /** What the user is scanning (the Laboratorio case), for the planner. */
+  /** What the user is scanning (the Lab case), for the planner. */
   context: z.string().max(1200).optional(),
   /** False for inventory cases (Legos): everything is reported as ok. */
   judgesCondition: z.boolean().default(true),

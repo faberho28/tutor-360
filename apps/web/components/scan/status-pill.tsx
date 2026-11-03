@@ -6,7 +6,7 @@ import { useElapsed } from "@/hooks/use-elapsed";
 import { copy, formatElapsed } from "@/lib/copy";
 import { useSession } from "@/lib/session/session-provider";
 
-/** "● Analizando 00:12:34", "En pausa", "Sin conexión con la IA", ... */
+/** "● Analyzing 00:12:34", "Paused", "No connection to the AI", ... */
 export function StatusPill() {
   const phase = useSession((s) => s.analysis.phase);
   const startedAt = useSession((s) => s.analysis.startedAt);

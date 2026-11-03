@@ -52,7 +52,7 @@ export function ComponentDetail({ detection }: { detection: Detection }) {
           ) : (
             <Plus aria-hidden="true" data-icon="inline-start" />
           )}
-          {inReport ? "Agregado al reporte" : "Agregar al reporte"}
+          {inReport ? "Added to the report" : "Add to the report"}
         </Button>
       </div>
     </div>

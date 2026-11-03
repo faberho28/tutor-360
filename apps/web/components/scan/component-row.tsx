@@ -66,7 +66,7 @@ export function ComponentRow({
       </div>
       {detection.reviewing ? (
         <span role="status" className="sr-only">
-          Revisando
+          Reviewing
         </span>
       ) : (
         <Badge variant={detection.status}>
@@ -78,11 +78,9 @@ export function ComponentRow({
         size="icon-xs"
         variant="ghost"
         aria-pressed={hidden}
-        aria-label={hidden ? "Mostrar máscara" : "Ocultar máscara"}
+        aria-label={hidden ? "Show mask" : "Hide mask"}
         title={
-          hidden
-            ? "Mostrar máscara"
-            : "Ocultar máscara (también con doble clic sobre ella)"
+          hidden ? "Show mask" : "Hide mask (also with a double click on it)"
         }
         onClick={(event) => {
           // The row selects on click: this button only toggles the mask.

@@ -16,7 +16,7 @@ export const MAX_VARIANTS = 3;
  * asks with all of them and keeps the one SAM understood best.
  */
 export const partSchema = z.object({
-  /** Name for the user, in Spanish. */
+  /** Name for the user. */
   label: z.string().trim().min(1).max(60),
   /** Different English wordings of the SAME single part. */
   phrases: z.array(z.string().trim().min(1).max(60)).min(1).max(MAX_VARIANTS),

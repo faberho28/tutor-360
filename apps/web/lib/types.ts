@@ -8,7 +8,7 @@ export type BoundingBox = { x: number; y: number; w: number; h: number };
 export type Detection = {
   /** Stable while the component stays visible. */
   id: string;
-  /** Name shown to the user (Spanish), given by the AI. */
+  /** Name shown to the user, given by the AI. */
   label: string;
   /** Short English noun phrase naming the object; used to match it across analyses. */
   concept: string;
@@ -19,7 +19,7 @@ export type Detection = {
   score: number | null;
   /** Condition of the object, decided by the AI ("ok" when the case does not judge). */
   status: ComponentStatus;
-  /** Why the AI gave that status (Spanish, one sentence); null when it gave none. */
+  /** Why the AI gave that status (one sentence); null when it gave none. */
   reason: string | null;
   /** Epoch milliseconds, used for "hace 3 s". */
   seenAt: number;
@@ -53,7 +53,7 @@ export type DiagnosisEntry =
 
 /** One way a step can turn out, offered to the student as a button. */
 export type GuideOption = {
-  /** What they measured, saw or felt (Spanish, a few words). */
+  /** What they measured, saw or felt (a few words). */
   label: string;
   /** It is the outcome the step said to expect (the "X" of "si pasa X, entonces Y"). */
   expected: boolean;
@@ -61,7 +61,7 @@ export type GuideOption = {
 
 /** One step of the guided procedure the tutor proposes. */
 export type GuideStep = {
-  /** What to do and why, for the student (Spanish). */
+  /** What to do and why, for the student. */
   text: string;
   /** The detection this step is about, or null when it is not about one part. */
   target: string | null;
@@ -75,7 +75,7 @@ export type Guide = {
   goal: string;
   steps: GuideStep[];
   conclusion: string;
-  /** A detailed description of what the picture showed (Spanish). */
+  /** A detailed description of what the picture showed. */
   observation: string;
 };
 
@@ -111,7 +111,7 @@ export type GuideEntry =
       reports: GuideReport[];
       /** What the student told the tutor out loud that changes the plan. */
       remarks: string[];
-      /** A detailed description of the scene when the guide began (Spanish). */
+      /** A detailed description of the scene when the guide began. */
       scene: string;
       /** What the student asked, what the tutor answered and what Spark saw at each revision, oldest first. */
       log: string[];

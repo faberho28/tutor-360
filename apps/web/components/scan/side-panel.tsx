@@ -24,7 +24,7 @@ function DesktopPanel() {
   // parts and the diagnoses, and only when the user asks for it.
   return (
     <aside
-      aria-label="Componentes y diagnósticos"
+      aria-label="Components and diagnoses"
       className="flex min-h-0 flex-col gap-4 overflow-hidden"
     >
       {initialAnalysis ? (
@@ -58,15 +58,14 @@ function MobilePanel() {
     >
       <DrawerPrimitive.Portal>
         <DrawerPrimitive.Content
-          aria-label="Componentes y diagnósticos"
+          aria-label="Components and diagnoses"
           className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-full flex-col rounded-t-3xl border border-b-0 bg-background outline-none"
         >
           <DrawerPrimitive.Title className="sr-only">
-            Componentes y diagnósticos
+            Components and diagnoses
           </DrawerPrimitive.Title>
           <DrawerPrimitive.Description className="sr-only">
-            Arrastra hacia arriba para ver la lista de componentes y su
-            diagnóstico.
+            Drag up to see the list of components and their diagnosis.
           </DrawerPrimitive.Description>
           <DrawerPrimitive.Handle className="mt-3 mb-2 h-1.5! w-12! bg-muted-foreground/30!" />
           <div

@@ -5,18 +5,18 @@ import { Button } from "@/components/ui/button";
 import { useVoice, type VoiceStatus } from "@/hooks/use-voice";
 
 const STATUS_TEXT: Record<VoiceStatus, string> = {
-  off: "Hablar con el tutor",
-  starting: "Abriendo el micrófono…",
-  listening: "Escuchando",
-  hearing: "Te escucho…",
-  thinking: "Entendiendo…",
-  speaking: "El tutor habla",
+  off: "Talk to the tutor",
+  starting: "Opening the microphone…",
+  listening: "Listening",
+  hearing: "I hear you…",
+  thinking: "Understanding…",
+  speaking: "The tutor is speaking",
 };
 
 /**
  * The microphone switch of the guide. Once on it keeps listening: say what
- * happened in the step ("sí pasó", "no pasó, se siente flojo") or call the tutor
- * with a question ("Tutor, ¿por qué mido el voltaje?"). Steps are read aloud.
+ * happened in the step ("it happened", "it did not happen, it feels loose") or call the tutor
+ * with a question ("Tutor, why do I measure the voltage?"). Steps are read aloud.
  */
 export function VoiceControl() {
   const voice = useVoice();
@@ -38,7 +38,7 @@ export function VoiceControl() {
           ) : (
             <MicOff aria-hidden="true" data-icon="inline-start" />
           )}
-          {on ? "Apagar voz" : "Activar voz"}
+          {on ? "Turn voice off" : "Turn voice on"}
         </Button>
         <span
           role="status"
@@ -60,12 +60,12 @@ export function VoiceControl() {
       </div>
       {on && !voice.heard && !voice.reply ? (
         <p className="text-xs leading-snug text-muted-foreground">
-          Di «sí pasó», «no pasó» o «Tutor, …» para preguntar.
+          Say “it happened”, “it did not happen” or “Tutor, …” to ask.
         </p>
       ) : null}
       {voice.heard ? (
         <p className="text-xs leading-snug text-muted-foreground">
-          <span className="font-medium">Te escuché: </span>«{voice.heard}»
+          <span className="font-medium">I heard: </span>“{voice.heard}”
         </p>
       ) : null}
       {voice.reply ? (

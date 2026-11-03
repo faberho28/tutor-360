@@ -17,9 +17,9 @@ import { useSession } from "@/lib/session/session-provider";
 
 /** Green under 1.5 s, amber under 3 s, red from there (PRD target: < 1.5 s). */
 function latencyTone(ms: number): { dot: string; word: string } {
-  if (ms < 1500) return { dot: "bg-ok", word: "rápida" };
-  if (ms < 3000) return { dot: "bg-warning", word: "lenta" };
-  return { dot: "bg-anomaly", word: "muy lenta" };
+  if (ms < 1500) return { dot: "bg-ok", word: "fast" };
+  if (ms < 3000) return { dot: "bg-warning", word: "slow" };
+  return { dot: "bg-anomaly", word: "very slow" };
 }
 
 const GLASS = "bg-black/50 text-white backdrop-blur";
@@ -58,7 +58,7 @@ export function StageCornerControls({
               "flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium tabular-nums",
               GLASS,
             )}
-            aria-label={`Latencia de la IA ${tone.word}`}
+            aria-label={`AI latency ${tone.word}`}
           >
             <span
               aria-hidden="true"
@@ -80,13 +80,13 @@ export function StageCornerControls({
           disabled={devices.length === 0}
         >
           <SelectTrigger
-            aria-label="Cámara"
+            aria-label="Camera"
             className={cn(
               "h-9 w-auto max-w-[200px] gap-2 rounded-full border-0 px-3 text-xs shadow-none ring-0 [&_svg]:text-white",
               GLASS,
             )}
           >
-            <SelectValue placeholder="Sin cámaras" />
+            <SelectValue placeholder="No cameras" />
           </SelectTrigger>
           <SelectContent align="end">
             {devices.map((item) => (
@@ -103,9 +103,7 @@ export function StageCornerControls({
           variant="ghost"
           size="icon"
           aria-label={
-            panelOpen
-              ? "Ocultar el panel de piezas"
-              : "Mostrar el panel de piezas"
+            panelOpen ? "Hide the parts panel" : "Show the parts panel"
           }
           aria-pressed={panelOpen}
           onClick={() => setPanelOpen(!panelOpen)}
@@ -124,11 +122,7 @@ export function StageCornerControls({
             type="button"
             variant="ghost"
             size="icon"
-            aria-label={
-              fullscreen.active
-                ? "Salir de pantalla completa"
-                : "Pantalla completa"
-            }
+            aria-label={fullscreen.active ? "Exit full screen" : "Full screen"}
             onClick={toggleFullscreen}
             className={cn(
               "size-9 rounded-full hover:bg-black/60 hover:text-white",

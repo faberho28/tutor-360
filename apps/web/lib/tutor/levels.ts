@@ -1,10 +1,10 @@
 /**
  * How much the person in front of the camera already knows. The user picks it in
- * the Laboratorio; the tutor's prompts (guide, voice, final check, diagnosis)
+ * the Lab; the tutor's prompts (guide, voice, final check, diagnosis)
  * are written for that reader. The prompt text lives in `level-profiles.ts`
  * (server only); this module is what the browser needs.
  *
- * Titles and descriptions are UI text (es-CO).
+ * Titles and descriptions are UI text (en).
  */
 
 export const TUTOR_LEVELS = [
@@ -24,25 +24,28 @@ export const TUTOR_LEVEL_INFO: Record<
   { title: string; description: string }
 > = {
   junior: {
-    title: "Aprendiz junior",
-    description: "Empiezo: explícame qué es cada cosa y por qué, paso a paso.",
+    title: "Junior apprentice",
+    description:
+      "I am starting out: explain what each thing is and why, step by step.",
   },
   middle: {
-    title: "Aprendiz middle",
-    description: "Conozco lo básico: dime el método y la razón de cada paso.",
+    title: "Middle apprentice",
+    description:
+      "I know the basics: give me the method and the reason for each step.",
   },
   senior: {
-    title: "Aprendiz senior",
-    description: "Ya diagnostico: dame hipótesis y pruebas que las distingan.",
+    title: "Senior apprentice",
+    description:
+      "I already diagnose: give me hypotheses and tests that tell them apart.",
   },
   technician: {
-    title: "Técnico",
+    title: "Technician",
     description:
-      "Domino las bases: solo el procedimiento, los valores y el porqué.",
+      "I master the basics: only the procedure, the values and the why.",
   },
 };
 
-/** The level named by the address (`?nivel=`), or the default when it is missing or invalid. */
+/** The level named by the address (`?level=`), or the default when it is missing or invalid. */
 export function parseTutorLevel(value: string | undefined): TutorLevel {
   return TUTOR_LEVELS.find((level) => level === value) ?? DEFAULT_TUTOR_LEVEL;
 }

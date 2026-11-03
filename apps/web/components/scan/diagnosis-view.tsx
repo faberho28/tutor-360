@@ -16,7 +16,7 @@ export function DiagnosisView({
 }) {
   if (!entry || entry.status === "loading") {
     return (
-      <div role="status" aria-label="Generando diagnóstico">
+      <div role="status" aria-label="Generating diagnosis">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-4 w-full rounded-md" />
           <Skeleton className="h-4 w-11/12 rounded-md" />
@@ -29,7 +29,7 @@ export function DiagnosisView({
   if (entry.status === "unavailable") {
     return (
       <p className="text-xs text-muted-foreground" role="status">
-        El diagnóstico con IA estará disponible pronto.
+        The AI diagnosis will be available soon.
       </p>
     );
   }
@@ -37,9 +37,9 @@ export function DiagnosisView({
   if (entry.status === "error") {
     return (
       <div className="flex flex-col items-start gap-2" role="alert">
-        <p className="text-xs">No pudimos generar el diagnóstico.</p>
+        <p className="text-xs">We could not generate the diagnosis.</p>
         <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-          Reintentar
+          Try again
         </Button>
       </div>
     );
@@ -58,8 +58,7 @@ function ReadyDiagnosis({ data }: { data: Diagnosis }) {
       <p className="text-xs leading-relaxed">{data.summary}</p>
       {data.confirmed === false ? (
         <p className="text-xs text-muted-foreground">
-          La IA no pudo confirmar este hallazgo con el recorte. Compruébalo a
-          simple vista.
+          The AI could not confirm this finding from the crop. Check it by eye.
         </p>
       ) : null}
     </div>

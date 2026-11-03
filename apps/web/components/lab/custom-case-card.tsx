@@ -37,7 +37,7 @@ export function CustomCaseCard({
 
   function start(event: FormEvent) {
     event.preventDefault();
-    if (valid) router.push(scanHref("personalizado", level, text));
+    if (valid) router.push(scanHref("custom", level, text));
   }
 
   return (
@@ -50,21 +50,21 @@ export function CustomCaseCard({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={start} className="flex flex-col gap-4">
           <DialogHeader>
-            <DialogTitle>Caso personalizado</DialogTitle>
+            <DialogTitle>Custom case</DialogTitle>
             <DialogDescription>
-              Cuéntale a la IA qué vas a mostrar y qué quieres encontrar.
+              Tell the AI what you are going to show and what you want to find.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="custom-case" className="text-xs font-medium">
-              ¿Qué vas a revisar?
+              What are you going to inspect?
             </label>
             <Textarea
               id="custom-case"
               value={text}
               maxLength={CUSTOM_MAX}
               onChange={(event) => setText(event.target.value)}
-              placeholder="Ej.: una consola de videojuegos abierta; busco partes quemadas o sueltas"
+              placeholder="e.g. an open game console; I am looking for burnt or loose parts"
               aria-describedby="custom-case-hint"
             />
             <p
@@ -73,8 +73,8 @@ export function CustomCaseCard({
             >
               <span>
                 {valid
-                  ? "Listo para empezar."
-                  : `Escribe al menos ${CUSTOM_MIN} caracteres.`}
+                  ? "Ready to start."
+                  : `Write at least ${CUSTOM_MIN} characters.`}
               </span>
               <span className="tabular-nums">
                 {text.length}/{CUSTOM_MAX}
@@ -87,7 +87,7 @@ export function CustomCaseCard({
               disabled={!valid}
               className="rounded-full px-5"
             >
-              Empezar a escanear
+              Start scanning
             </Button>
           </DialogFooter>
         </form>

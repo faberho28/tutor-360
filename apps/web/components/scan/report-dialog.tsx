@@ -85,7 +85,7 @@ export function ReportDialog({
       () => {
         if (run.current !== id) return;
         setPhase("done");
-        toast.success("Reporte generado");
+        toast.success("Report generated");
       },
       () => {
         if (run.current !== id) return;
@@ -104,19 +104,19 @@ export function ReportDialog({
         className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl"
       >
         <DialogHeader>
-          <DialogTitle>Reporte de la sesión</DialogTitle>
+          <DialogTitle>Session report</DialogTitle>
           <DialogDescription>
             {reportAvailable
-              ? "Revisa las capturas antes de generar el reporte."
-              : "Revisa tus capturas. La generación del reporte estará disponible pronto."}
+              ? "Review the captures before generating the report."
+              : "Review your captures. Report generation will be available soon."}
           </DialogDescription>
         </DialogHeader>
 
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Stat label="Capturas" value={captures.length} />
-          <Stat label="Anomalías" value={anomalies} />
-          <Stat label="Por revisar" value={warnings} />
-          <Stat label="Agregados al reporte" value={included} />
+          <Stat label="Captures" value={captures.length} />
+          <Stat label="Anomalies" value={anomalies} />
+          <Stat label="To check" value={warnings} />
+          <Stat label="Added to the report" value={included} />
         </dl>
 
         <CapturesStrip />
@@ -124,7 +124,7 @@ export function ReportDialog({
         {generating ? (
           <div
             role="progressbar"
-            aria-label="Generando el reporte"
+            aria-label="Generating the report"
             className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
           >
             <div className="h-full w-1/3 rounded-full bg-inverse motion-safe:animate-pulse" />
@@ -132,7 +132,7 @@ export function ReportDialog({
         ) : null}
         {phase === "error" ? (
           <p role="alert" className="text-xs text-destructive">
-            No pudimos generar el reporte. Inténtalo de nuevo.
+            We could not generate the report. Try again.
           </p>
         ) : null}
 
@@ -144,7 +144,7 @@ export function ReportDialog({
             className="rounded-full px-4 text-xs"
             onClick={() => handleOpenChange(false)}
           >
-            Cerrar
+            Close
           </Button>
           <Button
             type="button"
@@ -162,10 +162,10 @@ export function ReportDialog({
             {generating
               ? "Generando…"
               : phase === "done"
-                ? "Generar de nuevo"
+                ? "Generate again"
                 : phase === "error"
-                  ? "Reintentar"
-                  : "Generar reporte"}
+                  ? "Try again"
+                  : "Generate report"}
           </Button>
         </DialogFooter>
       </DialogContent>

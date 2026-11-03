@@ -30,13 +30,13 @@ export function ResetContextDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>¿Reiniciar el contexto?</DialogTitle>
+          <DialogTitle>Reset the context?</DialogTitle>
           <DialogDescription>
-            Se borran las piezas detectadas, los diagnósticos, los pasos
+            The detected parts, the diagnoses and the steps are deleted
             {captures > 0
-              ? ` y las ${captures} captura${captures > 1 ? "s" : ""} (no se podrán usar en el reporte)`
+              ? ` along with the ${captures} capture${captures > 1 ? "s" : ""} (they can no longer be used in the report)`
               : ""}
-            . La cámara y el caso se mantienen.
+            . The camera and the case are kept.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -47,7 +47,7 @@ export function ResetContextDialog({
             className="rounded-full px-4 text-xs"
             onClick={() => onOpenChange(false)}
           >
-            Cancelar
+            Cancel
           </Button>
           <Button
             type="button"
@@ -59,7 +59,7 @@ export function ResetContextDialog({
               onOpenChange(false);
             }}
           >
-            Reiniciar
+            Reset
           </Button>
         </DialogFooter>
       </DialogContent>

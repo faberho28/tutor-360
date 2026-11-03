@@ -24,7 +24,7 @@ export function StageEmptyState({
             className="size-8 text-muted-foreground motion-safe:animate-spin"
           />
           <p role="status" className="text-xs font-medium">
-            Preparando análisis…
+            Preparing analysis…
           </p>
         </div>
       </div>
@@ -43,22 +43,22 @@ export function StageEmptyState({
       <div className="flex max-w-sm flex-col gap-1">
         <p className="text-sm font-semibold">
           {insecure
-            ? "La cámara requiere una conexión segura"
+            ? "The camera needs a secure connection"
             : noPermission
-              ? "Necesitamos tu cámara para ver la PC"
-              : "No encontramos ninguna cámara"}
+              ? "We need your camera to see the PC"
+              : "We found no camera"}
         </p>
         <p className="text-xs text-muted-foreground">
           {insecure
-            ? "El navegador solo permite usar la cámara en páginas HTTPS (o localhost). Abre la app con una dirección segura."
+            ? "The browser only allows the camera on HTTPS pages (or localhost). Open the app with a secure address."
             : noPermission
-              ? "Permite el acceso a la cámara en tu navegador y vuelve a intentarlo."
-              : "Conecta tu iPhone por USB-C (Mac: Continuity Camera · Windows: Camo o Iriun) o una webcam."}
+              ? "Allow camera access in your browser and try again."
+              : "Connect your iPhone over USB-C (Mac: Continuity Camera · Windows: Camo or Iriun) or a webcam."}
         </p>
       </div>
       {insecure ? null : (
         <Button type="button" onClick={retry}>
-          Reintentar
+          Try again
         </Button>
       )}
     </div>

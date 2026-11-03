@@ -265,7 +265,7 @@ export class RealAnalysis implements ScanAnalysis {
   private async run(signal: AbortSignal): Promise<Outcome> {
     const video = readyVideo(this.getVideo());
     if (!video) {
-      throw new AnalyzeClientError("unknown", "La cámara aún no está lista");
+      throw new AnalyzeClientError("unknown", "The camera is not ready yet");
     }
     const startedAt = performance.now();
     // The tracking takes THIS frame as the reference of what comes back, and
@@ -580,7 +580,7 @@ export class RealAnalysis implements ScanAnalysis {
     const step = guide.steps[guide.current];
     if (!step) return;
     this.tellGuide(
-      `Quiero saltar este paso sin hacerlo: «${step.text}». Sigue con lo que viene sin él.`,
+      `I want to skip this step without doing it: "${step.text}". Continue with what comes next without it.`,
     );
   }
 
@@ -729,8 +729,8 @@ export class RealAnalysis implements ScanAnalysis {
     }
     if (outcome.intent === "question" && outcome.reply) {
       // The next call remembers this exchange: Spark keeps nothing by itself.
-      this.store.getState().logGuide(`El estudiante preguntó: «${transcript}»`);
-      this.store.getState().logGuide(`El tutor respondió: «${outcome.reply}»`);
+      this.store.getState().logGuide(`The student asked: "${transcript}"`);
+      this.store.getState().logGuide(`The tutor answered: "${outcome.reply}"`);
     }
     // New information or an instruction (even phrased as a question): the steps change.
     if (outcome.replan && outcome.intent !== "answer" && outcome.note) {

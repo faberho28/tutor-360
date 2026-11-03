@@ -17,10 +17,10 @@ const EDITABLE =
 
 const SHORTCUTS = [
   ["Espacio", "Capturar"],
-  ["A", "Activar o pausar análisis automático"],
-  ["↑ / ↓", "Recorrer componentes"],
-  ["Enter", "Seleccionar componente"],
-  ["R", "Generar reporte"],
+  ["A", "Turn automatic analysis on or pause it"],
+  ["↑ / ↓", "Move through components"],
+  ["Enter", "Select component"],
+  ["R", "Generate report"],
 ] as const;
 
 export function ShortcutsHelp() {
@@ -42,10 +42,9 @@ export function ShortcutsHelp() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Atajos de teclado</DialogTitle>
+          <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription>
-            Usa estos atajos cuando el foco no esté en un control o campo de
-            texto.
+            Use these shortcuts when focus is not on a control or text field.
           </DialogDescription>
         </DialogHeader>
         <dl className="grid gap-3">
@@ -69,7 +68,7 @@ export function ShortcutsHelp() {
             onClick={() => setOpen(false)}
           >
             <Keyboard aria-hidden="true" data-icon="inline-start" />
-            Cerrar
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

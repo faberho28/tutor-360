@@ -41,7 +41,7 @@ function ApiKeyForm() {
       }}
     >
       <label htmlFor="model-api-key" className="text-xs font-medium">
-        Llave de la API de Meta
+        Meta API key
       </label>
       <Input
         id="model-api-key"
@@ -53,7 +53,7 @@ function ApiKeyForm() {
           setDraft(event.target.value);
           setFailed(false);
         }}
-        placeholder={saved ? maskApiKey(saved) : "Pega tu llave"}
+        placeholder={saved ? maskApiKey(saved) : "Paste your key"}
         aria-invalid={failed}
         aria-describedby="model-api-key-help"
       />
@@ -63,14 +63,14 @@ function ApiKeyForm() {
         aria-live="polite"
       >
         {failed
-          ? "No pudimos guardar la llave. Revísala e inténtalo de nuevo."
+          ? "We could not save the key. Check it and try again."
           : saved
-            ? "Usando tu llave. Se borra al cerrar la pestaña."
-            : "Sin llave propia se usa la del servidor, si está configurada. Tu llave solo vive en esta pestaña."}
+            ? "Using your key. It is deleted when you close the tab."
+            : "Without your own key the server key is used, if configured. Your key only lives in this tab."}
       </p>
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={!valid}>
-          Guardar
+          Save
         </Button>
         {saved ? (
           <Button
@@ -82,7 +82,7 @@ function ApiKeyForm() {
               setDraft("");
             }}
           >
-            Borrar
+            Delete
           </Button>
         ) : null}
       </div>
@@ -97,9 +97,9 @@ export function ApiKeyDialog({ children }: { children: ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Llave de la IA</DialogTitle>
+          <DialogTitle>AI key</DialogTitle>
           <DialogDescription>
-            Usa tu propia llave de Meta en lugar de la del servidor.
+            Use your own Meta key instead of the server key.
           </DialogDescription>
         </DialogHeader>
         <ApiKeyForm />

@@ -65,7 +65,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    image.onerror = () => reject(new Error("The image could not be read"));
     image.src = src;
   });
 }
@@ -82,7 +82,7 @@ export function StepsLab() {
   const [context, setContext] = useState(LAB_CASES[0]!.context);
   // The tutor never gets the analysis prompt: only what the user says they are doing.
   const tutorContext =
-    caseId === "personalizado"
+    caseId === "custom"
       ? context
       : (LAB_CASES.find((c) => c.id === caseId)?.description ?? "");
   const [busy, setBusy] = useState<Stage | null>(null);
@@ -237,7 +237,7 @@ export function StepsLab() {
       setGuide(null);
       const parts = z.array(partSchema).parse(JSON.parse(planJson));
       const startedAt = performance.now();
-      const response = await requestAnalysis(frame, "lab-pasos", {
+      const response = await requestAnalysis(frame, "lab-steps", {
         plan: parts,
         context,
         judgesCondition: false,
@@ -315,14 +315,14 @@ export function StepsLab() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6">
       <header>
-        <h1 className="text-lg font-semibold">Laboratorio de pasos</h1>
+        <h1 className="text-lg font-semibold">Steps lab</h1>
         <p className="text-sm text-muted-foreground">
-          Solo desarrollo. Corre cada etapa por separado y ajusta su prompt.
+          Development only. Run each stage on its own and tune its prompt.
         </p>
       </header>
 
       <Card className="gap-3 p-4">
-        <h2 className="text-sm font-semibold">Imagen y contexto</h2>
+        <h2 className="text-sm font-semibold">Image and context</h2>
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="file"
@@ -333,13 +333,13 @@ export function StepsLab() {
           {cameraOn ? (
             <>
               <Button type="button" size="sm" onClick={() => void takePhoto()}>
-                Tomar foto
+                Take photo
               </Button>
               <select
                 value={deviceId ?? ""}
                 onChange={(e) => chooseCamera(e.target.value)}
                 className="h-8 max-w-64 rounded-lg border border-input bg-background px-2 text-sm"
-                aria-label="Cámara"
+                aria-label="Camera"
               >
                 {devices.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -353,7 +353,7 @@ export function StepsLab() {
                 variant="outline"
                 onClick={stopCamera}
               >
-                Cerrar cámara
+                Close camera
               </Button>
             </>
           ) : (
@@ -363,7 +363,7 @@ export function StepsLab() {
               variant="outline"
               onClick={() => void startCamera()}
             >
-              Usar cámara
+              Use camera
             </Button>
           )}
           <select
@@ -375,7 +375,7 @@ export function StepsLab() {
               setContext(found.context);
             }}
             className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            aria-label="Caso"
+            aria-label="Case"
           >
             {LAB_CASES.map((c) => (
               <option key={c.id} value={c.id}>
@@ -387,7 +387,7 @@ export function StepsLab() {
         <Textarea
           value={context}
           onChange={(e) => setContext(e.target.value)}
-          aria-label="Contexto del caso (en inglés)"
+          aria-label="Case context (in English)"
           className="min-h-16"
         />
         {cameraOn ? (
@@ -402,7 +402,7 @@ export function StepsLab() {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={frame.dataUrl}
-            alt="Imagen de prueba"
+            alt="Test image"
             className="max-h-72 w-fit rounded-lg"
           />
         ) : null}
@@ -416,13 +416,13 @@ export function StepsLab() {
 
       <Card className="gap-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">1. Plan para SAM (Spark)</h2>
+          <h2 className="text-sm font-semibold">1. Plan for SAM (Spark)</h2>
           <Button
             type="button"
             disabled={!frame || busy !== null}
             onClick={() => void askState()}
           >
-            {busy === "plan" ? "Preguntando…" : "Obtener el plan"}
+            {busy === "plan" ? "Asking…" : "Get the plan"}
           </Button>
         </div>
         <PromptBox
@@ -434,15 +434,15 @@ export function StepsLab() {
         {plan ? (
           <div className="flex flex-col gap-2 text-sm">
             <p>
-              <span className="font-medium">Tipos de pieza: </span>
+              <span className="font-medium">Part kinds: </span>
               {plan.parts.length}{" "}
               <span className="text-muted-foreground">({plan.ms} ms)</span>
             </p>
-            <p className="font-medium">Lo que le pediría a SAM (editable):</p>
+            <p className="font-medium">What it would ask SAM for (editable):</p>
             <Textarea
               value={planJson}
               onChange={(e) => setPlanJson(e.target.value)}
-              aria-label="Plan para SAM"
+              aria-label="Plan for SAM"
               className="min-h-40 font-mono text-xs"
             />
           </div>
@@ -451,21 +451,21 @@ export function StepsLab() {
 
       <Card className="gap-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">2. Máscaras (SAM)</h2>
+          <h2 className="text-sm font-semibold">2. Masks (SAM)</h2>
           <Button
             type="button"
             disabled={!plan || busy !== null}
             onClick={() => void paintWithSam()}
           >
-            {busy === "sam" ? "Pintando…" : "Generar máscaras"}
+            {busy === "sam" ? "Painting…" : "Generate masks"}
           </Button>
         </div>
         {sam ? (
           <div className="flex flex-col gap-2 text-sm">
             <p>
-              {sam.detections.length} máscaras en {sam.ms} ms
+              {sam.detections.length} masks in {sam.ms} ms
               {numbered.length < sam.detections.length
-                ? ` (la guía ve las ${numbered.length} mayores)`
+                ? ` (the guide sees the ${numbered.length} largest)`
                 : ""}
               :{" "}
               {[...counts.entries()]
@@ -475,7 +475,7 @@ export function StepsLab() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={sam.marked}
-              alt="Piezas numeradas"
+              alt="Numbered parts"
               className="max-h-[28rem] w-fit rounded-lg"
             />
           </div>
@@ -484,12 +484,12 @@ export function StepsLab() {
 
       <Card className="gap-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">3. Guía (Spark)</h2>
+          <h2 className="text-sm font-semibold">3. Guide (Spark)</h2>
           <select
             value={effort}
             onChange={(e) => setEffort(e.target.value as typeof effort)}
             className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            aria-label="Esfuerzo de razonamiento"
+            aria-label="Reasoning effort"
           >
             {["minimal", "low", "medium", "high"].map((value) => (
               <option key={value} value={value}>
@@ -502,7 +502,7 @@ export function StepsLab() {
             disabled={!sam || busy !== null}
             onClick={() => void writeGuide()}
           >
-            {busy === "guide" ? "Escribiendo…" : "Generar la guía"}
+            {busy === "guide" ? "Writing…" : "Generate the guide"}
           </Button>
         </div>
         <PromptBox
@@ -514,7 +514,7 @@ export function StepsLab() {
         {guide ? (
           <div className="flex flex-col gap-3 text-sm">
             <p>
-              <span className="font-medium">Objetivo: </span>
+              <span className="font-medium">Goal: </span>
               {guide.goal}{" "}
               <span className="text-muted-foreground">({guide.ms} ms)</span>
             </p>
@@ -526,16 +526,16 @@ export function StepsLab() {
                   <li key={i} className={i < guide.current ? "opacity-70" : ""}>
                     {step.text}{" "}
                     <span className="text-muted-foreground">
-                      {n > 0 ? `[pieza ${n}]` : "[sin pieza]"}
+                      {n > 0 ? `[part ${n}]` : "[no part]"}
                     </span>
                     {report ? (
                       <p className="text-muted-foreground">
                         Respuesta:{" "}
                         {report.result === "yes"
-                          ? "sí pasó"
+                          ? "it happened"
                           : report.result === "no"
-                            ? "no pasó"
-                            : "no sé"}
+                            ? "it did not happen"
+                            : "not sure"}
                         {report.note ? ` — "${report.note}"` : ""}
                       </p>
                     ) : null}
@@ -544,16 +544,16 @@ export function StepsLab() {
                         <Textarea
                           value={note}
                           onChange={(e) => setNote(e.target.value)}
-                          placeholder="Qué viste o mediste (opcional)"
-                          aria-label="Nota del paso"
+                          placeholder="What you saw or measured (optional)"
+                          aria-label="Step note"
                           className="min-h-14"
                         />
                         <div className="flex flex-wrap gap-2">
                           {(
                             [
-                              ["yes", "Sí pasó"],
-                              ["no", "No pasó"],
-                              ["unsure", "No sé"],
+                              ["yes", "It happened"],
+                              ["no", "It did not happen"],
+                              ["unsure", "Not sure"],
                             ] as const
                           ).map(([result, label]) => (
                             <Button
@@ -576,13 +576,13 @@ export function StepsLab() {
             </ol>
             {guide.current >= guide.steps.length ? (
               <p className="rounded-lg bg-muted p-3">
-                <span className="font-medium">Conclusión: </span>
-                {guide.conclusion || "(la guía terminó sin conclusión)"}
+                <span className="font-medium">Conclusion: </span>
+                {guide.conclusion || "(the guide ended without a conclusion)"}
               </p>
             ) : null}
             <details>
               <summary className="cursor-pointer text-muted-foreground">
-                Último prompt enviado
+                Last prompt sent
               </summary>
               <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
                 {guide.prompt}
@@ -595,7 +595,7 @@ export function StepsLab() {
   );
 }
 
-/** Repeated names come back numbered ("tecla 3"): count them as one kind. */
+/** Repeated names come back numbered ("key 3"): count them as one kind. */
 function kind(label: string) {
   return label.replace(/\s+\d+$/, "");
 }
@@ -625,7 +625,7 @@ function PromptBox({
   return (
     <details>
       <summary className="cursor-pointer text-sm text-muted-foreground">
-        Prompt {value.trim() ? "(editado)" : "(el del código)"}
+        Prompt {value.trim() ? "(edited)" : "(the one in the code)"}
       </summary>
       <div className="mt-2 flex flex-col gap-2">
         <div className="flex gap-2">
@@ -636,7 +636,7 @@ function PromptBox({
             disabled={disabled}
             onClick={onLoad}
           >
-            Cargar el prompt actual
+            Load the current prompt
           </Button>
           <Button
             type="button"
@@ -644,7 +644,7 @@ function PromptBox({
             variant="outline"
             onClick={() => onChange("")}
           >
-            Usar el del código
+            Use the one in the code
           </Button>
         </div>
         <Textarea

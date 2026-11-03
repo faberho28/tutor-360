@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function FirstAnalysisSkeleton() {
   return (
     <div
-      aria-label="Analizando la PC"
+      aria-label="Analyzing the PC"
       className="flex min-h-0 flex-1 flex-col gap-4"
     >
       <Skeleton className="h-12 w-full rounded-xl" />

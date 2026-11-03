@@ -35,7 +35,7 @@ export function SessionName() {
         autoFocus
         value={draft}
         maxLength={MAX_LENGTH}
-        aria-label="Nombre de la sesión"
+        aria-label="Session name"
         onChange={(event) => setDraft(event.target.value)}
         onFocus={(event) => event.currentTarget.select()}
         onBlur={() => finish(true, false)}
@@ -60,7 +60,7 @@ export function SessionName() {
         aria-hidden="true"
         className="size-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
       />
-      <span className="sr-only">(editar)</span>
+      <span className="sr-only">(edit)</span>
     </button>
   );
 }

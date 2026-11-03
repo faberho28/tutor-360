@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const parsed = analyzeRequestSchema.safeParse(payload);
   if (!parsed.success) return fail("invalid_input");
 
-  // The user's own key (from Ajustes) wins over the server's. It is only
+  // The user's own key (from Settings) wins over the server's. It is only
   // passed on to the model client: never stored, never logged.
   const sentKey = request.headers.get(API_KEY_HEADER);
   if (sentKey !== null && !API_KEY_PATTERN.test(sentKey)) return fail("auth");

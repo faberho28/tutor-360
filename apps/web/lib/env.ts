@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 
 // Everything has a default. The key is optional here because the user can send
-// their own from Ajustes; without either, the model calls fail as not_configured.
+// their own from Settings; without either, the model calls fail as not_configured.
 const envSchema = z.object({
   MODEL_API_KEY: z.string().min(1).optional(),
   MODEL_API_BASE_URL: z.string().min(1).default("https://api.meta.ai/v1"),

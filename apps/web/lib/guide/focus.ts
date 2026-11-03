@@ -13,7 +13,7 @@ export function guideTargets(guide: GuideEntry): readonly string[] {
   return target ? [target] : NONE;
 }
 
-/** Splits "Retira el módulo: así revisas sus contactos" into the action and its reason. */
+/** Splits "Remove the module: this way you check its contacts" into the action and its reason. */
 export function splitStep(text: string): { action: string; reason: string } {
   const at = text.indexOf(":");
   if (at < 0) return { action: text.trim(), reason: "" };

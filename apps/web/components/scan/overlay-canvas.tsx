@@ -294,7 +294,7 @@ export function OverlayCanvas({
     <canvas
       ref={canvasRef}
       role="img"
-      aria-label="Máscaras de los componentes detectados"
+      aria-label="Masks of the detected components"
       className="absolute inset-0 size-full touch-manipulation"
       onPointerMove={(event) => {
         if (event.pointerType === "touch") return;

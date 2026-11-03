@@ -18,7 +18,7 @@ export function LevelPicker({
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="text-sm font-medium">
-        ¿Cuánta experiencia tienes?
+        How much experience do you have?
       </legend>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {TUTOR_LEVELS.map((level) => {

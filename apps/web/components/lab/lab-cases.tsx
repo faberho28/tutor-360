@@ -18,7 +18,7 @@ export function LabCases() {
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {LAB_CASES.map((labCase) => (
           <li key={labCase.id}>
-            {labCase.id === "personalizado" ? (
+            {labCase.id === "custom" ? (
               <CustomCaseCard labCase={labCase} level={level} />
             ) : (
               <Link href={scanHref(labCase.id, level)} className={CARD_CLASS}>

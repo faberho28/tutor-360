@@ -53,15 +53,15 @@ export default function DesignPage() {
     <main className="mx-auto flex max-w-5xl flex-col gap-4 p-4 md:p-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold">Sistema de diseño</h1>
+          <h1 className="text-lg font-semibold">Design system</h1>
           <p className="text-xs text-muted-foreground">
-            Guía visual de desarrollo. No se publica en producción.
+            Visual development guide. Not published in production.
           </p>
         </div>
         <ThemeToggle />
       </header>
 
-      <Section title="Paleta">
+      <Section title="Palette">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {SWATCHES.map(({ token, className }) => (
             <div key={token} className="flex flex-col gap-1">
@@ -72,42 +72,38 @@ export default function DesignPage() {
         </div>
       </Section>
 
-      <Section title="Estados">
+      <Section title="Statuses">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="anomaly">Anomalía</Badge>
-          <Badge variant="warning">Revisar</Badge>
+          <Badge variant="anomaly">Anomaly</Badge>
+          <Badge variant="warning">Check</Badge>
           <Badge variant="ok">OK</Badge>
-          <Badge variant="inverse">Analizando 00:12:34</Badge>
+          <Badge variant="inverse">Analyzing 00:12:34</Badge>
         </div>
       </Section>
 
-      <Section title="Botones">
+      <Section title="Buttons">
         <div className="flex flex-wrap items-center gap-2">
-          <Button>Principal</Button>
-          <Button variant="secondary">Secundario</Button>
-          <Button variant="outline">Contorno</Button>
-          <Button variant="ghost">Fantasma</Button>
-          <Button variant="destructive">Borrar captura</Button>
+          <Button>Primary</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="outline">Outline</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="destructive">Delete capture</Button>
           <Button variant="inverse">
             <FileDown aria-hidden="true" data-icon="inline-start" />
-            Generar reporte
+            Generate report
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="control"
-            variant="secondary"
-            aria-label="Cambiar cámara"
-          >
+          <Button size="control" variant="secondary" aria-label="Switch camera">
             <SwitchCamera aria-hidden="true" />
           </Button>
-          <Button size="control" variant="secondary" aria-label="Capturar">
+          <Button size="control" variant="secondary" aria-label="Capture">
             <Aperture aria-hidden="true" />
           </Button>
         </div>
       </Section>
 
-      <Section title="Overlay por estado">
+      <Section title="Overlay by status">
         <ul className="grid gap-2 sm:grid-cols-2">
           {COMPONENT_STATUSES.map((status) => {
             const entry = OVERLAY[status];
@@ -133,9 +129,9 @@ export default function DesignPage() {
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="text-sm font-medium">
                     {status === "anomaly"
-                      ? "Anomalía"
+                      ? "Anomaly"
                       : status === "warning"
-                        ? "Revisar"
+                        ? "Check"
                         : "OK"}
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -144,9 +140,9 @@ export default function DesignPage() {
                 </div>
                 <Badge variant={status}>
                   {status === "anomaly"
-                    ? "Anomalía"
+                    ? "Anomaly"
                     : status === "warning"
-                      ? "Revisar"
+                      ? "Check"
                       : "OK"}
                 </Badge>
               </li>
@@ -155,7 +151,7 @@ export default function DesignPage() {
         </ul>
       </Section>
 
-      <Section title="Radios">
+      <Section title="Radii">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {RADII.map(({ name, className, px }) => (
             <div key={name} className="flex flex-col gap-1">

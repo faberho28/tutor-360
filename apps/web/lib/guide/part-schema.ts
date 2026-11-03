@@ -6,7 +6,7 @@ export const guidePartSchema = z.object({
   id: z.string().min(1).max(64),
   label: z.string().min(1).max(120),
   status: z.enum(["ok", "warning", "anomaly"]),
-  /** Why the review gave that status (Spanish, one sentence). */
+  /** Why the review gave that status (one sentence). */
   reason: z.string().max(400).nullish(),
   /** Appeared after the tutor last looked. */
   isNew: z.boolean().optional(),
