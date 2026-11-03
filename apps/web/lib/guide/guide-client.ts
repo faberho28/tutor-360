@@ -96,7 +96,7 @@ export async function requestGuide(
             label,
             status,
             reason,
-            bbox,
+            bbox: clampBox(bbox),
             isNew,
           }),
         ),
@@ -132,4 +132,19 @@ export async function requestGuide(
     clearTimeout(timer);
     options.signal?.removeEventListener("abort", onAbort);
   }
+}
+
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
+/**
+ * The tracking moves the boxes, so one at the edge of the picture can end up a
+ * hair outside 0..1; the server rejects the whole request for that.
+ */
+function clampBox(box: Detection["bbox"]): Detection["bbox"] {
+  return {
+    x: clamp01(box.x),
+    y: clamp01(box.y),
+    w: clamp01(box.w),
+    h: clamp01(box.h),
+  };
 }
