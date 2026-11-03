@@ -19,6 +19,8 @@ export type ScanAnalysis = AnalysisSource & {
   answerGuideStep(report: GuideReport): void;
   /** The student tells the tutor a fact or an instruction; the steps are rewritten with it. */
   tellGuide(remark: string): void;
+  /** The student will not do the current step: the tutor drops it and rewrites what follows. */
+  skipGuideStep(): void;
   /**
    * Understands one thing the student said out loud (as the speech-to-text heard
    * it): an answer to the current step is applied, a question comes back with the

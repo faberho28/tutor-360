@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type RefObject,
+} from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { guideTargets } from "@/lib/guide/focus";
 import { drawOverlay, hitTest, type OverlayLayout } from "@/lib/overlay/draw";
 import { drawTrackingDebug } from "@/lib/overlay/draw-debug";
 import { drawChangeGrid } from "@/lib/overlay/draw-grid";
+import { placeGuideCard, type GuidePos } from "@/lib/overlay/guide-placement";
+import type { BoundingBox } from "@/lib/types";
 import type { ChangeStatus } from "@/lib/vision/change-detector";
 import { getTrackingDebug, subscribeTrackingDebug } from "@/lib/tracking/debug";
 import { OVERLAY } from "@/lib/overlay-theme";
@@ -25,10 +34,21 @@ const ANIMATION_FRAME_MS = 66;
 export function OverlayCanvas({
   source,
   changeGrid = null,
+  guideCardRef,
+  guidePos = null,
+  onGuidePos,
 }: {
   source: { width: number; height: number };
   /** The change detector's grid to paint (to tune it), or null. */
   changeGrid?: { heat: readonly number[]; status: ChangeStatus } | null;
+  /**
+   * The guide's card: a line is drawn from it to the guide's part, and its
+   * place is chosen from where that part is so it never covers it.
+   */
+  guideCardRef?: RefObject<HTMLElement | null>;
+  /** Where the card is now (null until it was first placed), and where to say it should go. */
+  guidePos?: GuidePos | null;
+  onGuidePos?: (pos: GuidePos) => void;
 }) {
   const detections = useSession((s) => s.detections);
   // Hidden masks are not painted but still answer to the pointer.
@@ -103,8 +123,24 @@ export function OverlayCanvas({
           (d) => OVERLAY[d.status].pulse && !hiddenIds.includes(d.id),
         ));
     let frame = 0;
+    // The place already asked for in this run (the parent answers a render later).
+    let askedPos: GuidePos | null = null;
 
     const draw = (now: number) => {
+      // The card changes height with each step: measured on every draw (the
+      // loop runs while the guide has a part), two reads per frame at most.
+      const card = guideCardRef?.current;
+      let guideCard: BoundingBox | null = null;
+      if (card) {
+        const cardBox = card.getBoundingClientRect();
+        const canvasBox = canvas.getBoundingClientRect();
+        guideCard = {
+          x: cardBox.left - canvasBox.left,
+          y: cardBox.top - canvasBox.top,
+          w: cardBox.width,
+          h: cardBox.height,
+        };
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       layoutRef.current = drawOverlay(ctx, {
         width: size.w,
@@ -120,7 +156,31 @@ export function OverlayCanvas({
         view: viewRef.current,
         hiddenIds,
         guideIds,
+        guideCard,
       });
+      // The card goes next to the part of the step and never over it (it may
+      // cover the other parts). Until it is first placed it is where the CSS
+      // put it, so that is where it is measured.
+      if (guideCard && onGuidePos) {
+        const target = layoutRef.current?.shapes.find((s) =>
+          guideIds.includes(s.id),
+        );
+        const current = askedPos ??
+          guidePos ?? { x: guideCard.x, y: guideCard.y };
+        const next = placeGuideCard({
+          current,
+          stage: { w: size.w, h: size.h },
+          card: { w: guideCard.w, h: guideCard.h },
+          target: target?.bounds ?? null,
+        });
+        const moved =
+          Math.abs(next.x - current.x) > 0.5 ||
+          Math.abs(next.y - current.y) > 0.5;
+        if (moved || (!guidePos && !askedPos)) {
+          askedPos = next;
+          onGuidePos(next);
+        }
+      }
       if (changeGrid) {
         // On top of the masks (drawOverlay clears the canvas first); the cells
         // are translucent, so the masks and the camera still show through.
@@ -163,6 +223,9 @@ export function OverlayCanvas({
     detections,
     hiddenIds,
     guideIds,
+    guideCardRef,
+    guidePos,
+    onGuidePos,
     changeGrid,
     selectedId,
     hoveredId,

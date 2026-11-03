@@ -51,13 +51,22 @@ export type DiagnosisEntry =
   | { status: "unavailable" }
   | { status: "ready"; data: Diagnosis };
 
-/** The general step-by-step of the scene, written by the AI once per scan. */
+/** One way a step can turn out, offered to the student as a button. */
+export type GuideOption = {
+  /** What they measured, saw or felt (Spanish, a few words). */
+  label: string;
+  /** It is the outcome the step said to expect (the "X" of "si pasa X, entonces Y"). */
+  expected: boolean;
+};
+
 /** One step of the guided procedure the tutor proposes. */
 export type GuideStep = {
   /** What to do and why, for the student (Spanish). */
   text: string;
   /** The detection this step is about, or null when it is not about one part. */
   target: string | null;
+  /** The concrete outcomes the step can have; empty when the tutor gave none. */
+  options: GuideOption[];
 };
 
 /** The guided procedure of the scan: its steps and the one the student is on. */

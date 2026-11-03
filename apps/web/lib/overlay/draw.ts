@@ -62,6 +62,11 @@ export type OverlayScene = {
    * matches a mask) every mask is drawn as usual.
    */
   guideIds?: readonly string[];
+  /**
+   * The box of the guide's card on the image (canvas pixels): a line goes from
+   * its edge to the guide's part, so the step and the part read as one.
+   */
+  guideCard?: BoundingBox | null;
 };
 
 /** Opacity of the masks while they are out of date. */
@@ -213,6 +218,54 @@ export function drawOverlay(
       ctx.stroke();
       ctx.setLineDash([]);
     }
+  }
+
+  // The line from the guide's card to the part it talks about: it leaves from
+  // the point of the card's edge nearest to the part and ends on the point of
+  // the outline closest to it, so it never crosses the part.
+  const card = scene.guideCard;
+  const target = card ? scene.detections.find((d) => guideSet.has(d.id)) : null;
+  const targetShape = target ? byId.get(target.id) : undefined;
+  if (card && targetShape && targetShape.points.length > 0) {
+    const link = {
+      x: Math.min(
+        Math.max(targetShape.bounds.x + targetShape.bounds.w / 2, card.x),
+        card.x + card.w,
+      ),
+      y: Math.min(
+        Math.max(targetShape.bounds.y + targetShape.bounds.h / 2, card.y),
+        card.y + card.h,
+      ),
+    };
+    let end = targetShape.points[0]!;
+    let best = Infinity;
+    for (const point of targetShape.points) {
+      const distance = (point[0] - link.x) ** 2 + (point[1] - link.y) ** 2;
+      if (distance < best) {
+        best = distance;
+        end = point;
+      }
+    }
+    ctx.setLineDash([]);
+    ctx.lineCap = "round";
+    for (const [color, lineWidth] of [
+      ["#FFFFFF", 5],
+      [GUIDE.color, 3],
+    ] as const) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(link.x, link.y);
+      ctx.lineTo(end[0], end[1]);
+      ctx.stroke();
+    }
+    ctx.fillStyle = GUIDE.color;
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(end[0], end[1], 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
   }
 
   ctx.globalAlpha = 1;

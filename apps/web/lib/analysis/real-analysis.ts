@@ -568,6 +568,21 @@ export class RealAnalysis implements ScanAnalysis {
     this.reviseFromStudent();
   }
 
+  /**
+   * The student does not want to do the current step. It goes to the tutor as
+   * something they said (a step to skip), so the steps from this one on are
+   * rewritten without it and without the ones that depended on it.
+   */
+  skipGuideStep() {
+    const { guide } = this.store.getState();
+    if (guide.status !== "ready" || guide.thinking) return;
+    const step = guide.steps[guide.current];
+    if (!step) return;
+    this.tellGuide(
+      `Quiero saltar este paso sin hacerlo: «${step.text}». Sigue con lo que viene sin él.`,
+    );
+  }
+
   /** Rewrites what is still to do from the reports and remarks the student has given. */
   private reviseFromStudent() {
     const { labCase, level } = this.store.getState();

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAnalysis } from "@/components/scan/analysis-provider";
 import { ChangeIndicator } from "@/components/scan/change-indicator";
 import { ControlBar } from "@/components/scan/control-bar";
 import { EnvironmentPreparation } from "@/components/scan/environment-preparation";
+import { GuideCard } from "@/components/scan/guide-card";
 import { LiveCameraSource } from "@/components/scan/live-camera-source";
 import { OverlayCanvas } from "@/components/scan/overlay-canvas";
 import { StageCornerControls } from "@/components/scan/stage-corner-controls";
@@ -14,6 +15,7 @@ import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useChangeDetection } from "@/hooks/use-change-detection";
 import { useCamera } from "@/lib/camera/use-camera";
+import type { GuidePos } from "@/lib/overlay/guide-placement";
 import { useSession } from "@/lib/session/session-provider";
 
 /**
@@ -24,6 +26,11 @@ export function CameraStage() {
   const stage = useSession((s) => s.stage);
   const deviceId = useSession((s) => s.cameraDeviceId);
   const [element, setElement] = useState<HTMLDivElement | null>(null);
+  // The guide's card sits on the stage; the overlay draws a line from it to the part.
+  const guideCardRef = useRef<HTMLDivElement>(null);
+  // Where it is: the overlay picks the place from where the part of the step is,
+  // so the card never covers it. Null until the first place is known.
+  const [guidePos, setGuidePos] = useState<GuidePos | null>(null);
   const [dims, setDims] = useState({ width: 1280, height: 720 });
   const { analysis, videoRef } = useAnalysis();
   const fullscreen = useFullscreen();
@@ -54,6 +61,9 @@ export function CameraStage() {
             />
             <OverlayCanvas
               source={dims}
+              guideCardRef={guideCardRef}
+              guidePos={guidePos}
+              onGuidePos={setGuidePos}
               changeGrid={
                 showGrid
                   ? { heat: change.reading.heat, status: change.reading.status }
@@ -71,6 +81,7 @@ export function CameraStage() {
             <ChangeIndicator reading={change.reading} onReset={change.reset} />
           ) : null}
         </StageCornerControls>
+        <GuideCard cardRef={guideCardRef} pos={guidePos} />
         <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-3">
           <ControlBar />
         </div>

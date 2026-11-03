@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, PanelRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ export function StageCornerControls({
   const devices = useSession((s) => s.cameraDevices);
   const activeId = useSession((s) => s.cameraActiveId);
   const setCameraDeviceId = useSession((s) => s.setCameraDeviceId);
+  const panelOpen = useSession((s) => s.panelOpen);
+  const setPanelOpen = useSession((s) => s.setPanelOpen);
   const value = activeId ?? "";
   const fullscreen = useFullscreen();
 
@@ -94,6 +96,28 @@ export function StageCornerControls({
             ))}
           </SelectContent>
         </Select>
+
+        {/* Desktop only: on a phone the panel is always the bottom drawer. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={
+            panelOpen
+              ? "Ocultar el panel de piezas"
+              : "Mostrar el panel de piezas"
+          }
+          aria-pressed={panelOpen}
+          onClick={() => setPanelOpen(!panelOpen)}
+          className={cn(
+            "size-9 rounded-full hover:bg-black/60 hover:text-white max-lg:hidden",
+            GLASS,
+            panelOpen &&
+              "bg-white text-black hover:bg-white/90 hover:text-black",
+          )}
+        >
+          <PanelRight aria-hidden="true" className="size-4" />
+        </Button>
 
         {fullscreen.supported ? (
           <Button

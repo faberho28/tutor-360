@@ -10,12 +10,17 @@ import type { Detection } from "@/lib/types";
 
 /**
  * Expands under the selected row: diagnosis, and the actions for that part.
- * The diagnosis is requested by StepsCard, which is always mounted.
+ * It also asks for the diagnosis of a part that needs one and has none yet (the
+ * scan only asks by itself for the first few).
  */
 export function ComponentDetail({ detection }: { detection: Detection }) {
   const store = useSessionStore();
   const { requestDiagnosis } = useServices();
   const entry = useSession((s) => s.diagnoses[detection.id]);
+
+  useEffect(() => {
+    if (detection.status !== "ok" && !entry) requestDiagnosis(store, detection);
+  }, [store, requestDiagnosis, detection, entry]);
   const inReport = useSession((s) => s.reportIds.includes(detection.id));
   const toggleReportItem = useSession((s) => s.toggleReportItem);
   const ref = useRef<HTMLDivElement>(null);

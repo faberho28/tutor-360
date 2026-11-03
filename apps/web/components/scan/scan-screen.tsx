@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "cn";
 import {
   AnalysisProvider,
   useAnalysis,
@@ -12,6 +13,7 @@ import { ShortcutsHelp } from "@/components/scan/shortcuts-help";
 import { TopBar } from "@/components/scan/top-bar";
 import { useAnalysisFailureToast } from "@/hooks/use-analysis-failure-toast";
 import { useNewAnomalyToast } from "@/hooks/use-new-anomaly-toast";
+import { useSession } from "@/lib/session/session-provider";
 
 export function ScanScreen() {
   return (
@@ -30,6 +32,7 @@ export function ScanScreen() {
  */
 function ScanLayout() {
   const { analysis } = useAnalysis();
+  const panelOpen = useSession((s) => s.panelOpen);
   useNewAnomalyToast();
   useAnalysisFailureToast(analysis);
 
@@ -42,7 +45,13 @@ function ScanLayout() {
       </TopBar>
       <ShortcutsHelp />
       {/* Room at the bottom on small screens for the drawer's peek. */}
-      <main className="grid min-h-0 gap-4 px-4 pt-1 pb-28 lg:grid-cols-[minmax(0,1fr)_clamp(380px,28vw,480px)] lg:pb-4">
+      <main
+        className={cn(
+          "grid min-h-0 gap-4 px-4 pt-1 pb-28 lg:pb-4",
+          // The panel is hidden until asked for: the stage takes the whole width.
+          panelOpen && "lg:grid-cols-[minmax(0,1fr)_clamp(380px,28vw,480px)]",
+        )}
+      >
         <div className="min-h-0">
           <CameraStage />
         </div>

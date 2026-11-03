@@ -4,9 +4,6 @@ import { cn } from "cn";
 import { useState } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { ComponentsCard } from "@/components/scan/components-card";
-import { GuidePanel } from "@/components/scan/guide-panel";
-import { VoiceControl } from "@/components/scan/voice-control";
-import { StepsCard } from "@/components/scan/steps-card";
 import { SummaryPill } from "@/components/scan/summary-pill";
 import { FirstAnalysisSkeleton } from "@/components/scan/first-analysis-skeleton";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
@@ -23,39 +20,19 @@ function DesktopPanel() {
   const initialAnalysis = useSession(
     (s) => s.analysis.phase === "analyzing" && s.detections.length === 0,
   );
-  // The guide replaces the list of parts while it runs; the list stays one
-  // click away.
-  const guideOn = useSession(
-    (s) => s.guide.status === "loading" || s.guide.status === "ready",
-  );
-  const [showParts, setShowParts] = useState(false);
-
+  // The guided steps live on the image (`GuideCard`): the panel is only the
+  // parts and the diagnoses, and only when the user asks for it.
   return (
     <aside
-      aria-label="Componentes y pasos"
+      aria-label="Componentes y diagnósticos"
       className="flex min-h-0 flex-col gap-4 overflow-hidden"
     >
       {initialAnalysis ? (
         <FirstAnalysisSkeleton />
-      ) : guideOn && !showParts ? (
-        <>
-          <VoiceControl />
-          <GuidePanel onShowParts={() => setShowParts(true)} />
-        </>
       ) : (
         <>
-          {guideOn ? (
-            <button
-              type="button"
-              onClick={() => setShowParts(false)}
-              className="self-start text-xs font-medium text-muted-foreground underline-offset-2 hover:underline"
-            >
-              Volver a la guía
-            </button>
-          ) : null}
           <SummaryPill />
           <ComponentsCard />
-          <StepsCard />
         </>
       )}
     </aside>
@@ -81,15 +58,15 @@ function MobilePanel() {
     >
       <DrawerPrimitive.Portal>
         <DrawerPrimitive.Content
-          aria-label="Componentes y pasos"
+          aria-label="Componentes y diagnósticos"
           className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-full flex-col rounded-t-3xl border border-b-0 bg-background outline-none"
         >
           <DrawerPrimitive.Title className="sr-only">
-            Componentes y pasos
+            Componentes y diagnósticos
           </DrawerPrimitive.Title>
           <DrawerPrimitive.Description className="sr-only">
-            Arrastra hacia arriba para ver la lista de componentes y el paso a
-            paso.
+            Arrastra hacia arriba para ver la lista de componentes y su
+            diagnóstico.
           </DrawerPrimitive.Description>
           <DrawerPrimitive.Handle className="mt-3 mb-2 h-1.5! w-12! bg-muted-foreground/30!" />
           <div
@@ -104,7 +81,6 @@ function MobilePanel() {
               <>
                 <SummaryPill />
                 <ComponentsCard />
-                <StepsCard />
               </>
             )}
           </div>
@@ -116,11 +92,16 @@ function MobilePanel() {
 
 export function SidePanel() {
   const isDesktop = useIsDesktop();
+  const panelOpen = useSession((s) => s.panelOpen);
 
   // The server does not know the width: keep the desktop column's space
-  // reserved until the browser answers, then mount the right variant.
+  // reserved (only when the panel is open) until the browser answers, then
+  // mount the right variant. On desktop the panel is hidden until asked for.
   if (isDesktop === undefined) {
-    return <div aria-hidden="true" className="hidden lg:block" />;
+    return panelOpen ? (
+      <div aria-hidden="true" className="hidden lg:block" />
+    ) : null;
   }
-  return isDesktop ? <DesktopPanel /> : <MobilePanel />;
+  if (!isDesktop) return <MobilePanel />;
+  return panelOpen ? <DesktopPanel /> : null;
 }

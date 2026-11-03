@@ -1,6 +1,6 @@
 import { API_KEY_HEADER } from "../settings/api-key";
 import type { TutorLevel } from "../tutor/levels";
-import type { Detection, Guide, GuideStep } from "../types";
+import type { Detection, Guide, GuideOption, GuideStep } from "../types";
 
 /** The first guide writes a goal, every step and a description: 10 s on a small board, 30 s or more on a crowded one. The route allows 60 s. */
 const TIMEOUT_MS = 70_000;
@@ -8,7 +8,10 @@ const TIMEOUT_MS = 70_000;
 /** What the tutor is told about each part. */
 export type GuidePartInput = Pick<Detection, "id" | "label" | "status">;
 
-function isStep(value: unknown): value is GuideStep {
+/** A step as it comes over the wire: the outcomes are optional (a step without them gets the plain buttons). */
+type WireStep = Omit<GuideStep, "options"> & { options?: unknown };
+
+function isStep(value: unknown): value is WireStep {
   if (typeof value !== "object" || value === null) return false;
   const { text, target } = value as { text?: unknown; target?: unknown };
   return (
@@ -16,6 +19,24 @@ function isStep(value: unknown): value is GuideStep {
     text.length > 0 &&
     (target === null || typeof target === "string")
   );
+}
+
+function isOption(value: unknown): value is GuideOption {
+  if (typeof value !== "object" || value === null) return false;
+  const { label, expected } = value as { label?: unknown; expected?: unknown };
+  return (
+    typeof label === "string" &&
+    label.length > 0 &&
+    typeof expected === "boolean"
+  );
+}
+
+function toStep({ text, target, options }: WireStep): GuideStep {
+  return {
+    text,
+    target,
+    options: Array.isArray(options) ? options.filter(isOption) : [],
+  };
 }
 
 /**
@@ -92,7 +113,7 @@ export async function requestGuide(
     }
     return {
       goal,
-      steps,
+      steps: steps.map(toStep),
       conclusion,
       observation: typeof observation === "string" ? observation : "",
     };
