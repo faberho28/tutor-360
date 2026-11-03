@@ -39,7 +39,7 @@ export function useCamera(enabled: boolean, deviceId: string | null) {
 
     const requested = deviceId ?? loadPreferredDevice();
     const open = async (): Promise<MediaStream> => {
-      const size = { width: { ideal: 1280 }, height: { ideal: 720 } };
+      const size = { width: { ideal: 1920 }, height: { ideal: 1080 } };
       if (!requested) {
         return navigator.mediaDevices.getUserMedia({
           audio: false,
