@@ -601,7 +601,13 @@ function kind(label: string) {
 }
 
 function toPart(d: Detection) {
-  return { id: d.id, label: d.label, status: d.status };
+  return {
+    id: d.id,
+    label: d.label,
+    status: d.status,
+    reason: d.reason,
+    bbox: d.bbox,
+  };
 }
 
 /** The prompt of a stage: empty means "the real one"; load it to edit it. */

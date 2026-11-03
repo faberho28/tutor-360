@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { failure as fail } from "@/lib/analysis/error-response";
 import { analyzeRequestSchema, MAX_BODY_BYTES } from "@/lib/analysis/request";
-import { MAX_GUIDE_PARTS } from "@/lib/guide/limits";
+import { guidePartsSchema } from "@/lib/guide/part-schema";
 import { ModelError, toModelError } from "@/lib/models/errors";
 import { MetaGuideWriter } from "@/lib/models/guide-writer";
 import { getEnv } from "@/lib/env";
@@ -39,15 +39,7 @@ const requestSchema = z.object({
       log: z.array(z.string().max(1700)).max(40).optional(),
     })
     .optional(),
-  parts: z
-    .array(
-      z.object({
-        id: z.string().min(1).max(64),
-        label: z.string().min(1).max(120),
-        status: z.enum(["ok", "warning", "anomaly"]),
-      }),
-    )
-    .max(MAX_GUIDE_PARTS),
+  parts: guidePartsSchema,
 });
 
 /**
@@ -72,6 +64,7 @@ export async function POST(request: Request) {
   const sentKey = request.headers.get(API_KEY_HEADER);
   if (sentKey !== null && !API_KEY_PATTERN.test(sentKey)) return fail("auth");
 
+  const requestedAt = Date.now();
   try {
     try {
       getEnv();
@@ -89,12 +82,15 @@ export async function POST(request: Request) {
       apiKey: sentKey ?? undefined,
       signal: request.signal,
     });
+    console.info(
+      `[guide] ok in ${Date.now() - requestedAt} ms, ${parsed.data.parts.length} parts, ${guide.steps.length} steps`,
+    );
     return Response.json(guide);
   } catch (error) {
     const modelError = toModelError(error);
-    // Kind and status only: neither the image nor SDK messages go to the log.
+    // Kind, status and time only: neither the image nor SDK messages go to the log.
     console.error(
-      `[guide] ${modelError.kind} status=${modelError.status ?? "-"}`,
+      `[guide] ${modelError.kind} status=${modelError.status ?? "-"} after ${Date.now() - requestedAt} ms, ${parsed.data.parts.length} parts`,
     );
     return fail(modelError.kind);
   }

@@ -12,7 +12,6 @@ import {
   clearAnalyzedFrame,
   setAnalyzedFrame,
 } from "../diagnosis/analyzed-frame";
-import { autoDiagnose } from "../diagnosis/request-diagnosis";
 import { requestGuide } from "../guide/guide-client";
 import { guideParts } from "../guide/limits";
 import { markFrame } from "../guide/mark-frame";
@@ -95,6 +94,10 @@ export class RealAnalysis implements ScanAnalysis {
   /** A revision of the steps is out (only one at a time). */
   private revising = false;
   private lastRevisionAt = 0;
+  /** The newest scene that arrived while a revision was out: revised right after it. */
+  private queuedFrame: CapturedFrame | null = null;
+  /** Ids of the parts the tutor has already been shown; the others are new to it. */
+  private readonly guideSeen = new Set<string>();
   /** The frame the guide was written from: the "before" of the final check. */
   private guideFrame: CapturedFrame | null = null;
   /**
@@ -346,6 +349,7 @@ export class RealAnalysis implements ScanAnalysis {
           (guide) => {
             // A reset in between: this guide belongs to the old context.
             if (signal.aborted) return;
+            this.markSeen(detections);
             this.store.getState().setGuide({
               status: "ready",
               check: { status: "idle" },
@@ -446,6 +450,8 @@ export class RealAnalysis implements ScanAnalysis {
     this.guideFrame = null;
     this.revising = false;
     this.lastRevisionAt = 0;
+    this.queuedFrame = null;
+    this.guideSeen.clear();
     this.lastScene = null;
     this.revisionSeq++;
     clearAnalyzedFrame(this.store);
@@ -510,13 +516,11 @@ export class RealAnalysis implements ScanAnalysis {
         context: labCase?.context || undefined,
         apiKey: readApiKey() ?? undefined,
       },
-      // A review finished: redraw with whatever the list is by now, and the
-      // parts that came out as a problem get their diagnosis right away.
+      // A review finished: redraw with whatever the list is by now.
       () => {
         this.store
           .getState()
           .replaceDetections(this.decorated(this.store.getState().detections));
-        autoDiagnose(this.store);
       },
     );
     // From here the tracking follows the masks where their objects are now.
@@ -525,9 +529,6 @@ export class RealAnalysis implements ScanAnalysis {
       else this.session.clear();
     }
     state.replaceDetections(this.decorated(next));
-    // Reviews already known (the scene is the same) can name and judge the new
-    // masks at once, with no review settling later to trigger this.
-    autoDiagnose(this.store);
     this.store.getState().setAnalysis({
       latencyMs,
       stale: false,
@@ -604,13 +605,19 @@ export class RealAnalysis implements ScanAnalysis {
       .then((picture) => {
         // Without a picture to show there is nothing to ask: the steps go on.
         if (!picture) throw new Error("There is no picture to show");
+        const parts = this.tagNew(picture.parts);
         return requestGuide(picture.image, {
-          parts: picture.parts,
+          parts,
           context: labCase?.description || undefined,
           level,
           progress,
           apiKey: readApiKey() ?? undefined,
           signal,
+        }).then((next) => {
+          if (!signal.aborted && seq === this.revisionSeq) {
+            this.markSeen(picture.parts);
+          }
+          return next;
         });
       })
       .then(
@@ -743,57 +750,101 @@ export class RealAnalysis implements ScanAnalysis {
     if (guide.status !== "ready" || guide.current >= guide.steps.length) return;
     // The student's own report is being worked out: it is the newer information.
     if (guide.thinking) return;
-    const now = performance.now();
-    if (this.revising || now - this.lastRevisionAt < GUIDE_REVISION_GAP_MS) {
+    // A revision is out: the newest scene waits for it instead of being lost.
+    if (this.revising) {
+      this.queuedFrame = frame;
       return;
     }
-    const detections = guideParts(this.store.getState().detections);
-    if (detections.length === 0) return;
+    // Parts the tutor has not seen are a reason to look again at once.
+    const hasNew = guideParts(this.store.getState().detections).some(
+      (d) => this.guideSeen.size > 0 && !this.guideSeen.has(d.id),
+    );
+    const now = performance.now();
+    if (!hasNew && now - this.lastRevisionAt < GUIDE_REVISION_GAP_MS) return;
     this.revising = true;
     this.lastRevisionAt = now;
     const { signal } = this.guideRun;
     const seq = this.revisionSeq;
-    const progress = {
-      goal: guide.goal,
-      steps: guide.steps.map((step) => step.text),
-      current: guide.current,
-      reports: guide.reports,
-      remarks: guide.remarks,
-      scene: guide.scene,
-      log: guide.log,
-    };
-    void markFrame(frame, detections)
-      .then((marked) =>
-        requestGuide(marked, {
-          parts: detections,
-          context: labCase?.description || undefined,
-          level,
-          progress,
-          apiKey: readApiKey() ?? undefined,
-          signal,
-        }),
-      )
-      .then(
-        (next) => {
-          // A reset in between: this revision belongs to the old context.
-          // A newer revision (the student answered a step) wins.
-          if (signal.aborted || seq !== this.revisionSeq) return;
-          this.store
-            .getState()
-            .reviseGuide(
-              next.goal,
-              next.steps,
-              progress.current,
-              next.conclusion,
-              next.observation,
-            );
-        },
-        // A failed revision leaves the steps as they are.
-        () => {},
-      )
+    let succeeded = false;
+    // The new parts come out of this analysis with provisional names: the tutor
+    // looks once Spark's reviews have named and judged them.
+    void waitForReviews(this.store)
+      .then(() => {
+        if (signal.aborted || seq !== this.revisionSeq) return;
+        const current = this.store.getState().guide;
+        if (
+          current.status !== "ready" ||
+          current.thinking ||
+          current.current >= current.steps.length
+        ) {
+          return;
+        }
+        const detections = guideParts(this.store.getState().detections);
+        if (detections.length === 0) return;
+        const progress = {
+          goal: current.goal,
+          steps: current.steps.map((step) => step.text),
+          current: current.current,
+          reports: current.reports,
+          remarks: current.remarks,
+          scene: current.scene,
+          log: current.log,
+        };
+        return markFrame(frame, detections)
+          .then((marked) =>
+            requestGuide(marked, {
+              parts: this.tagNew(detections),
+              context: labCase?.description || undefined,
+              level,
+              progress,
+              apiKey: readApiKey() ?? undefined,
+              signal,
+            }),
+          )
+          .then((next) => {
+            // A reset in between: this revision belongs to the old context.
+            // A newer revision (the student answered a step) wins.
+            if (signal.aborted || seq !== this.revisionSeq) return;
+            this.markSeen(detections);
+            succeeded = true;
+            this.store
+              .getState()
+              .reviseGuide(
+                next.goal,
+                next.steps,
+                progress.current,
+                next.conclusion,
+                next.observation,
+              );
+          });
+      })
+      // A failed revision leaves the steps as they are.
+      .catch(() => {})
       .finally(() => {
         this.revising = false;
+        const queued = this.queuedFrame;
+        this.queuedFrame = null;
+        // Retried only after a success: a failure would loop on the same parts.
+        if (queued && succeeded && !signal.aborted) this.reviseGuide(queued);
       });
+  }
+
+  /**
+   * Marks the parts the tutor has not been told about yet. The first look (the
+   * guide itself) tells it about all of them, so nothing is new until then.
+   */
+  private tagNew<T extends { id: string }>(
+    parts: readonly T[],
+  ): (T & { isNew?: boolean })[] {
+    if (this.guideSeen.size === 0) return [...parts];
+    return parts.map((part) =>
+      this.guideSeen.has(part.id) ? part : { ...part, isNew: true },
+    );
+  }
+
+  /** The tutor has now been shown these parts. */
+  private markSeen(parts: readonly { id: string }[]) {
+    for (const part of parts) this.guideSeen.add(part.id);
   }
 
   private fail(error: unknown, info: { willRetry: boolean; manual: boolean }) {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { analyzeRequestSchema } from "@/lib/analysis/request";
 import { getEnv } from "@/lib/env";
-import { MAX_GUIDE_PARTS } from "@/lib/guide/limits";
+import { guidePartsSchema } from "@/lib/guide/part-schema";
 import { toModelError } from "@/lib/models/errors";
 import { buildGuidePrompt, MetaGuideWriter } from "@/lib/models/guide-writer";
 import { API_KEY_HEADER, API_KEY_PATTERN } from "@/lib/settings/api-key";
@@ -13,15 +13,7 @@ const requestSchema = z.object({
   context: analyzeRequestSchema.shape.context,
   /** How much the student already knows. */
   level: z.enum(TUTOR_LEVELS).optional(),
-  parts: z
-    .array(
-      z.object({
-        id: z.string().min(1).max(64),
-        label: z.string().min(1).max(120),
-        status: z.enum(["ok", "warning", "anomaly"]),
-      }),
-    )
-    .max(MAX_GUIDE_PARTS),
+  parts: guidePartsSchema,
   /** The procedure being followed, with what the student reported. */
   progress: z
     .object({

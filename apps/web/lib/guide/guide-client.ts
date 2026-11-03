@@ -6,7 +6,13 @@ import type { Detection, Guide, GuideOption, GuideStep } from "../types";
 const TIMEOUT_MS = 70_000;
 
 /** What the tutor is told about each part. */
-export type GuidePartInput = Pick<Detection, "id" | "label" | "status">;
+export type GuidePartInput = Pick<
+  Detection,
+  "id" | "label" | "status" | "reason" | "bbox"
+> & {
+  /** Appeared after the tutor last looked. */
+  isNew?: boolean;
+};
 
 /** A step as it comes over the wire: the outcomes are optional (a step without them gets the plain buttons). */
 type WireStep = Omit<GuideStep, "options"> & { options?: unknown };
@@ -84,11 +90,16 @@ export async function requestGuide(
         context: options.context,
         level: options.level,
         progress: options.progress,
-        parts: options.parts.map(({ id, label, status }) => ({
-          id,
-          label,
-          status,
-        })),
+        parts: options.parts.map(
+          ({ id, label, status, reason, bbox, isNew }) => ({
+            id,
+            label,
+            status,
+            reason,
+            bbox,
+            isNew,
+          }),
+        ),
       }),
       signal: controller.signal,
     });

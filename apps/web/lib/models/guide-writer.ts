@@ -2,23 +2,21 @@ import "server-only";
 import { z } from "zod";
 import { levelGuidance, levelProfile } from "../tutor/level-profiles";
 import { DEFAULT_TUTOR_LEVEL, type TutorLevel } from "../tutor/levels";
+import type { GuideOption } from "../types";
 import { ModelError, toModelError } from "./errors";
-import { partLine } from "./part-line";
+import { partLine, type PartForPrompt } from "./part-line";
 import { callSpark } from "./spark-call";
 
 /** A part the models found, as the tutor sees it: enough to point at it. */
-export type GuidePart = {
-  id: string;
-  /** Name shown to the user (Spanish). */
-  label: string;
-  status: "ok" | "warning" | "anomaly";
-};
+export type GuidePart = PartForPrompt & { id: string };
 
 export type GuideStep = {
   /** What to do and why, for the student (Spanish). */
   text: string;
   /** The part this step is about, or null when it is not about one part. */
   target: string | null;
+  /** The concrete outcomes the step can have, for the student to tap. */
+  options: GuideOption[];
 };
 
 export type Guide = {
@@ -85,6 +83,9 @@ export type GuideInput = {
 const SAFETY_MAX_STEPS = 60;
 /** What a step uses when it is not about any single part. */
 export const NO_TARGET = "none";
+/** The prompt asks for 2 to 4 outcomes per step; a few more are tolerated, never shown. */
+const MAX_OPTIONS_ASKED = 6;
+const MAX_OPTIONS_SHOWN = 4;
 
 const guideSchema = z.object({
   observation: z.string().trim().max(1500),
@@ -94,6 +95,14 @@ const guideSchema = z.object({
       z.object({
         text: z.string().trim().min(1).max(420),
         target: z.string().trim().min(1).max(64),
+        options: z
+          .array(
+            z.object({
+              label: z.string().trim().min(1).max(80),
+              expected: z.boolean(),
+            }),
+          )
+          .max(MAX_OPTIONS_ASKED),
       }),
     )
     // No steps left is allowed when the procedure is over (see `conclusion`).
@@ -118,10 +127,22 @@ const RESPONSE_FORMAT = {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["text", "target"],
+          required: ["text", "target", "options"],
           properties: {
             text: { type: "string" },
             target: { type: "string" },
+            options: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["label", "expected"],
+                properties: {
+                  label: { type: "string" },
+                  expected: { type: "boolean" },
+                },
+              },
+            },
           },
         },
       },
@@ -139,7 +160,7 @@ export function buildGuidePrompt(
     input.context
       ? `What the student says they are working on: "${input.context}"`
       : null,
-    "The image shows the parts the vision system found, each one outlined in magenta with its number on a magenta tag. This is the condition of each numbered part. Their names are NOT given on purpose: another model named them and often got them wrong, so identify every part by LOOKING at it in the image:",
+    "The image shows the parts the vision system found, each one outlined in magenta with its number on a magenta tag. Each line gives where the part sits in the picture, its condition, and what another model guessed about it. That guess (name and reason) is only a hint: that model named whole groups of masks and often got them wrong, so identify every part by LOOKING at it in the image and trust the image over the hint:",
     ...input.parts.map(partLine),
     input.progress
       ? [
@@ -158,6 +179,12 @@ export function buildGuidePrompt(
               : "";
             return `${i + 1}. (done) ${step} STUDENT REPORT: ${REPORT_TEXT[report.result]}.${note}`;
           }),
+          "The steps marked (done) are finished for good, whether they were completed or skipped: NEVER write them again, nor a step that repeats the same action on the same thing with other words. If a report says a done step did not give the expected result, move on with a DIFFERENT action (another check, the cause, the fix); never ask them to do the same one again.",
+          ...(input.parts.some((part) => part.isNew)
+            ? [
+                "Parts marked [NEW] were not in the picture the last time you looked: the camera moved, something appeared or was uncovered. Decide whether they change the procedure; when they matter (a warning or anomaly, or something the goal depends on), add steps for them in the right place.",
+              ]
+            : []),
           ...(input.progress.scene
             ? [
                 `What the scene looked like when the procedure began (described then): "${input.progress.scene}"`,
@@ -177,7 +204,7 @@ export function buildGuidePrompt(
             : []),
           input.progress.reports?.some(Boolean) ||
           (input.progress.remarks?.length ?? 0) > 0
-            ? 'Decide what comes next from what the student reported. Write ONLY the steps still to do, in the order to do them, in Spanish (Colombia) with correct spelling, accents included. Each one follows from the reports: a test that came out as expected moves toward its conclusion, one that did not points to another cause or another check, and the student\'s own words may add facts. What the student told the tutor out loud (listed above, when there is any) are facts or instructions too: take them into account even when they are not about the current step (a part they replaced, a step they want to skip or repeat, something new they found), and rewrite from the current step on. Drop the planned steps the reports make pointless and add the ones they make necessary. If a cause is already found, the steps carry out the fix and then confirm it. When the goal has been reached (the problem is solved, or its cause is found and the student has nothing else to do), write NO steps and put in "conclusion" what was found and done, addressed to the student. A conclusion must be supported by the reports: never say that everything is fine while a report said the step did NOT happen, or that the student could not tell, and no later step settled it. A report like that opens something to follow: the next steps repeat or refine the check, look for its cause or fix it, until it is settled; and if the student cannot settle it, the conclusion says what stays unresolved and what to do about it.'
+            ? 'Decide what comes next from what the student reported. Write ONLY the steps still to do, in the order to do them, in Spanish (Colombia) with correct spelling, accents included. Each one follows from the reports: a test that came out as expected moves toward its conclusion, one that did not points to another cause or another check, and the student\'s own words may add facts. What the student told the tutor out loud (listed above, when there is any) are facts or instructions too: take them into account even when they are not about the current step (a part they replaced, a step they want to skip or repeat, something new they found), and rewrite from the current step on. Drop the planned steps the reports make pointless and add the ones they make necessary. If a cause is already found, the steps carry out the fix and then confirm it. When the goal has been reached (the problem is solved, or its cause is found and the student has nothing else to do), write NO steps and put in "conclusion" what was found and done, addressed to the student. A conclusion must be supported by the reports: never say that everything is fine while a report said the step did NOT happen, or that the student could not tell, and no later step settled it. A report like that opens something to follow: the next steps refine the check with a different action, look for its cause or fix it, until it is settled (never by asking for the same step again); and if the student cannot settle it, the conclusion says what stays unresolved and what to do about it.'
             : "Write ONLY the steps that are still to do from now on, in the order to do them, in Spanish (Colombia) with correct spelling, accents included. Keep them word for word when what you see agrees with them. Drop a step the picture shows is already achieved, rewrite one that the new situation changed, and add one that a new situation needs. Keep the goal unless the situation changed it. If nothing relevant changed, answer the remaining steps unchanged.",
         ].join("\n")
       : `Look at the image and write the procedure the student should follow now: a goal and every step the procedure really needs (as many as it takes to reach the goal, no fewer and none that is filler), in the order to do them, in Spanish (Colombia) with correct spelling, accents included.`,
@@ -191,6 +218,7 @@ export function buildGuidePrompt(
     '- Every "si X, entonces Y" must be sound: Y has to follow necessarily from X, so say only what X really proves. When X could come from several causes, do not conclude: the next step is the check that tells those causes apart.',
     '- Do not stop at finding the cause, or at "it cannot be fixed" or "replace it all". Give the whole path: find the cause, then carry out the fix on what can be fixed (say what stays as it is and what is the safe order), and last confirm that it worked. Only when something truly cannot be fixed by the student, say so and what to do instead.',
     `- Every step has a "target": the number, as in the list above, of the ONE outlined part the step is about, or "${NO_TARGET}" when it is not about a single part (for example unplugging the whole device). Choose it by looking at the outlined part in the image: make sure the number tag is the one sitting on the part your step talks about, and never guess or invent a number.`,
+    '- Every step has "options": 2 to 4 short outcomes (at most 8 words each, in Spanish) that the student taps to say how the step turned out, instead of a plain yes or no. They are the concrete results the step can really have, what they measured, saw or felt, taken from the "si pasa X, entonces Y" of the step ("Marca cerca de 3 V", "Marca 0 V", "El conector se mueve", "Sigue firme"). Set "expected" to true for the outcome the step says to expect (the X of "si pasa X") and false for the others. Offer the outcomes that would change what comes next, no two that mean the same, and never "yes", "no" or "I do not know": the student has those buttons and a free note for anything else. Name no specific part in them either, only what happened.',
     '- The student sees the part of the step blinking in magenta on the screen. The names shown on the screen for each part come from another model and will not match yours, so NEVER say which specific part it is (not "la tecla Shift", not "el módulo de RAM"). Refer to it only by its general kind and the blinking: "la tecla que parpadea", "el componente que parpadea", "la pieza que parpadea". Say what to do with it, not what it is called.',
     "- Start with safety only when it applies to this kind of object (for example unplugging or powering off something connected to the mains).",
     "- Parts in warning or anomaly condition come first among the parts to work on.",
@@ -235,9 +263,19 @@ export function parseGuide(
     );
   }
   // The target comes back as the number the image marks; the part is its id.
-  const steps = parsed.data.steps.map(({ text: step, target }) => {
+  const steps = parsed.data.steps.map(({ text: step, target, options }) => {
     const n = /^\d{1,3}$/.test(target) ? Number(target) : 0;
-    return { text: step, target: parts[n - 1]?.id ?? null };
+    // The same outcome never twice, and no more than the card can show.
+    const labels = new Set<string>();
+    const shown = options
+      .filter(({ label }) => {
+        const key = label.toLowerCase();
+        if (labels.has(key)) return false;
+        labels.add(key);
+        return true;
+      })
+      .slice(0, MAX_OPTIONS_SHOWN);
+    return { text: step, target: parts[n - 1]?.id ?? null, options: shown };
   });
   // The same step never twice, whatever part it points at.
   const seen = new Set<string>();
@@ -260,6 +298,9 @@ export function parseGuide(
   };
 }
 
+/** Under the route's 60 s (`maxDuration`). */
+const GUIDE_TIMEOUT_MS = 55_000;
+
 /** Low: the same scene should get the same procedure. */
 const GUIDE_TEMPERATURE = 0.3;
 
@@ -273,6 +314,11 @@ export class MetaGuideWriter {
         format: RESPONSE_FORMAT,
         reasoningEffort: input.reasoningEffort ?? "minimal",
         temperature: GUIDE_TEMPERATURE,
+        // The answer is long (steps, outcomes, a description): 15 s per try cut
+        // it off. One try only, so the route's 60 s are not spent on retries.
+        timeoutMs: GUIDE_TIMEOUT_MS,
+        maxRetries: 0,
+        logAs: "guide",
         apiKey: input.apiKey,
         signal: input.signal,
       });

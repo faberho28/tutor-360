@@ -5,17 +5,10 @@ import { getAnalyzedFrame } from "./analyzed-frame";
 import { cropFrame } from "./crop";
 import { requestDiagnosisFor } from "./diagnose-client";
 
-/** Diagnoses that run at the same time (each one is a Spark call). */
-export const AUTO_PARALLEL = 3;
 /**
- * Diagnoses the scan asks for by itself: the rest wait for the user to select
- * the part. Bounds the cost of a board full of warnings.
- */
-export const AUTO_MAX = 8;
-
-/**
- * Spark looks at a crop of the analyzed frame and writes the diagnosis. The
- * answer is kept per part, so selecting another part never overwrites it.
+ * Spark looks at a crop of the analyzed frame and writes the diagnosis. Only on
+ * demand (the user selects the part or the report needs it). The answer is kept
+ * per part, so selecting another part never overwrites it.
  */
 export function requestDiagnosis(store: SessionStore, detection: Detection) {
   const { diagnoses, labCase, level, setDiagnosis } = store.getState();
@@ -60,30 +53,5 @@ export function requestDiagnosis(store: SessionStore, detection: Detection) {
     } catch {
       store.getState().setDiagnosis(detection.id, { status: "error" });
     }
-    // One slot is free: the next part in line may start.
-    autoDiagnose(store);
   })();
-}
-
-/**
- * Asks for the diagnosis of the parts that came out of Spark's review as
- * "anomaly" or "warning", anomalies first, so it is ready when the user selects
- * them. Called whenever the names and statuses change. A part whose review is
- * still out is skipped (its status is only provisional); one that failed is not
- * retried here (the user retries it from the detail).
- */
-export function autoDiagnose(store: SessionStore) {
-  const { detections, diagnoses } = store.getState();
-  const started = Object.keys(diagnoses).length;
-  const loading = Object.values(diagnoses).filter(
-    (entry) => entry.status === "loading",
-  ).length;
-  const room = Math.min(AUTO_PARALLEL - loading, AUTO_MAX - started);
-  if (room <= 0) return;
-  const rank = (d: Detection) => (d.status === "anomaly" ? 0 : 1);
-  detections
-    .filter((d) => d.status !== "ok" && !d.reviewing && !diagnoses[d.id])
-    .sort((a, b) => rank(a) - rank(b))
-    .slice(0, room)
-    .forEach((d) => requestDiagnosis(store, d));
 }

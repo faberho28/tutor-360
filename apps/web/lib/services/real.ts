@@ -8,8 +8,7 @@ import type { ScanServices } from "./types";
  * it says so instead of faking a result.
  */
 export const realServices: ScanServices = {
-  // The diagnosis also starts by itself after Spark's review (autoDiagnose);
-  // selecting a part that has none asks for it here.
+  // The diagnosis is only on demand: selecting a part that has none asks for it here.
   requestDiagnosis,
   // The PDF is built in the browser (HU-26, HU-27): the pictures stay local.
   reportAvailable: true,

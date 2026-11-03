@@ -16,6 +16,12 @@ export type SparkCall = {
   model?: string;
   apiKey?: string;
   signal?: AbortSignal;
+  /** Per-attempt timeout instead of the client's 15 s (long answers need more). */
+  timeoutMs?: number;
+  /** Retries instead of the client's 2 (a retry after a long timeout outlives the route). */
+  maxRetries?: number;
+  /** When set, logs how long the call took and its tokens under this name. */
+  logAs?: string;
 };
 
 /**
@@ -24,6 +30,7 @@ export type SparkCall = {
  */
 export async function callSpark(call: SparkCall): Promise<string> {
   const client = getModelClient(call.apiKey);
+  const startedAt = Date.now();
   const response = await client.responses.create(
     {
       model: call.model ?? getEnv().SCENE_MODEL,
@@ -49,7 +56,16 @@ export async function callSpark(call: SparkCall): Promise<string> {
         ? { temperature: call.temperature }
         : {}),
     },
-    { signal: call.signal },
+    {
+      signal: call.signal,
+      ...(call.timeoutMs !== undefined ? { timeout: call.timeoutMs } : {}),
+      ...(call.maxRetries !== undefined ? { maxRetries: call.maxRetries } : {}),
+    },
   );
+  if (call.logAs) {
+    console.info(
+      `[${call.logAs}] spark ${Date.now() - startedAt} ms, tokens in=${response.usage?.input_tokens ?? "-"} out=${response.usage?.output_tokens ?? "-"}`,
+    );
+  }
   return response.output_text;
 }
