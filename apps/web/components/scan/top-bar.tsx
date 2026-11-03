@@ -1,4 +1,5 @@
-import { Cpu, KeyRound, Settings } from "lucide-react";
+import { KeyRound, Settings } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
@@ -28,9 +29,14 @@ export function TopBar({
         aria-label="Tutor AI 360, go to the home page"
         className="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 pl-1 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Cpu aria-hidden="true" className="size-4" strokeWidth={1.75} />
-        </span>
+        <Image
+          src="/logo.svg"
+          alt=""
+          width={32}
+          height={32}
+          unoptimized
+          className="size-8"
+        />
         <span
           aria-hidden="true"
           className="hidden text-xs font-semibold text-muted-foreground sm:block"

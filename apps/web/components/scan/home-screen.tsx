@@ -1,4 +1,5 @@
 import { Camera, ScanSearch, Stethoscope, ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { TopBar } from "@/components/scan/top-bar";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,15 @@ export function HomeScreen() {
       <main className="flex min-h-0 flex-col items-center overflow-y-auto p-6">
         <div className="my-auto flex w-full max-w-3xl flex-col items-center gap-10 py-8 text-center">
           <div className="flex flex-col items-center gap-4">
+            <Image
+              src="/logo.svg"
+              alt="Tutor AI 360"
+              width={96}
+              height={96}
+              unoptimized
+              priority
+              className="size-24"
+            />
             <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
               Diagnose the inside of a PC with the camera
             </h2>
