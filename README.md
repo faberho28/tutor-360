@@ -24,14 +24,27 @@ Tutor AI 360 looks at the board with them: it names and judges each part, writes
 
 ## Quick start (run it yourself)
 
-1. **API key.** Copy `apps/web/.env.example` to `apps/web/.env` and set your `MODEL_API_KEY`. If you prefer not to, paste it later with the key icon in the top bar.
-2. **Run it**, with or without Docker:
-   - With Docker: `docker compose up --build`.
-   - Without Docker (Node 24 and pnpm 12): `pnpm install` and `pnpm dev`.
-3. **Open** `http://localhost:3000` (the camera only works on `localhost` or over HTTPS).
-4. **Use it:** in the Lab choose what to scan and your level, allow the camera in Scan and press the automatic analysis button; select a part to see its diagnosis and follow the guide on the image.
+You need a Meta Model API key and a device with a camera. Pick Docker (nothing else to install) or run it locally with Node 24 and pnpm 12.
 
-If port 3000 is taken, use `WEB_PORT=3210 docker compose up --build` or `pnpm --filter web exec next dev -p 3210`.
+**1. Set your API key** (optional here, you can also paste it in the app later with the key icon in the top bar):
+
+```bash
+cp apps/web/.env.example apps/web/.env
+# then set MODEL_API_KEY in apps/web/.env
+```
+
+**2. Start the app**, with one of these:
+
+| Option        | Commands                                              |
+| ------------- | ----------------------------------------------------- |
+| Docker        | `docker compose up --build`                           |
+| Node and pnpm | `corepack enable`, then `pnpm install` and `pnpm dev` |
+
+**3. Open** <http://localhost:3000>. The camera only works on `localhost` or over HTTPS.
+
+**4. Scan.** Follow steps 3 and 4 of [Try it](#try-it): pick a case and your level in the Lab, allow the camera, turn on the automatic analysis, select a part and follow the guide on the image.
+
+> **Tip:** if port 3000 is taken, run `WEB_PORT=3210 docker compose up --build` with Docker, or `pnpm --filter web exec next dev -p 3210` without it, and open that port instead.
 
 ## What it does
 
@@ -195,4 +208,3 @@ samples/             Sample photos
 ## Conventions
 
 - Commits follow Conventional Commits.
-- Only `README.md` is versioned among the Markdown files; the rest of the documentation is local.
