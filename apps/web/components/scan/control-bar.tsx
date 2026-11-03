@@ -19,7 +19,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -60,9 +59,21 @@ function Hint({
   );
 }
 
+/** The four small buttons around the analysis one: the same size, the same gap. */
+const SIDE_BUTTON = "size-8 rounded-full border";
+
 /**
- * Floating bar: capture, automatic analysis and report. It drives the
- * analysis the page provides.
+ * Two buttons on each side. With a mouse the bar rests as just the analysis
+ * button and these groups unfold on hover or focus; on touch they stay open.
+ */
+const SIDE_GROUP =
+  "flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100";
+
+/**
+ * Floating bar. The main button, in the middle and the biggest, is the
+ * automatic analysis; around it, two on each side and all the same size: restart
+ * the context and capture on the left, report and more on the right. It drives
+ * the analysis the page provides.
  */
 export function ControlBar() {
   const store = useSessionStore();
@@ -153,71 +164,82 @@ export function ControlBar() {
         role="toolbar"
         aria-label="Controles de captura"
         className={cn(
-          "group pointer-events-auto grid w-fit grid-cols-[68px_32px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1 shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
-          "[@media(hover:hover)]:grid-cols-[0px_32px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_32px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_32px_68px] [@media(hover:hover)]:focus-within:gap-1",
+          "group pointer-events-auto grid w-fit grid-cols-[68px_40px_68px] items-center gap-1 overflow-hidden rounded-full border bg-card/90 p-1shadow-lg shadow-black/5 backdrop-blur transition-[grid-template-columns,gap] duration-300 ease-out motion-reduce:transition-none",
+          "[@media(hover:hover)]:grid-cols-[0px_40px_0px] [@media(hover:hover)]:gap-0 [@media(hover:hover)]:hover:grid-cols-[68px_40px_68px] [@media(hover:hover)]:hover:gap-1 [@media(hover:hover)]:focus-within:grid-cols-[68px_40px_68px] [@media(hover:hover)]:focus-within:gap-1",
         )}
       >
-        <div className="flex items-center justify-center opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
-          <Hint
-            label={
-              autoAvailable
-                ? auto
-                  ? copy.controls.autoOff
-                  : copy.controls.autoOn
-                : "Análisis automático (próximamente)"
-            }
-            shortcut={autoAvailable ? "A" : undefined}
-          >
+        <div className={SIDE_GROUP}>
+          <Hint label={copy.controls.reset}>
             <Button
               type="button"
-              size="control"
+              size="icon"
               variant="secondary"
-              aria-pressed={auto}
-              aria-disabled={!autoAvailable || undefined}
-              aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
-              aria-keyshortcuts="A"
-              onClick={toggleAuto}
-              className={cn(
-                "border",
-                auto && "border-primary text-primary",
-                !autoAvailable && "opacity-50",
-              )}
+              aria-label={copy.controls.reset}
+              onClick={requestReset}
+              className={SIDE_BUTTON}
             >
-              {auto ? (
-                <Pause
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={1.75}
-                />
-              ) : (
-                <Play
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={1.75}
-                />
-              )}
+              <RotateCcw
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={1.75}
+              />
+            </Button>
+          </Hint>
+
+          <Hint label={copy.controls.capture} shortcut="Espacio">
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              aria-label={copy.controls.capture}
+              aria-keyshortcuts="Space"
+              onClick={capture}
+              className={SIDE_BUTTON}
+            >
+              <Aperture
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={1.75}
+              />
             </Button>
           </Hint>
         </div>
 
-        <Hint label={copy.controls.capture} shortcut="Espacio">
+        <Hint
+          label={
+            autoAvailable
+              ? auto
+                ? copy.controls.autoOff
+                : copy.controls.autoOn
+              : "Análisis automático (próximamente)"
+          }
+          shortcut={autoAvailable ? "A" : undefined}
+        >
           <Button
             type="button"
-            size="control"
+            size="icon"
             variant="ghost"
-            aria-label={copy.controls.capture}
-            aria-keyshortcuts="Space"
-            onClick={capture}
+            aria-pressed={auto}
+            aria-disabled={!autoAvailable || undefined}
+            aria-label={auto ? copy.controls.autoOff : copy.controls.autoOn}
+            aria-keyshortcuts="A"
+            onClick={toggleAuto}
+            className={cn(
+              "size-10 rounded-full",
+              // Running: a primary ring and icon, so it reads as on at a glance.
+              auto && "text-primary ring-2 ring-primary",
+              !autoAvailable && "opacity-50",
+            )}
           >
-            <Aperture
-              aria-hidden="true"
-              className="size-6"
-              strokeWidth={1.75}
-            />
+            {auto ? (
+              <Pause aria-hidden="true" className="size-5" strokeWidth={1.75} />
+            ) : (
+              <Play aria-hidden="true" className="size-5" strokeWidth={1.75} />
+            )}
           </Button>
         </Hint>
 
-        <div className="flex items-center justify-between opacity-100 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100">
+        <div className={SIDE_GROUP}>
           <Hint
             label={
               hasCaptures
@@ -228,13 +250,13 @@ export function ControlBar() {
           >
             <Button
               type="button"
-              size="control"
+              size="icon"
               variant="secondary"
               aria-label={copy.controls.report}
               aria-disabled={!hasCaptures || undefined}
               aria-keyshortcuts="R"
               onClick={report}
-              className={cn("border", !hasCaptures && "opacity-50")}
+              className={cn(SIDE_BUTTON, !hasCaptures && "opacity-50")}
             >
               <FileDown
                 aria-hidden="true"
@@ -249,10 +271,10 @@ export function ControlBar() {
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
-                  size="control"
+                  size="icon"
                   variant="secondary"
                   aria-label={copy.controls.more}
-                  className="border"
+                  className={SIDE_BUTTON}
                 >
                   <Ellipsis
                     aria-hidden="true"
@@ -270,10 +292,6 @@ export function ControlBar() {
                 {copy.controls.changeGrid}
                 <DropdownMenuShortcut>G</DropdownMenuShortcut>
               </DropdownMenuCheckboxItem>
-              <DropdownMenuItem onSelect={requestReset}>
-                <RotateCcw aria-hidden="true" />
-                {copy.controls.reset}
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
