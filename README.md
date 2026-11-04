@@ -9,6 +9,8 @@
 
 **Live demo:** <https://tutor-ia.hypot.app/>
 
+**Live video:** <https://youtu.be/1QTpbaGfEPA>
+
 > **Flow:** Scan · Select a part · Follow the guide on the image · Answer by tapping or by voice · Final check · PDF report
 
 ## Why it exists
